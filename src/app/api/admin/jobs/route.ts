@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { jobs, companies, categories, adminActivityLogs } from "@/db/schema";
 import { eq, and, ilike, sql, desc } from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
+import { publishJobToSocialMedia } from "@/lib/social/publisher";
 
 // Helper to make slug
 function makeSlug(title: string, companyName: string, city: string): string {
@@ -245,15 +246,69 @@ export async function POST(req: NextRequest) {
       .returning();
 
     // Log admin activity
-    await db.insert(adminActivityLogs).values({
-      adminName: session.name || session.email,
-      action: "JOB_CREATE",
-      entity: "jobs",
-      entityId: newJob.id,
-      details: `Created job posting: ${newJob.title}`,
+  await db.insert(adminActivityLogs).values({
+  adminName: session.name || session.email,
+  action: "JOB_CREATE",
+  entity: "jobs",
+  entityId: newJob.id,
+  details: `Created job posting: ${newJob.title}`,
+});
+
+// -----------------------------------------------------
+// Social media publishing
+// -----------------------------------------------------
+//
+// Important:
+// The job has already been successfully created.
+//
+// Social media failures MUST NOT cause the job creation
+// request itself to fail.
+//
+let socialResults = null;
+
+if (newJob.status === "PUBLISHED") {
+  try {
+    socialResults = await publishJobToSocialMedia({
+      id: newJob.id,
+      title: newJob.title,
+      slug: newJob.slug,
+
+      companyName,
+
+      city: newJob.city,
+      state: newJob.state,
+      country: newJob.country,
+
+      employmentType: newJob.employmentType,
+      workMode: newJob.workMode,
+      experienceLevel: newJob.experienceLevel,
+
+      requiredSkills: newJob.requiredSkills,
+
+      minSalary: newJob.minSalary,
+      maxSalary: newJob.maxSalary,
+      currency: newJob.currency,
+      salaryPeriod: newJob.salaryPeriod,
+      isSalaryVisible: newJob.isSalaryVisible,
+
+      applicationDeadline: newJob.applicationDeadline,
     });
 
-    return NextResponse.json({ success: true, data: newJob });
+    console.log("Social publishing results:", socialResults);
+  } catch (socialError) {
+    // Never fail job creation because a social platform failed.
+    console.error(
+      "Job created successfully, but social publishing failed:",
+      socialError
+    );
+  }
+}
+
+return NextResponse.json({
+  success: true,
+  data: newJob,
+  socialPublishing: socialResults,
+});
   } catch (error: any) {
     console.error("Error in POST /api/admin/jobs:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });

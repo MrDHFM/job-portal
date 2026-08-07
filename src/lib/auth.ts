@@ -13,9 +13,17 @@ export function hashPassword(password: string): string {
 
 // Simple and highly secure custom session tokens using AES-256-GCM or HMAC
 // To keep it clean and robust without external libraries, we use an encrypted payload
-const ENCRYPTION_KEY = process.env.JWT_SECRET || "job_portal_very_long_secret_key_2026_minimum_32_chars";
+const ENCRYPTION_KEY = process.env.JWT_SECRET;
 // Ensure the key is exactly 32 bytes
-const paddedKey = Buffer.concat([Buffer.from(ENCRYPTION_KEY), Buffer.alloc(32)], 32);
+
+if (!ENCRYPTION_KEY) {
+  throw new Error("JWT_SECRET is required");
+}
+
+const paddedKey = Buffer.concat(
+  [Buffer.from(ENCRYPTION_KEY), Buffer.alloc(32)],
+  32
+);
 
 export function encryptSession(payload: any): string {
   const iv = crypto.randomBytes(16);
