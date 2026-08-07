@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { jobs, companies, categories } from "@/db/schema";
-import { eq, and, ne, or, sql } from "drizzle-orm";
+import { eq, and, ne, or, sql, gte } from "drizzle-orm";
+import { isJobExpired } from "@/lib/jobs/job-expiry";
 import {
   Briefcase,
   Building2,
@@ -84,6 +85,7 @@ export default async function JobDetailPage(props: Props) {
   }
 
   const { job, company, category } = jobResults[0];
+  const expired = isJobExpired(job);
 
   // Increment views count in PostgreSQL
   try {
@@ -116,15 +118,31 @@ export default async function JobDetailPage(props: Props) {
       .from(jobs)
       .innerJoin(companies, eq(jobs.companyId, companies.id))
       .where(
-        and(
-          eq(jobs.status, "PUBLISHED"),
-          ne(jobs.id, job.id),
-          or(
-            eq(jobs.categoryId, job.categoryId),
-            eq(jobs.companyId, job.companyId)
-          )
-        )
-      )
+  and(
+    eq(jobs.status, "PUBLISHED"),
+
+    // Don't show jobs past their application deadline
+    or(
+      sql`${jobs.applicationDeadline} IS NULL`,
+      gte(jobs.applicationDeadline, new Date())
+    ),
+
+    // Don't show jobs past expiresAt
+    or(
+      sql`${jobs.expiresAt} IS NULL`,
+      gte(jobs.expiresAt, new Date())
+    ),
+
+    // Same category OR same company
+    or(
+      eq(jobs.categoryId, job.categoryId),
+      eq(jobs.companyId, job.companyId)
+    ),
+
+    // Don't show current job
+    ne(jobs.id, job.id)
+  )
+)
       .orderBy(desc(jobs.publishedAt))
       .limit(3);
   } catch (e) {
@@ -195,7 +213,7 @@ export default async function JobDetailPage(props: Props) {
             
             {/* Left Content Area: Core Info (8 cols) */}
             <div className="lg:col-span-8 space-y-6">
-              <JobDetailsClient job={job} company={company} category={category} similarJobs={similarJobs} />
+              <JobDetailsClient job={job} company={company} isExpired={expired} category={category} similarJobs={similarJobs} />
             </div>
 
             {/* Right Sidebar: Structured Quick Summary Panel (4 cols) */}

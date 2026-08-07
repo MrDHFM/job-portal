@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { jobs, companies, categories } from "@/db/schema";
-import { eq, and, or, like, ilike, gte, lte, sql, desc, asc } from "drizzle-orm";
+import {
+  eq,
+  and,
+  or,
+  like,
+  ilike,
+  gte,
+  lte,
+  sql,
+  desc,
+  asc,
+} from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
@@ -21,7 +32,9 @@ export async function GET(req: NextRequest) {
     const country = searchParams.get("country") || "";
     const isFeatured = searchParams.get("isFeatured") === "true";
     const isUrgent = searchParams.get("isUrgent") === "true";
-    const minSalary = searchParams.get("minSalary") ? parseInt(searchParams.get("minSalary") || "0") : null;
+    const minSalary = searchParams.get("minSalary")
+      ? parseInt(searchParams.get("minSalary") || "0")
+      : null;
     const sort = searchParams.get("sort") || "latest"; // latest, oldest, salary_high, salary_low, relevant
 
     const offset = (page - 1) * limit;
@@ -35,6 +48,19 @@ export async function GET(req: NextRequest) {
     // Filter by status (unless admin requests all)
     if (!isAdmin) {
       conditions.push(eq(jobs.status, "PUBLISHED"));
+
+      // Hide jobs whose application deadline has passed.
+      conditions.push(
+        or(
+          sql`${jobs.applicationDeadline} IS NULL`,
+          gte(jobs.applicationDeadline, new Date()),
+        ),
+      );
+
+      // Also respect expiresAt if used in the future.
+      conditions.push(
+        or(sql`${jobs.expiresAt} IS NULL`, gte(jobs.expiresAt, new Date())),
+      );
     } else {
       const statusFilter = searchParams.get("status");
       if (statusFilter) {
@@ -44,8 +70,10 @@ export async function GET(req: NextRequest) {
 
     if (sector) conditions.push(eq(jobs.sector, sector));
     if (workMode) conditions.push(eq(jobs.workMode, workMode));
-    if (employmentType) conditions.push(eq(jobs.employmentType, employmentType));
-    if (experienceLevel) conditions.push(eq(jobs.experienceLevel, experienceLevel));
+    if (employmentType)
+      conditions.push(eq(jobs.employmentType, employmentType));
+    if (experienceLevel)
+      conditions.push(eq(jobs.experienceLevel, experienceLevel));
     if (categoryId) conditions.push(eq(jobs.categoryId, parseInt(categoryId)));
     if (companyId) conditions.push(eq(jobs.companyId, parseInt(companyId)));
     if (city) conditions.push(ilike(jobs.city, `%${city}%`));
@@ -62,8 +90,8 @@ export async function GET(req: NextRequest) {
           ilike(jobs.title, `%${keyword}%`),
           ilike(jobs.description, `%${keyword}%`),
           ilike(jobs.requiredSkills, `%${keyword}%`),
-          ilike(jobs.summary, `%${keyword}%`)
-        )
+          ilike(jobs.summary, `%${keyword}%`),
+        ),
       );
     }
 
@@ -103,6 +131,10 @@ export async function GET(req: NextRequest) {
         isFeatured: jobs.isFeatured,
         isUrgent: jobs.isUrgent,
         status: jobs.status,
+
+        applicationDeadline: jobs.applicationDeadline,
+        expiresAt: jobs.expiresAt,
+
         createdAt: jobs.createdAt,
         publishedAt: jobs.publishedAt,
         viewsCount: jobs.viewsCount,
@@ -154,7 +186,7 @@ export async function GET(req: NextRequest) {
     console.error("Error in GET /api/v1/jobs:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

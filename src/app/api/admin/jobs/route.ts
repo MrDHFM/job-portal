@@ -176,6 +176,21 @@ export async function POST(req: NextRequest) {
       slug = `${originalSlug}-${count++}`;
     }
 
+    const parsedApplicationDeadline =
+  applicationDeadline
+    ? new Date(applicationDeadline)
+    : null;
+
+const requestedStatus =
+  status || "PUBLISHED";
+
+const finalStatus =
+  requestedStatus === "PUBLISHED" &&
+  parsedApplicationDeadline &&
+  parsedApplicationDeadline.getTime() < Date.now()
+    ? "EXPIRED"
+    : requestedStatus;
+
     const [newJob] = await db
       .insert(jobs)
       .values({
@@ -216,8 +231,8 @@ export async function POST(req: NextRequest) {
         applicationMethod,
         applicationUrl: applicationUrl || null,
         recruiterEmail: recruiterEmail || null,
-        applicationDeadline: applicationDeadline ? new Date(applicationDeadline) : null,
-        status: status || "PUBLISHED",
+        applicationDeadline: parsedApplicationDeadline,
+        status: finalStatus,
         isFeatured: !!isFeatured,
         isUrgent: !!isUrgent,
         seoTitle: seoTitle || null,

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -28,6 +29,7 @@ type JobDetailsClientProps = {
   job: any;
   company: any;
   category: any;
+  isExpired: boolean;
   similarJobs: any[];
 };
 
@@ -36,6 +38,7 @@ export default function JobDetailsClient({
   company,
   category,
   similarJobs,
+  isExpired,
 }: JobDetailsClientProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
@@ -137,8 +140,12 @@ export default function JobDetailsClient({
   };
 
   // Handle Apply click or form trigger
-  const handleApplyClick = () => {
-    if (job.applicationMethod === "EXTERNAL_URL") {
+const handleApplyClick = () => {
+  if (isExpired) {
+    return;
+  }
+
+  if (job.applicationMethod === "EXTERNAL_URL") {
       if (job.applicationUrl) {
         // Safe redirect
         window.open(job.applicationUrl, "_blank", "noopener,noreferrer");
@@ -319,8 +326,39 @@ Best regards`,
 
        {/* Application Action */}
 <div className="space-y-4">
+{isExpired ? (
+    <div className="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/20">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
 
-  {job.applicationMethod === "EMAIL" && job.recruiterEmail ? (
+        <div>
+          <p className="font-extrabold text-red-700 dark:text-red-400">
+            Applications Closed
+          </p>
+
+          <p className="mt-1 text-sm text-red-600 dark:text-red-300">
+            The application deadline for this job has passed.
+            This position is no longer accepting applications.
+          </p>
+
+          {job.applicationDeadline && (
+            <p className="mt-2 text-xs font-semibold text-red-500 dark:text-red-400">
+              Application deadline:{" "}
+              {new Date(job.applicationDeadline).toLocaleDateString(
+                "en-US",
+                {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                }
+              )}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  ) :
+   job.applicationMethod === "EMAIL" && job.recruiterEmail ? (
     <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 to-indigo-50/50 p-4 sm:p-5 dark:border-blue-900/40 dark:from-blue-950/20 dark:to-indigo-950/10">
 
       <div className="flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
@@ -753,7 +791,7 @@ Best regards`,
                 </h3>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
                   Your application and resume details have been safely logged in
-                  CareerDiscover's backend database. Recruiter personnel will
+                  CareerDiscover&apos;s backend database. Recruiter personnel will
                   contact you soon.
                 </p>
                 <button

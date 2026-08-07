@@ -56,54 +56,37 @@ export function buildTelegramJobPost(job: SocialJob) {
   const skills = formatSkills(job.requiredSkills);
   const salary = formatSalary(job);
 
-  const location = [job.city, job.state]
-    .map(clean)
-    .filter(Boolean)
-    .join(", ");
+  const location = [job.city, job.state].map(clean).filter(Boolean).join(", ");
 
   // Keep hashtags useful and readable.
   // Avoid converting a very long job title into one giant hashtag.
   const hashtags = [
     "#Hiring",
     "#Jobs",
-    job.companyName
-      ? `#${makeHashtag(job.companyName)}`
-      : "",
-    job.city
-      ? `#${makeHashtag(job.city)}Jobs`
-      : "",
+    job.companyName ? `#${makeHashtag(job.companyName)}` : "",
+    job.city ? `#${makeHashtag(job.city)}Jobs` : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   const lines = [
-  "🚀 NEW JOB OPPORTUNITY",
-  "",
-  `💼 ${job.title}`,
-  `🏢 ${job.companyName}`,
-  "",
-  location ? `📍 Location: ${location}` : "",
-  job.experienceLevel
-    ? `🎯 Experience: ${job.experienceLevel}`
-    : "",
-  job.employmentType
-    ? `🧑‍💻 Employment: ${job.employmentType}`
-    : "",
-  job.workMode
-    ? `🌐 Work Mode: ${job.workMode}`
-    : "",
-  salary
-    ? `💰 Salary: ${salary}`
-    : "",
-  skills
-    ? `🛠 Skills: ${skills}`
-    : "",
-  "",
-  "👇 View complete job details and apply:",
-  jobUrl,
-  "",
-  hashtags,
-];
+    "🚀 NEW JOB OPPORTUNITY",
+    "",
+    `💼 ${job.title}`,
+    `🏢 ${job.companyName}`,
+    "",
+    location ? `📍 Location: ${location}` : "",
+    job.experienceLevel ? `🎯 Experience: ${job.experienceLevel}` : "",
+    job.employmentType ? `🧑‍💻 Employment: ${job.employmentType}` : "",
+    job.workMode ? `🌐 Work Mode: ${job.workMode}` : "",
+    salary ? `💰 Salary: ${salary}` : "",
+    skills ? `🛠 Skills: ${skills}` : "",
+    "",
+    "👇 View complete job details and apply:",
+    jobUrl,
+    "",
+    hashtags,
+  ];
 
   const text = lines
     .join("\n")
