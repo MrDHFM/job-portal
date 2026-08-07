@@ -77,32 +77,33 @@ export function buildTelegramJobPost(job: SocialJob) {
     .join(" ");
 
   const lines = [
-    "🚀 NEW JOB OPPORTUNITY",
-    "",
-    `💼 ${job.title}`,
-    `🏢 ${job.companyName}`,
-    "",
-    location ? `📍 Location: ${location}` : "",
-    job.experienceLevel
-      ? `🎯 Experience: ${job.experienceLevel}`
-      : "",
-    job.employmentType
-      ? `🧑‍💻 Employment: ${job.employmentType}`
-      : "",
-    job.workMode
-      ? `🌐 Work Mode: ${job.workMode}`
-      : "",
-    salary
-      ? `💰 Salary: ${salary}`
-      : "",
-    skills
-      ? `🛠 Skills: ${skills}`
-      : "",
-    "",
-    "👇 View complete job details and apply",
-    "",
-    hashtags,
-  ];
+  "🚀 NEW JOB OPPORTUNITY",
+  "",
+  `💼 ${job.title}`,
+  `🏢 ${job.companyName}`,
+  "",
+  location ? `📍 Location: ${location}` : "",
+  job.experienceLevel
+    ? `🎯 Experience: ${job.experienceLevel}`
+    : "",
+  job.employmentType
+    ? `🧑‍💻 Employment: ${job.employmentType}`
+    : "",
+  job.workMode
+    ? `🌐 Work Mode: ${job.workMode}`
+    : "",
+  salary
+    ? `💰 Salary: ${salary}`
+    : "",
+  skills
+    ? `🛠 Skills: ${skills}`
+    : "",
+  "",
+  "👇 View complete job details and apply:",
+  jobUrl,
+  "",
+  hashtags,
+];
 
   const text = lines
     .join("\n")
