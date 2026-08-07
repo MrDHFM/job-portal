@@ -51,7 +51,7 @@ export function buildTelegramJobPost(job: SocialJob) {
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://job-portal-zeta-two-46.vercel.app";
 
-  const jobUrl = `${siteUrl.replace(/\/$/, "")}/jobs/${job.slug}`;
+  const jobUrl = `${siteUrl.replace(/\/$/, "")}/jobs/detail/${job.slug}`;
 
   const skills = formatSkills(job.requiredSkills);
   const salary = formatSalary(job);
