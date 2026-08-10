@@ -3,8 +3,17 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Heart, Sun, Moon, Menu, X, ShieldAlert } from "lucide-react";
+import {
+  Briefcase,
+  Heart,
+  Sun,
+  Moon,
+  Menu,
+  X,
+  ShieldAlert,
+} from "lucide-react";
 import { useTheme } from "@/app/theme-provider";
+import Image from "next/image";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -61,13 +70,27 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-white/80 backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-900/80 transition-colors">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-            <Briefcase className="h-5 w-5" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white">
-            Career<span className="text-blue-600">Discover</span>
-          </span>
+        <Link
+          href="/"
+          className="flex h-14 items-center gap-[10px] shrink-0"
+          aria-label="CareerDiscoverJobs Home"
+        >
+          <Image
+            src="/images/logo.png"
+            alt="CareerDiscoverJobs"
+            width={220}
+            height={80}
+            priority
+            className="h-14 w-auto object-contain"
+          />
+           <Image
+            src="/images/name.png"
+            alt="CareerDiscoverJobs"
+            width={220}
+            height={80}
+            priority
+            className=""
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -110,7 +133,11 @@ export default function Navbar() {
             className="p-2 text-neutral-600 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400 rounded-lg bg-neutral-100 dark:bg-neutral-800 transition-colors cursor-pointer"
             aria-label="Toggle theme"
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
           </button>
 
           {/* Render Admin Portal button only if logged in as admin */}
@@ -132,7 +159,11 @@ export default function Navbar() {
             className="p-2 text-neutral-600 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400 rounded-lg bg-neutral-100 dark:bg-neutral-800 transition-colors"
             aria-label="Toggle theme"
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
           </button>
 
           <button
@@ -189,7 +220,8 @@ export default function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-2 py-2 text-blue-600 dark:text-blue-400 font-semibold"
                 >
-                  <ShieldAlert className="h-5 w-5 text-blue-600" /> Admin Dashboard
+                  <ShieldAlert className="h-5 w-5 text-blue-600" /> Admin
+                  Dashboard
                 </Link>
               )}
             </div>
