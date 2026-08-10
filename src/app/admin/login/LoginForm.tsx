@@ -57,13 +57,13 @@ export default function LoginForm() {
         </div>
 
         {/* Demo Credentials Notice */}
-        <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/50 rounded-xl p-4 text-xs space-y-1">
+        {/* <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/50 rounded-xl p-4 text-xs space-y-1">
           <span className="font-bold text-blue-800 dark:text-blue-300 block flex items-center gap-1">
             <ShieldCheck className="h-3.5 w-3.5 text-blue-600" /> Auditor Test Account:
           </span>
           <p className="text-neutral-600 dark:text-neutral-400">Email: <strong className="text-neutral-800 dark:text-white">admin@jobportal.com</strong></p>
           <p className="text-neutral-600 dark:text-neutral-400">Password: <strong className="text-neutral-800 dark:text-white">admin</strong></p>
-        </div>
+        </div> */}
 
         {error && (
           <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-xl p-3.5 text-xs font-semibold text-red-800 dark:text-red-300 flex items-center gap-2">
@@ -84,7 +84,7 @@ export default function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@jobportal.com"
+                placeholder="Email"
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-850 dark:text-neutral-100 outline-none focus:border-blue-500"
               />
             </div>
