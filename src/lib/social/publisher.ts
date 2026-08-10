@@ -1,5 +1,7 @@
 import { buildTelegramJobPost } from "./formatter";
 import { publishToTelegram } from "./telegram";
+import { publishToInstagram } from "./instagram";
+
 import type {
   SocialJob,
   SocialPublishResult,
@@ -9,6 +11,10 @@ export async function publishJobToSocialMedia(
   job: SocialJob
 ): Promise<SocialPublishResult[]> {
   const results: SocialPublishResult[] = [];
+
+  // --------------------------------------------------
+  // Telegram
+  // --------------------------------------------------
 
   try {
     const telegramMessage =
@@ -20,7 +26,7 @@ export async function publishJobToSocialMedia(
     results.push(telegramResult);
   } catch (error) {
     console.error(
-      "Social publishing failed:",
+      "Telegram publishing failed:",
       error
     );
 
@@ -30,7 +36,32 @@ export async function publishJobToSocialMedia(
       error:
         error instanceof Error
           ? error.message
-          : "Unknown social publishing error.",
+          : "Telegram publishing failed.",
+    });
+  }
+
+  // --------------------------------------------------
+  // Instagram
+  // --------------------------------------------------
+
+  try {
+    const instagramResult =
+      await publishToInstagram(job);
+
+    results.push(instagramResult);
+  } catch (error) {
+    console.error(
+      "Instagram publishing failed:",
+      error
+    );
+
+    results.push({
+      success: false,
+      platform: "instagram",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Instagram publishing failed.",
     });
   }
 

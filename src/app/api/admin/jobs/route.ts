@@ -18,7 +18,10 @@ export async function GET(req: Request) {
   try {
     const session = await getAdminSession();
     if (!session) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     const adminJobs = await db
@@ -54,7 +57,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ success: true, data: adminJobs });
   } catch (error: any) {
     console.error("Error in GET /api/admin/jobs:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -62,7 +68,10 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getAdminSession();
     if (!session) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     const body = await req.json();
@@ -109,7 +118,7 @@ export async function POST(req: NextRequest) {
       isUrgent,
       seoTitle,
       seoDescription,
-      
+
       // Walkin
       walkinDate,
       walkinStartTime,
@@ -129,12 +138,28 @@ export async function POST(req: NextRequest) {
       govOfficialWebsiteUrl,
 
       // Force create (skip duplicate warning)
-      force
+      force,
     } = body;
 
     // Validation
-    if (!companyId || !categoryId || !title || !sector || !employmentType || !experienceLevel || !workMode || !country || !state || !city || !description || !applicationMethod) {
-      return NextResponse.json({ success: false, error: "Missing required core job details." }, { status: 400 });
+    if (
+      !companyId ||
+      !categoryId ||
+      !title ||
+      !sector ||
+      !employmentType ||
+      !experienceLevel ||
+      !workMode ||
+      !country ||
+      !state ||
+      !city ||
+      !description ||
+      !applicationMethod
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Missing required core job details." },
+        { status: 400 },
+      );
     }
 
     // Duplicate prevention check
@@ -147,49 +172,68 @@ export async function POST(req: NextRequest) {
             eq(jobs.companyId, parseInt(companyId)),
             ilike(jobs.title, title.trim()),
             ilike(jobs.city, city.trim()),
-            eq(jobs.status, "PUBLISHED")
-          )
+            eq(jobs.status, "PUBLISHED"),
+          ),
         )
         .limit(1);
 
       if (possibleDuplicates.length > 0) {
-        return NextResponse.json({
-          success: false,
-          warning: "Possible duplicate job detected.",
-          message: `A published job titled "${title}" at "${city}" already exists for this company. Are you sure you want to post this as a separate opening?`,
-          duplicateId: possibleDuplicates[0].id,
-        }, { status: 409 });
+        return NextResponse.json(
+          {
+            success: false,
+            warning: "Possible duplicate job detected.",
+            message: `A published job titled "${title}" at "${city}" already exists for this company. Are you sure you want to post this as a separate opening?`,
+            duplicateId: possibleDuplicates[0].id,
+          },
+          { status: 409 },
+        );
       }
     }
 
     // Get company details for slug
-    const comp = await db.select().from(companies).where(eq(companies.id, parseInt(companyId))).limit(1);
-    const companyName = comp[0]?.name || "company";
+    const comp = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.id, parseInt(companyId)))
+      .limit(1);
 
+    const category = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, parseInt(categoryId)))
+      .limit(1);
+
+    const companyName = comp[0]?.name || "Company";
+
+    const companyLogoUrl = comp[0]?.logoUrl || null;
+
+    const categoryName = category[0]?.name || null;
     // Create unique slug
     let slug = makeSlug(title, companyName, city);
     let originalSlug = slug;
     let count = 1;
     while (true) {
-      const match = await db.select().from(jobs).where(eq(jobs.slug, slug)).limit(1);
+      const match = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.slug, slug))
+        .limit(1);
       if (match.length === 0) break;
       slug = `${originalSlug}-${count++}`;
     }
 
-    const parsedApplicationDeadline =
-  applicationDeadline
-    ? new Date(applicationDeadline)
-    : null;
+    const parsedApplicationDeadline = applicationDeadline
+      ? new Date(applicationDeadline)
+      : null;
 
-const requestedStatus =
-  status || "PUBLISHED";
+    const requestedStatus = status || "PUBLISHED";
 
-const finalStatus =
-  requestedStatus === "PUBLISHED" &&
-  parsedApplicationDeadline &&
-  parsedApplicationDeadline.getTime() < Date.now()
-    ? "EXPIRED"
-    : requestedStatus;
+    const finalStatus =
+      requestedStatus === "PUBLISHED" &&
+      parsedApplicationDeadline &&
+      parsedApplicationDeadline.getTime() < Date.now()
+        ? "EXPIRED"
+        : requestedStatus;
 
     const [newJob] = await db
       .insert(jobs)
@@ -237,7 +281,7 @@ const finalStatus =
         isUrgent: !!isUrgent,
         seoTitle: seoTitle || null,
         seoDescription: seoDescription || null,
-        
+
         walkinDate: walkinDate ? new Date(walkinDate) : null,
         walkinStartTime: walkinStartTime || null,
         walkinEndTime: walkinEndTime || null,
@@ -261,71 +305,79 @@ const finalStatus =
       .returning();
 
     // Log admin activity
-  await db.insert(adminActivityLogs).values({
-  adminName: session.name || session.email,
-  action: "JOB_CREATE",
-  entity: "jobs",
-  entityId: newJob.id,
-  details: `Created job posting: ${newJob.title}`,
-});
-
-// -----------------------------------------------------
-// Social media publishing
-// -----------------------------------------------------
-//
-// Important:
-// The job has already been successfully created.
-//
-// Social media failures MUST NOT cause the job creation
-// request itself to fail.
-//
-let socialResults = null;
-
-if (newJob.status === "PUBLISHED") {
-  try {
-    socialResults = await publishJobToSocialMedia({
-      id: newJob.id,
-      title: newJob.title,
-      slug: newJob.slug,
-
-      companyName,
-
-      city: newJob.city,
-      state: newJob.state,
-      country: newJob.country,
-
-      employmentType: newJob.employmentType,
-      workMode: newJob.workMode,
-      experienceLevel: newJob.experienceLevel,
-
-      requiredSkills: newJob.requiredSkills,
-
-      minSalary: newJob.minSalary,
-      maxSalary: newJob.maxSalary,
-      currency: newJob.currency,
-      salaryPeriod: newJob.salaryPeriod,
-      isSalaryVisible: newJob.isSalaryVisible,
-
-      applicationDeadline: newJob.applicationDeadline,
+    await db.insert(adminActivityLogs).values({
+      adminName: session.name || session.email,
+      action: "JOB_CREATE",
+      entity: "jobs",
+      entityId: newJob.id,
+      details: `Created job posting: ${newJob.title}`,
     });
 
-    console.log("Social publishing results:", socialResults);
-  } catch (socialError) {
-    // Never fail job creation because a social platform failed.
-    console.error(
-      "Job created successfully, but social publishing failed:",
-      socialError
-    );
-  }
-}
+    // -----------------------------------------------------
+    // Social media publishing
+    // -----------------------------------------------------
+    //
+    // Important:
+    // The job has already been successfully created.
+    //
+    // Social media failures MUST NOT cause the job creation
+    // request itself to fail.
+    //
+    let socialResults = null;
 
-return NextResponse.json({
-  success: true,
-  data: newJob,
-  socialPublishing: socialResults,
-});
+    if (newJob.status === "PUBLISHED") {
+      try {
+        socialResults = await publishJobToSocialMedia({
+          id: newJob.id,
+          title: newJob.title,
+          slug: newJob.slug,
+
+          companyName,
+
+          city: newJob.city,
+          state: newJob.state,
+          country: newJob.country,
+
+          employmentType: newJob.employmentType,
+          workMode: newJob.workMode,
+          experienceLevel: newJob.experienceLevel,
+
+          requiredSkills: newJob.requiredSkills,
+
+          minSalary: newJob.minSalary,
+          maxSalary: newJob.maxSalary,
+          currency: newJob.currency,
+          salaryPeriod: newJob.salaryPeriod,
+          isSalaryVisible: newJob.isSalaryVisible,
+
+          applicationDeadline: newJob.applicationDeadline,
+          companyLogoUrl,
+          categoryName,
+
+          isUrgent: newJob.isUrgent,
+          isFeatured: newJob.isFeatured,
+        });
+
+        console.log("Social publishing results:", socialResults);
+      } catch (socialError) {
+        // Never fail job creation because a social platform failed.
+        console.error(
+          "Job created successfully, but social publishing failed:",
+          socialError,
+        );
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: newJob,
+      socialPublishing: socialResults,
+    });
   } catch (error: any) {
     console.error("Error in POST /api/admin/jobs:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

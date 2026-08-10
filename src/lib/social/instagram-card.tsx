@@ -1,11 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
 import type { SocialJob } from "./types";
 
 function truncate(value: string, max: number) {
   if (!value) return "";
-  return value.length <= max
-    ? value
-    : `${value.slice(0, max - 1).trim()}…`;
+  return value.length <= max ? value : `${value.slice(0, max - 1).trim()}…`;
 }
 
 function formatLocation(job: SocialJob) {
@@ -181,8 +180,28 @@ function SalaryIcon() {
   );
 }
 
+function isValidImageUrl(value?: string | null) {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return false;
+    }
+
+    if (url.hostname === "google.com" || url.hostname === "www.google.com") {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function generateInstagramJobCard(
-  job: SocialJob
+  job: SocialJob,
 ): Promise<ArrayBuffer> {
   const location = formatLocation(job);
   const skills = formatSkills(job.requiredSkills);
@@ -190,467 +209,453 @@ export async function generateInstagramJobCard(
   const opportunityLabel = getOpportunityLabel(job);
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: "1080px",
+        height: "1350px",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        overflow: "hidden",
+        padding: "62px 70px 54px",
+        background:
+          "linear-gradient(145deg,#050713 0%,#080d1d 48%,#07131d 100%)",
+        color: "#f8fafc",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      {/* Ambient background */}
       <div
         style={{
-          width: "1080px",
-          height: "1350px",
+          position: "absolute",
+          display: "flex",
+          width: 650,
+          height: 650,
+          borderRadius: 999,
+          right: -250,
+          top: -320,
+          background:
+            "radial-gradient(circle,rgba(99,102,241,.40),rgba(99,102,241,.08) 48%,transparent 72%)",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          display: "flex",
+          width: 560,
+          height: 560,
+          borderRadius: 999,
+          left: -260,
+          bottom: -270,
+          background:
+            "radial-gradient(circle,rgba(14,165,233,.22),rgba(14,165,233,.04) 50%,transparent 72%)",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          display: "flex",
+          inset: 0,
+          opacity: 0.035,
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px)",
+          backgroundSize: "55px 55px",
+        }}
+      />
+
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            fontSize: 27,
+            fontWeight: 800,
+            letterSpacing: "-1px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              width: 42,
+              height: 42,
+              borderRadius: 12,
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 14,
+              background: "linear-gradient(135deg,#6366f1,#38bdf8)",
+              fontWeight: 900,
+            }}
+          >
+            C
+          </div>
+          CareerDiscover
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "11px 20px",
+            borderRadius: 999,
+            background: "rgba(255,255,255,.055)",
+            border: "1px solid rgba(255,255,255,.1)",
+            color: "#cbd5e1",
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: "1.5px",
+          }}
+        >
+          JOB ALERT
+        </div>
+      </div>
+
+      {/* Company */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          position: "relative",
+          marginTop: 55,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            width: 94,
+            height: 94,
+            borderRadius: 23,
+            flexShrink: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#fff",
+            overflow: "hidden",
+            boxShadow: "0 16px 42px rgba(0,0,0,.3)",
+          }}
+        >
+          {isValidImageUrl(job.companyLogoUrl) ? (
+            <img
+              src={job.companyLogoUrl ?? undefined}
+              width={76}
+              height={76}
+              alt=""
+              style={{
+                objectFit: "contain",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                fontSize: 30,
+                fontWeight: 900,
+                color: "#111827",
+              }}
+            >
+              {getInitials(job.companyName)}
+            </div>
+          )}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            marginLeft: 24,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              color: job.isUrgent ? "#fb7185" : "#818cf8",
+              fontSize: 17,
+              fontWeight: 800,
+              letterSpacing: "2.4px",
+              marginBottom: 8,
+            }}
+          >
+            {opportunityLabel}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              color: "#e2e8f0",
+              fontSize: 28,
+              fontWeight: 700,
+            }}
+          >
+            {truncate(job.companyName, 50)}
+          </div>
+        </div>
+      </div>
+
+      {/* Job title */}
+      <div
+        style={{
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          overflow: "hidden",
-          padding: "62px 70px 54px",
-          background:
-            "linear-gradient(145deg,#050713 0%,#080d1d 48%,#07131d 100%)",
-          color: "#f8fafc",
-          fontFamily: "Arial, sans-serif",
+          marginTop: 43,
         }}
       >
-        {/* Ambient background */}
-        <div
-          style={{
-            position: "absolute",
-            display: "flex",
-            width: 650,
-            height: 650,
-            borderRadius: 999,
-            right: -250,
-            top: -320,
-            background:
-              "radial-gradient(circle,rgba(99,102,241,.40),rgba(99,102,241,.08) 48%,transparent 72%)",
-          }}
-        />
-
-        <div
-          style={{
-            position: "absolute",
-            display: "flex",
-            width: 560,
-            height: 560,
-            borderRadius: 999,
-            left: -260,
-            bottom: -270,
-            background:
-              "radial-gradient(circle,rgba(14,165,233,.22),rgba(14,165,233,.04) 50%,transparent 72%)",
-          }}
-        />
-
-        <div
-          style={{
-            position: "absolute",
-            display: "flex",
-            inset: 0,
-            opacity: 0.035,
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px)",
-            backgroundSize: "55px 55px",
-          }}
-        />
-
-        {/* Header */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            position: "relative",
+            maxWidth: 900,
+            fontSize: getTitleSize(job.title),
+            lineHeight: 1.04,
+            fontWeight: 900,
+            letterSpacing: "-2.4px",
+            color: "#f8fafc",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              fontSize: 27,
-              fontWeight: 800,
-              letterSpacing: "-1px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                width: 42,
-                height: 42,
-                borderRadius: 12,
-                alignItems: "center",
-                justifyContent: "center",
-                marginRight: 14,
-                background:
-                  "linear-gradient(135deg,#6366f1,#38bdf8)",
-                fontWeight: 900,
-              }}
-            >
-              C
-            </div>
-
-            CareerDiscover
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "11px 20px",
-              borderRadius: 999,
-              background: "rgba(255,255,255,.055)",
-              border: "1px solid rgba(255,255,255,.1)",
-              color: "#cbd5e1",
-              fontSize: 15,
-              fontWeight: 700,
-              letterSpacing: "1.5px",
-            }}
-          >
-            JOB ALERT
-          </div>
+          {truncate(job.title, 105)}
         </div>
 
-        {/* Company */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            position: "relative",
-            marginTop: 55,
+            width: 92,
+            height: 5,
+            borderRadius: 999,
+            marginTop: 22,
+            background: "linear-gradient(90deg,#818cf8,#38bdf8)",
           }}
-        >
-          <div
-            style={{
-              display: "flex",
-              width: 94,
-              height: 94,
-              borderRadius: 23,
-              flexShrink: 0,
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#fff",
-              overflow: "hidden",
-              boxShadow: "0 16px 42px rgba(0,0,0,.3)",
-            }}
-          >
-            {job.companyLogoUrl ? (
-              <img
-                src={job.companyLogoUrl}
-                width="76"
-                height="76"
-                alt=""
-                style={{
-                  objectFit: "contain",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: 30,
-                  fontWeight: 900,
-                  color: "#111827",
-                }}
-              >
-                {getInitials(job.companyName)}
-              </div>
-            )}
-          </div>
+        />
+      </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              marginLeft: 24,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                color: job.isUrgent ? "#fb7185" : "#818cf8",
-                fontSize: 17,
-                fontWeight: 800,
-                letterSpacing: "2.4px",
-                marginBottom: 8,
-              }}
-            >
-              {opportunityLabel}
-            </div>
+      {/* Main metadata */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 13,
+          position: "relative",
+          marginTop: 39,
+        }}
+      >
+        {location && (
+          <InfoCard icon={<LocationIcon />} label="LOCATION" value={location} />
+        )}
 
-            <div
-              style={{
-                display: "flex",
-                color: "#e2e8f0",
-                fontSize: 28,
-                fontWeight: 700,
-              }}
-            >
-              {truncate(job.companyName, 50)}
-            </div>
-          </div>
-        </div>
+        <InfoCard
+          icon={<ExperienceIcon />}
+          label="EXPERIENCE"
+          value={job.experienceLevel}
+        />
 
-        {/* Job title */}
+        <InfoCard
+          icon={<EmploymentIcon />}
+          label="EMPLOYMENT"
+          value={job.employmentType}
+        />
+
+        <InfoCard
+          icon={<WorkModeIcon />}
+          label="WORK MODE"
+          value={job.workMode}
+        />
+      </div>
+
+      {/* Skills */}
+      {skills.length > 0 && (
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             position: "relative",
-            marginTop: 43,
+            marginTop: 34,
           }}
         >
           <div
             style={{
               display: "flex",
-              maxWidth: 900,
-              fontSize: getTitleSize(job.title),
-              lineHeight: 1.04,
-              fontWeight: 900,
-              letterSpacing: "-2.4px",
-              color: "#f8fafc",
+              color: "#64748b",
+              fontSize: 14,
+              fontWeight: 800,
+              letterSpacing: "2.2px",
+              marginBottom: 14,
             }}
           >
-            {truncate(job.title, 105)}
+            KEY SKILLS
           </div>
 
           <div
             style={{
               display: "flex",
-              width: 92,
-              height: 5,
-              borderRadius: 999,
-              marginTop: 22,
-              background:
-                "linear-gradient(90deg,#818cf8,#38bdf8)",
+              flexWrap: "wrap",
+              gap: 9,
             }}
-          />
+          >
+            {skills.map((skill) => (
+              <div
+                key={skill}
+                style={{
+                  display: "flex",
+                  padding: "9px 16px",
+                  borderRadius: 999,
+                  background: "rgba(99,102,241,.1)",
+                  border: "1px solid rgba(129,140,248,.22)",
+                  color: "#c7d2fe",
+                  fontSize: 16,
+                  fontWeight: 600,
+                }}
+              >
+                {truncate(skill, 25)}
+              </div>
+            ))}
+          </div>
         </div>
+      )}
 
-        {/* Main metadata */}
+      {/* Optional salary */}
+      {salary && (
         <div
           style={{
             display: "flex",
-            flexWrap: "wrap",
-            gap: 13,
             position: "relative",
-            marginTop: 39,
+            alignItems: "center",
+            marginTop: 27,
+            padding: "15px 18px",
+            borderRadius: 17,
+            background: "rgba(34,197,94,.055)",
+            border: "1px solid rgba(74,222,128,.15)",
           }}
         >
-          {location && (
-            <InfoCard
-              icon={<LocationIcon />}
-              label="LOCATION"
-              value={location}
-            />
-          )}
+          <div
+            style={{
+              display: "flex",
+              color: "#86efac",
+              marginRight: 14,
+            }}
+          >
+            <SalaryIcon />
+          </div>
 
-          <InfoCard
-            icon={<ExperienceIcon />}
-            label="EXPERIENCE"
-            value={job.experienceLevel}
-          />
-
-          <InfoCard
-            icon={<EmploymentIcon />}
-            label="EMPLOYMENT"
-            value={job.employmentType}
-          />
-
-          <InfoCard
-            icon={<WorkModeIcon />}
-            label="WORK MODE"
-            value={job.workMode}
-          />
-        </div>
-
-        {/* Skills */}
-        {skills.length > 0 && (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              position: "relative",
-              marginTop: 34,
             }}
           >
             <div
               style={{
                 display: "flex",
                 color: "#64748b",
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: 800,
-                letterSpacing: "2.2px",
-                marginBottom: 14,
+                letterSpacing: "1.5px",
               }}
             >
-              KEY SKILLS
+              COMPENSATION
             </div>
 
             <div
               style={{
                 display: "flex",
-                flexWrap: "wrap",
-                gap: 9,
+                color: "#dcfce7",
+                fontSize: 18,
+                fontWeight: 700,
+                marginTop: 4,
               }}
             >
-              {skills.map((skill) => (
-                <div
-                  key={skill}
-                  style={{
-                    display: "flex",
-                    padding: "9px 16px",
-                    borderRadius: 999,
-                    background: "rgba(99,102,241,.1)",
-                    border:
-                      "1px solid rgba(129,140,248,.22)",
-                    color: "#c7d2fe",
-                    fontSize: 16,
-                    fontWeight: 600,
-                  }}
-                >
-                  {truncate(skill, 25)}
-                </div>
-              ))}
+              {salary}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Optional salary */}
-        {salary && (
-          <div
-            style={{
-              display: "flex",
-              position: "relative",
-              alignItems: "center",
-              marginTop: 27,
-              padding: "15px 18px",
-              borderRadius: 17,
-              background: "rgba(34,197,94,.055)",
-              border: "1px solid rgba(74,222,128,.15)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                color: "#86efac",
-                marginRight: 14,
-              }}
-            >
-              <SalaryIcon />
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  color: "#64748b",
-                  fontSize: 12,
-                  fontWeight: 800,
-                  letterSpacing: "1.5px",
-                }}
-              >
-                COMPENSATION
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  color: "#dcfce7",
-                  fontSize: 18,
-                  fontWeight: 700,
-                  marginTop: 4,
-                }}
-              >
-                {salary}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* CTA */}
+      {/* CTA */}
+      <div
+        style={{
+          display: "flex",
+          position: "relative",
+          marginTop: "auto",
+          padding: "25px 28px",
+          borderRadius: 23,
+          alignItems: "center",
+          justifyContent: "space-between",
+          background:
+            "linear-gradient(135deg,rgba(99,102,241,.16),rgba(56,189,248,.08))",
+          border: "1px solid rgba(255,255,255,.11)",
+        }}
+      >
         <div
           style={{
             display: "flex",
-            position: "relative",
-            marginTop: "auto",
-            padding: "25px 28px",
-            borderRadius: 23,
-            alignItems: "center",
-            justifyContent: "space-between",
-            background:
-              "linear-gradient(135deg,rgba(99,102,241,.16),rgba(56,189,248,.08))",
-            border: "1px solid rgba(255,255,255,.11)",
+            flexDirection: "column",
           }}
         >
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
+              color: "#94a3b8",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "1.3px",
+              marginBottom: 6,
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                color: "#94a3b8",
-                fontSize: 14,
-                fontWeight: 700,
-                letterSpacing: "1.3px",
-                marginBottom: 6,
-              }}
-            >
-              READY FOR YOUR NEXT OPPORTUNITY?
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                color: "#f8fafc",
-                fontSize: 21,
-                fontWeight: 800,
-              }}
-            >
-              View full job details & apply
-            </div>
+            READY FOR YOUR NEXT OPPORTUNITY?
           </div>
 
           <div
             style={{
               display: "flex",
-              padding: "15px 22px",
-              borderRadius: 14,
-              background: "#f8fafc",
-              color: "#111827",
-              fontSize: 17,
-              fontWeight: 900,
+              color: "#f8fafc",
+              fontSize: 21,
+              fontWeight: 800,
             }}
           >
-            LINK IN BIO
+            View full job details & apply
           </div>
         </div>
 
-        {/* Footer */}
         <div
           style={{
             display: "flex",
-            position: "relative",
-            justifyContent: "space-between",
-            marginTop: 19,
-            color: "#64748b",
-            fontSize: 13,
+            padding: "15px 22px",
+            borderRadius: 14,
+            background: "#f8fafc",
+            color: "#111827",
+            fontSize: 17,
+            fontWeight: 900,
           }}
         >
-          <div style={{ display: "flex" }}>
-            CareerDiscover
-          </div>
-
-          <div style={{ display: "flex" }}>
-            Save • Share • Apply
-          </div>
+          LINK IN BIO
         </div>
       </div>
-    ),
+
+      {/* Footer */}
+      <div
+        style={{
+          display: "flex",
+          position: "relative",
+          justifyContent: "space-between",
+          marginTop: 19,
+          color: "#64748b",
+          fontSize: 13,
+        }}
+      >
+        <div style={{ display: "flex" }}>CareerDiscover</div>
+
+        <div style={{ display: "flex" }}>Save • Share • Apply</div>
+      </div>
+    </div>,
     {
       width: 1080,
       height: 1350,
-    }
+    },
   ).arrayBuffer();
 }
 
