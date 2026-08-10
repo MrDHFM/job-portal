@@ -4,18 +4,19 @@ import { uploadInstagramJobCard } from "./instagram-storage";
 
 type InstagramApiResponse = {
   id?: string;
- error?: {
-  message?: string;
-  type?: string;
-  code?: number;
-  error_subcode?: number;
-  error_user_title?: string;
-  error_user_msg?: string;
-};
+  permalink?: string;
+
+  error?: {
+    message?: string;
+    type?: string;
+    code?: number;
+    error_subcode?: number;
+    error_user_title?: string;
+    error_user_msg?: string;
+  };
 };
 
-const API_VERSION =
-  process.env.INSTAGRAM_API_VERSION || "v24.0";
+const API_VERSION = process.env.INSTAGRAM_API_VERSION || "v24.0";
 
 const BASE_URL = `https://graph.instagram.com/${API_VERSION}`;
 
@@ -24,9 +25,7 @@ function getConfig() {
   const instagramAccountId = process.env.INSTAGRAM_ACCOUNT_ID;
 
   if (!accessToken || !instagramAccountId) {
-    throw new Error(
-      "Instagram environment variables are not configured."
-    );
+    throw new Error("Instagram environment variables are not configured.");
   }
 
   return {
@@ -40,12 +39,9 @@ function buildCaption(job: SocialJob) {
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://job-portal-zeta-two-46.vercel.app";
 
-  const jobUrl =
-    `${siteUrl.replace(/\/$/, "")}/jobs/detail/${job.slug}`;
+  const jobUrl = `${siteUrl.replace(/\/$/, "")}/jobs/detail/${job.slug}`;
 
-  const location = [job.city, job.state]
-    .filter(Boolean)
-    .join(", ");
+  const location = [job.city, job.state].filter(Boolean).join(", ");
 
   const skills = job.requiredSkills
     ? job.requiredSkills
@@ -66,11 +62,9 @@ function buildCaption(job: SocialJob) {
         `${currency} ${job.minSalary.toLocaleString()} - ` +
         `${job.maxSalary.toLocaleString()}`;
     } else if (job.minSalary) {
-      salary =
-        `From ${currency} ${job.minSalary.toLocaleString()}`;
+      salary = `From ${currency} ${job.minSalary.toLocaleString()}`;
     } else {
-      salary =
-        `Up to ${currency} ${job.maxSalary?.toLocaleString()}`;
+      salary = `Up to ${currency} ${job.maxSalary?.toLocaleString()}`;
     }
   }
 
@@ -80,15 +74,9 @@ function buildCaption(job: SocialJob) {
     `💼 ${job.title}`,
     `🏢 ${job.companyName}`,
     location ? `📍 ${location}` : "",
-    job.experienceLevel
-      ? `🎯 ${job.experienceLevel}`
-      : "",
-    job.employmentType
-      ? `💼 ${job.employmentType}`
-      : "",
-    job.workMode
-      ? `🏠 ${job.workMode}`
-      : "",
+    job.experienceLevel ? `🎯 ${job.experienceLevel}` : "",
+    job.employmentType ? `💼 ${job.employmentType}` : "",
+    job.workMode ? `🏠 ${job.workMode}` : "",
     salary ? `💰 ${salary}` : "",
     "",
     skills ? `🛠️ Skills: ${skills}` : "",
@@ -97,20 +85,15 @@ function buildCaption(job: SocialJob) {
     jobUrl,
     "",
     "#CareerDiscover #Hiring #Jobs #JobOpening",
-    job.city
-      ? `#${job.city.replace(/[^a-zA-Z0-9]/g, "")}Jobs`
-      : "",
+    job.city ? `#${job.city.replace(/[^a-zA-Z0-9]/g, "")}Jobs` : "",
     "#Careers #JobSearch",
   ];
 
-  return lines
-    .filter(Boolean)
-    .join("\n")
-    .slice(0, 2200);
+  return lines.filter(Boolean).join("\n").slice(0, 2200);
 }
 
 async function parseResponse(
-  response: Response
+  response: Response,
 ): Promise<InstagramApiResponse> {
   const data = (await response.json()) as InstagramApiResponse;
 
@@ -123,19 +106,16 @@ async function parseResponse(
 
     throw new Error(
       data.error?.error_user_msg ||
-      data.error?.message ||
-      JSON.stringify(data) ||
-      `Instagram API request failed with status ${response.status}`
+        data.error?.message ||
+        JSON.stringify(data) ||
+        `Instagram API request failed with status ${response.status}`,
     );
   }
 
   return data;
 }
 
-async function waitForMediaReady(
-  containerId: string,
-  accessToken: string
-) {
+async function waitForMediaReady(containerId: string, accessToken: string) {
   const maxAttempts = 10;
   const delayMs = 3000;
 
@@ -152,15 +132,11 @@ async function waitForMediaReady(
 
     const data = await response.json();
 
-    console.log(
-      `Instagram media status attempt ${attempt}:`,
-      data
-    );
+    console.log(`Instagram media status attempt ${attempt}:`, data);
 
     if (!response.ok || data.error) {
       throw new Error(
-        data.error?.message ||
-          "Failed to check Instagram media status."
+        data.error?.message || "Failed to check Instagram media status.",
       );
     }
 
@@ -168,38 +144,26 @@ async function waitForMediaReady(
       return;
     }
 
-    if (
-      data.status_code === "ERROR" ||
-      data.status_code === "EXPIRED"
-    ) {
-      throw new Error(
-        `Instagram media processing failed: ${
-          data.status_code
-        }`
-      );
+    if (data.status_code === "ERROR" || data.status_code === "EXPIRED") {
+      throw new Error(`Instagram media processing failed: ${data.status_code}`);
     }
 
     // IN_PROGRESS / other processing state
     if (attempt < maxAttempts) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, delayMs)
-      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
   throw new Error(
-    "Instagram media is still processing after waiting. Please try again."
+    "Instagram media is still processing after waiting. Please try again.",
   );
 }
 
 export async function publishToInstagram(
-  job: SocialJob
+  job: SocialJob,
 ): Promise<SocialPublishResult> {
   try {
-    const {
-      accessToken,
-      instagramAccountId,
-    } = getConfig();
+    const { accessToken, instagramAccountId } = getConfig();
 
     // --------------------------------------------------
     // 1. Generate 4:5 Instagram image
@@ -211,11 +175,7 @@ export async function publishToInstagram(
     // 2. Upload image to a public URL
     // --------------------------------------------------
 
-    const uploaded = await uploadInstagramJobCard(
-      job.id,
-      job.slug,
-      image
-    );
+    const uploaded = await uploadInstagramJobCard(job.id, job.slug, image);
 
     console.log("Instagram uploaded image URL:", uploaded.url);
 
@@ -223,110 +183,92 @@ export async function publishToInstagram(
     // 3. Create Instagram media container
     // --------------------------------------------------
 
-    const containerUrl =
-      `${BASE_URL}/${instagramAccountId}/media`;
+    const containerUrl = `${BASE_URL}/${instagramAccountId}/media`;
 
     const containerParams = new URLSearchParams();
 
-    containerParams.set(
-      "image_url",
-      uploaded.url
-    );
+    containerParams.set("image_url", uploaded.url);
 
-    containerParams.set(
-      "caption",
-      buildCaption(job)
-    );
+    containerParams.set("caption", buildCaption(job));
 
-    containerParams.set(
-      "access_token",
-      accessToken
-    );
+    containerParams.set("access_token", accessToken);
 
-    const containerResponse = await fetch(
-      containerUrl,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/x-www-form-urlencoded",
-        },
-        body: containerParams.toString(),
-        cache: "no-store",
-      }
-    );
+    const containerResponse = await fetch(containerUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: containerParams.toString(),
+      cache: "no-store",
+    });
 
-    const container =
-  await parseResponse(containerResponse);
+    const container = await parseResponse(containerResponse);
 
-if (!container.id) {
-  throw new Error(
-    "Instagram did not return a media container ID."
-  );
-}
+    if (!container.id) {
+      throw new Error("Instagram did not return a media container ID.");
+    }
 
-console.log(
-  "Instagram media container created:",
-  container.id
-);
+    console.log("Instagram media container created:", container.id);
 
-// Wait until Instagram finishes processing the image
-await waitForMediaReady(
-  container.id,
-  accessToken
-);
+    // Wait until Instagram finishes processing the image
+    await waitForMediaReady(container.id, accessToken);
 
-console.log(
-  "Instagram media is ready. Publishing..."
-);
+    console.log("Instagram media is ready. Publishing...");
 
     // --------------------------------------------------
     // 4. Publish the media container
     // --------------------------------------------------
 
-    const publishUrl =
-      `${BASE_URL}/${instagramAccountId}/media_publish`;
+    const publishUrl = `${BASE_URL}/${instagramAccountId}/media_publish`;
 
     const publishParams = new URLSearchParams();
 
-    publishParams.set(
-      "creation_id",
-      container.id
-    );
+    publishParams.set("creation_id", container.id);
 
-    publishParams.set(
-      "access_token",
-      accessToken
-    );
+    publishParams.set("access_token", accessToken);
 
-    const publishResponse = await fetch(
-      publishUrl,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/x-www-form-urlencoded",
-        },
-        body: publishParams.toString(),
-        cache: "no-store",
-      }
-    );
+    const publishResponse = await fetch(publishUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: publishParams.toString(),
+      cache: "no-store",
+    });
 
-    const published =
-      await parseResponse(publishResponse);
+    const published = await parseResponse(publishResponse);
+
+    if (!published.id) {
+      throw new Error(
+        "Instagram published successfully but did not return a media ID.",
+      );
+    }
+
+    console.log("Instagram published media ID:", published.id);
+
+    // Get the REAL Instagram post URL
+    const permalinkUrl =
+      `${BASE_URL}/${published.id}` +
+      `?fields=permalink` +
+      `&access_token=${encodeURIComponent(accessToken)}`;
+
+    const permalinkResponse = await fetch(permalinkUrl, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    const permalinkData = await parseResponse(permalinkResponse);
+
+    console.log("Instagram real post permalink:", permalinkData.permalink);
 
     return {
       success: true,
       platform: "instagram",
       externalPostId: published.id,
-      externalPostUrl:
-        `https://www.instagram.com/p/${published.id}/`,
+      externalPostUrl: permalinkData.permalink || undefined,
     };
   } catch (error) {
-    console.error(
-      "Instagram publishing failed:",
-      error
-    );
+    console.error("Instagram publishing failed:", error);
 
     return {
       success: false,
