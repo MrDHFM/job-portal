@@ -135,6 +135,51 @@ export const jobs = pgTable("jobs", {
   expiresAt: timestamp("expires_at"),
 });
 
+export const jobSocialPosts = pgTable(
+  "job_social_posts",
+  {
+    id: serial("id").primaryKey(),
+
+    jobId: integer("job_id")
+      .references(() => jobs.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+
+    platform: text("platform").notNull(),
+
+    status: text("status")
+      .notNull()
+      .default("PENDING"),
+
+    externalPostId: text("external_post_id"),
+
+    externalPostUrl: text("external_post_url"),
+
+    postContent: text("post_content"),
+
+    errorMessage: text("error_message"),
+
+    postedAt: timestamp("posted_at"),
+
+    createdAt: timestamp("created_at")
+      .defaultNow()
+      .notNull(),
+
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    jobPlatformUnique: uniqueIndex(
+      "job_social_posts_job_platform_unique"
+    ).on(
+      table.jobId,
+      table.platform
+    ),
+  })
+);
+
 // Applications for internal submissions
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
@@ -205,18 +250,36 @@ export const siteSettings = pgTable("site_settings", {
 });
 
 // Relationships
-export const jobsRelations = relations(jobs, ({ one, many }) => ({
-  company: one(companies, {
-    fields: [jobs.companyId],
-    references: [companies.id],
-  }),
-  category: one(categories, {
-    fields: [jobs.categoryId],
-    references: [categories.id],
-  }),
-  applications: many(applications),
-  saved: many(savedJobs),
-}));
+export const jobsRelations = relations(
+  jobs,
+  ({ one, many }) => ({
+    company: one(companies, {
+      fields: [jobs.companyId],
+      references: [companies.id],
+    }),
+
+    category: one(categories, {
+      fields: [jobs.categoryId],
+      references: [categories.id],
+    }),
+
+    applications: many(applications),
+
+    saved: many(savedJobs),
+
+    socialPosts: many(jobSocialPosts),
+  })
+);
+
+export const jobSocialPostsRelations = relations(
+  jobSocialPosts,
+  ({ one }) => ({
+    job: one(jobs, {
+      fields: [jobSocialPosts.jobId],
+      references: [jobs.id],
+    }),
+  })
+);
 
 export const companiesRelations = relations(companies, ({ many }) => ({
   jobs: many(jobs),

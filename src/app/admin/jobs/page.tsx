@@ -1,7 +1,9 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+
 import {
   Briefcase,
   Plus,
@@ -15,8 +17,10 @@ import {
   ExternalLink,
   SlidersHorizontal,
   Search,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
+import SocialMediaPostManager from "@/components/SocialMediaPostManager";
+
 
 export default function AdminJobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -43,10 +47,17 @@ export default function AdminJobsPage() {
   }, []);
 
   const handleDuplicate = async (id: number, title: string) => {
-    if (!confirm(`Are you sure you want to duplicate "${title}"? A copy will be created as a DRAFT.`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to duplicate "${title}"? A copy will be created as a DRAFT.`,
+      )
+    )
+      return;
 
     try {
-      const res = await fetch(`/api/admin/jobs/${id}/duplicate`, { method: "POST" });
+      const res = await fetch(`/api/admin/jobs/${id}/duplicate`, {
+        method: "POST",
+      });
       const json = await res.json();
       if (json.success) {
         alert("Job duplicated as DRAFT.");
@@ -79,7 +90,12 @@ export default function AdminJobsPage() {
   };
 
   const handleDelete = async (id: number, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete "${title}"? This cannot be undone.`,
+      )
+    )
+      return;
 
     try {
       const res = await fetch(`/api/admin/jobs/${id}`, { method: "DELETE" });
@@ -98,7 +114,9 @@ export default function AdminJobsPage() {
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (job.company?.name || "").toLowerCase().includes(searchTerm.toLowerCase());
+      (job.company?.name || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "" || job.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -112,7 +130,8 @@ export default function AdminJobsPage() {
             <Briefcase className="h-6 w-6 text-blue-600" /> Jobs Management
           </h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            Create, duplicate, edit, or archive job postings. Duplicating a job creates a new draft.
+            Create, duplicate, edit, or archive job postings. Duplicating a job
+            creates a new draft.
           </p>
         </div>
         <Link
@@ -153,13 +172,18 @@ export default function AdminJobsPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">Loading jobs database...</div>
+        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">
+          Loading jobs database...
+        </div>
       ) : filteredJobs.length === 0 ? (
         <div className="bg-white dark:bg-neutral-900 border border-dashed rounded-2xl p-16 text-center">
           <Briefcase className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
-          <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No jobs match your filter</h3>
+          <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
+            No jobs match your filter
+          </h3>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-sm mx-auto">
-            All positions come from legitimate PostgreSQL records. Create your first job by tapping the button above.
+            All positions come from legitimate PostgreSQL records. Create your
+            first job by tapping the button above.
           </p>
         </div>
       ) : (
@@ -167,10 +191,11 @@ export default function AdminJobsPage() {
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="bg-neutral-50 dark:bg-neutral-850 text-neutral-500 dark:text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 text-xs uppercase font-bold tracking-wider">
-                <th className="p-4 pl-6">Job Posting</th>
+                <th className="p-4">Job Posting</th>
                 <th className="p-4">Category</th>
                 <th className="p-4">Location</th>
                 <th className="p-4">Status</th>
+                <th className="p-4">Social</th>
                 <th className="p-4 text-center">Views</th>
                 <th className="p-4 text-center">Apply Clicks</th>
                 <th className="p-4 pr-6 text-right">Actions</th>
@@ -178,15 +203,26 @@ export default function AdminJobsPage() {
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {filteredJobs.map((job) => (
-                <tr key={job.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/50 transition-colors">
+                <tr
+                  key={job.id}
+                  className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/50 transition-colors"
+                >
                   <td className="p-4 pl-6">
                     <div>
-                      <span className="font-extrabold text-neutral-850 dark:text-neutral-200 block">{job.title}</span>
-                      <span className="text-xs text-blue-600 dark:text-blue-400 font-bold">{job.company?.name}</span>
+                      <span className="font-extrabold text-neutral-850 dark:text-neutral-200 block">
+                        {job.title}
+                      </span>
+                      <span className="text-xs text-blue-600 dark:text-blue-400 font-bold">
+                        {job.company?.name}
+                      </span>
                     </div>
                   </td>
-                  <td className="p-4 text-neutral-600 dark:text-neutral-400 font-medium">{job.category?.name}</td>
-                  <td className="p-4 text-neutral-600 dark:text-neutral-400 text-xs font-bold">{job.city}</td>
+                  <td className="p-4 text-neutral-600 dark:text-neutral-400 font-medium">
+                    {job.category?.name}
+                  </td>
+                  <td className="p-4 text-neutral-600 dark:text-neutral-400 text-xs font-bold">
+                    {job.city}
+                  </td>
                   <td className="p-4">
                     <button
                       onClick={() => handleToggleStatus(job.id, job.status)}
@@ -194,19 +230,31 @@ export default function AdminJobsPage() {
                         job.status === "PUBLISHED"
                           ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                           : job.status === "DRAFT"
-                          ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                          : "bg-red-50 text-red-700"
+                            ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                            : "bg-red-50 text-red-700"
                       }`}
                       title="Click to toggle status"
                     >
                       {job.status}
                     </button>
                   </td>
-                  <td className="p-4 text-center text-xs font-bold text-neutral-700 dark:text-neutral-300">
-                    <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3 text-neutral-400" /> {job.viewsCount}</span>
+                  <td className="p-4">
+                    <SocialMediaPostManager
+                      jobId={job.id}
+                      jobTitle={job.title}
+                    />
                   </td>
                   <td className="p-4 text-center text-xs font-bold text-neutral-700 dark:text-neutral-300">
-                    <span className="inline-flex items-center gap-1"><MousePointerClick className="h-3 w-3 text-neutral-400" /> {job.applyClicksCount}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Eye className="h-3 w-3 text-neutral-400" />{" "}
+                      {job.viewsCount}
+                    </span>
+                  </td>
+                  <td className="p-4 text-center text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                    <span className="inline-flex items-center gap-1">
+                      <MousePointerClick className="h-3 w-3 text-neutral-400" />{" "}
+                      {job.applyClicksCount}
+                    </span>
                   </td>
                   <td className="p-4 pr-6 text-right space-x-1 shrink-0">
                     <Link

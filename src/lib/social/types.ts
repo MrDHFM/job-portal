@@ -33,7 +33,21 @@ export type SocialJob = {
 
 export type SocialPlatform =
   | "telegram"
-  | "instagram";
+  | "instagram"
+  | "linkedin"
+  | "x";
+
+export type ManualSocialPost = {
+  platform: "linkedin" | "x";
+  content: string;
+  jobUrl: string;
+};
+
+export type SocialPostStatus =
+  | "PENDING"
+  | "PUBLISHED"
+  | "FAILED"
+  | "MANUAL_READY";
 
 export type SocialPublishResult = {
   success: boolean;
