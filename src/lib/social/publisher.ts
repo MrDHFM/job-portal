@@ -3,7 +3,6 @@ import { publishToTelegram } from "./telegram";
 import { publishToInstagram } from "./instagram";
 import { db } from "@/db";
 import { jobSocialPosts } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
 
 import type {
   SocialJob,
@@ -14,31 +13,15 @@ async function saveSocialPostStatus(
   jobId: number,
   result: SocialPublishResult
 ) {
-  await db
-    .insert(jobSocialPosts)
-    .values({
-      jobId,
-      platform: result.platform,
-      status: result.success
-        ? "PUBLISHED"
-        : "FAILED",
-      externalPostId:
-        result.externalPostId || null,
-      externalPostUrl:
-        result.externalPostUrl || null,
-      errorMessage:
-        result.error || null,
-      postedAt: result.success
-        ? new Date()
-        : null,
-      updatedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: [
-        jobSocialPosts.jobId,
-        jobSocialPosts.platform,
-      ],
-      set: {
+  try {
+    const now = new Date();
+
+    await db
+      .insert(jobSocialPosts)
+      .values({
+        jobId,
+        platform: result.platform,
+
         status: result.success
           ? "PUBLISHED"
           : "FAILED",
@@ -52,13 +35,65 @@ async function saveSocialPostStatus(
         errorMessage:
           result.error || null,
 
-        postedAt: result.success
-          ? new Date()
-          : null,
+        postedAt:
+          result.success
+            ? now
+            : null,
 
-        updatedAt: new Date(),
-      },
-    });
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [
+          jobSocialPosts.jobId,
+          jobSocialPosts.platform,
+        ],
+
+        set: {
+          status: result.success
+            ? "PUBLISHED"
+            : "FAILED",
+
+          externalPostId:
+            result.externalPostId || null,
+
+          externalPostUrl:
+            result.externalPostUrl || null,
+
+          errorMessage:
+            result.error || null,
+
+          postedAt:
+            result.success
+              ? now
+              : null,
+
+          updatedAt: now,
+        },
+      });
+
+    console.log(
+      `Social post status saved: ${result.platform}`,
+      {
+        jobId,
+        status: result.success
+          ? "PUBLISHED"
+          : "FAILED",
+        externalPostId:
+          result.externalPostId,
+      }
+    );
+  } catch (error) {
+    console.error(
+      `Failed to save ${result.platform} social post status:`,
+      error
+    );
+
+    // Important:
+    // Do NOT throw here.
+    //
+    // The actual social media post may already
+    // have been published successfully.
+  }
 }
 
 export async function publishJobToSocialMedia(
@@ -66,68 +101,95 @@ export async function publishJobToSocialMedia(
 ): Promise<SocialPublishResult[]> {
   const results: SocialPublishResult[] = [];
 
-  // --------------------------------------------------
-  // Telegram
-  // --------------------------------------------------
+  // ==================================================
+  // TELEGRAM
+  // ==================================================
+
+  let telegramResult: SocialPublishResult;
 
   try {
     const telegramMessage =
       buildTelegramJobPost(job);
 
-    const telegramResult =
-      await publishToTelegram(telegramMessage);
+    telegramResult =
+      await publishToTelegram(
+        telegramMessage
+      );
 
-    results.push(telegramResult);
-
-await saveSocialPostStatus(
-  job.id,
-  telegramResult
-);
+    console.log(
+      "Telegram publishing result:",
+      telegramResult
+    );
   } catch (error) {
     console.error(
       "Telegram publishing failed:",
       error
     );
 
-    results.push({
+    telegramResult = {
       success: false,
       platform: "telegram",
       error:
         error instanceof Error
           ? error.message
           : "Telegram publishing failed.",
-    });
+    };
   }
 
-  // --------------------------------------------------
-  // Instagram
-  // --------------------------------------------------
+  results.push(telegramResult);
+
+  // Always attempt to save the result
+  await saveSocialPostStatus(
+    job.id,
+    telegramResult
+  );
+
+  // ==================================================
+  // INSTAGRAM
+  // ==================================================
+
+  let instagramResult: SocialPublishResult;
 
   try {
-    const instagramResult =
+    instagramResult =
       await publishToInstagram(job);
 
-    results.push(instagramResult);
-
-await saveSocialPostStatus(
-  job.id,
-  instagramResult
-);
+    console.log(
+      "Instagram publishing result:",
+      instagramResult
+    );
   } catch (error) {
     console.error(
       "Instagram publishing failed:",
       error
     );
 
-    results.push({
+    instagramResult = {
       success: false,
       platform: "instagram",
       error:
         error instanceof Error
           ? error.message
           : "Instagram publishing failed.",
-    });
+    };
   }
+
+  results.push(instagramResult);
+
+  // Always attempt to save the result
+  await saveSocialPostStatus(
+    job.id,
+    instagramResult
+  );
+
+  // ==================================================
+  // FINAL RESULTS
+  // ==================================================
+
+  console.log(
+    "Final social publishing results:",
+    results
+  );
 
   return results;
 }
