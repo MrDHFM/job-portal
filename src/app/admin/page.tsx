@@ -15,8 +15,10 @@ import {
   Mail,
   Zap,
   TrendingUp,
-  Activity
+  Activity,
 } from "lucide-react";
+import InstagramTokenHealth from "@/components/admin/InstagramTokenHealth";
+import { getInstagramTokenHealth } from "@/lib/social/instagram-token";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,8 @@ export default async function AdminDashboardPage() {
   if (!session) {
     redirect("/admin/login");
   }
+
+  const instagramTokenHealth = await getInstagramTokenHealth();
 
   // Load analytics using internal fetch to /api/admin/analytics or direct DB queries
   // Since we are server-side, querying directly is 100% standard and performant!
@@ -39,11 +43,13 @@ export default async function AdminDashboardPage() {
     totalMessages: 0,
     totalViews: 0,
     totalClicks: 0,
-    recentLogs: [] as any[]
+    recentLogs: [] as any[],
   };
 
   try {
-    const { origin } = new URL(process.env.BACKEND_URL || "http://localhost:3000");
+    const { origin } = new URL(
+      process.env.BACKEND_URL || "http://localhost:3000",
+    );
     // Query directly from database since we are inside standard NextJS server component!
     const [
       totalJobsRes,
@@ -55,18 +61,28 @@ export default async function AdminDashboardPage() {
       appsRes,
       messagesRes,
       sumRes,
-      logsRes
+      logsRes,
     ] = await Promise.all([
       db.execute(sql`SELECT count(*)::integer as count FROM jobs`),
-      db.execute(sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'PUBLISHED'`),
-      db.execute(sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'DRAFT'`),
-      db.execute(sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'EXPIRED'`),
+      db.execute(
+        sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'PUBLISHED'`,
+      ),
+      db.execute(
+        sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'DRAFT'`,
+      ),
+      db.execute(
+        sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'EXPIRED'`,
+      ),
       db.execute(sql`SELECT count(*)::integer as count FROM companies`),
       db.execute(sql`SELECT count(*)::integer as count FROM categories`),
       db.execute(sql`SELECT count(*)::integer as count FROM applications`),
       db.execute(sql`SELECT count(*)::integer as count FROM contact_messages`),
-      db.execute(sql`SELECT coalesce(sum(views_count), 0)::integer as views, coalesce(sum(apply_clicks_count), 0)::integer as clicks FROM jobs`),
-      db.execute(sql`SELECT * FROM admin_activity_logs ORDER BY created_at DESC LIMIT 6`)
+      db.execute(
+        sql`SELECT coalesce(sum(views_count), 0)::integer as views, coalesce(sum(apply_clicks_count), 0)::integer as clicks FROM jobs`,
+      ),
+      db.execute(
+        sql`SELECT * FROM admin_activity_logs ORDER BY created_at DESC LIMIT 6`,
+      ),
     ]);
 
     stats.totalJobs = Number(totalJobsRes.rows[0]?.count || 0);
@@ -85,16 +101,53 @@ export default async function AdminDashboardPage() {
   }
 
   const statCards = [
-    { label: "Active Jobs", value: stats.activeJobs, sub: "Published on portal", icon: <Briefcase className="h-5 w-5 text-blue-500" />, bg: "border-blue-100 dark:border-blue-950 bg-blue-50/10" },
-    { label: "Draft Postings", value: stats.draftJobs, sub: "Pending draft approvals", icon: <Zap className="h-5 w-5 text-amber-500" />, bg: "border-amber-100 dark:border-amber-950 bg-amber-50/10" },
-    { label: "Hiring Companies", value: stats.totalCompanies, sub: "Registered employers", icon: <Building2 className="h-5 w-5 text-emerald-500" />, bg: "border-emerald-100 dark:border-emerald-950 bg-emerald-50/10" },
-    { label: "Applications Received", value: stats.totalApplications, sub: "Internal resumes", icon: <FileText className="h-5 w-5 text-purple-500" />, bg: "border-purple-100 dark:border-purple-950 bg-purple-50/10" },
-    { label: "Total Views", value: stats.totalViews, sub: "Aggregate detail loads", icon: <Eye className="h-5 w-5 text-indigo-500" />, bg: "border-indigo-100 dark:border-indigo-950 bg-indigo-50/10" },
-    { label: "Apply Clicks", value: stats.totalClicks || 0, sub: "Aggregate CTA click loads", icon: <MousePointerClick className="h-5 w-5 text-pink-500" />, bg: "border-pink-100 dark:border-pink-950 bg-pink-50/10" },
+    {
+      label: "Active Jobs",
+      value: stats.activeJobs,
+      sub: "Published on portal",
+      icon: <Briefcase className="h-5 w-5 text-blue-500" />,
+      bg: "border-blue-100 dark:border-blue-950 bg-blue-50/10",
+    },
+    {
+      label: "Draft Postings",
+      value: stats.draftJobs,
+      sub: "Pending draft approvals",
+      icon: <Zap className="h-5 w-5 text-amber-500" />,
+      bg: "border-amber-100 dark:border-amber-950 bg-amber-50/10",
+    },
+    {
+      label: "Hiring Companies",
+      value: stats.totalCompanies,
+      sub: "Registered employers",
+      icon: <Building2 className="h-5 w-5 text-emerald-500" />,
+      bg: "border-emerald-100 dark:border-emerald-950 bg-emerald-50/10",
+    },
+    {
+      label: "Applications Received",
+      value: stats.totalApplications,
+      sub: "Internal resumes",
+      icon: <FileText className="h-5 w-5 text-purple-500" />,
+      bg: "border-purple-100 dark:border-purple-950 bg-purple-50/10",
+    },
+    {
+      label: "Total Views",
+      value: stats.totalViews,
+      sub: "Aggregate detail loads",
+      icon: <Eye className="h-5 w-5 text-indigo-500" />,
+      bg: "border-indigo-100 dark:border-indigo-950 bg-indigo-50/10",
+    },
+    {
+      label: "Apply Clicks",
+      value: stats.totalClicks || 0,
+      sub: "Aggregate CTA click loads",
+      icon: <MousePointerClick className="h-5 w-5 text-pink-500" />,
+      bg: "border-pink-100 dark:border-pink-950 bg-pink-50/10",
+    },
   ];
 
   return (
     <div className="space-y-8">
+      <InstagramTokenHealth health={instagramTokenHealth} />
       {/* Welcome Banner */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-xs">
         <div>
@@ -102,7 +155,14 @@ export default async function AdminDashboardPage() {
             Welcome Back, {session.name}!
           </h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            Logged in as <strong className="text-neutral-750 dark:text-neutral-300 font-extrabold">{session.email}</strong> • Role: <span className="bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full">{session.role}</span>
+            Logged in as{" "}
+            <strong className="text-neutral-750 dark:text-neutral-300 font-extrabold">
+              {session.email}
+            </strong>{" "}
+            • Role:{" "}
+            <span className="bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full">
+              {session.role}
+            </span>
           </p>
         </div>
 
@@ -156,21 +216,41 @@ export default async function AdminDashboardPage() {
             <TrendingUp className="h-4 w-4 text-blue-600" /> Quick Operations
           </h2>
           <div className="grid grid-cols-1 gap-2.5 text-xs font-bold text-neutral-750 dark:text-neutral-300">
-            <Link href="/admin/companies" className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all">
+            <Link
+              href="/admin/companies"
+              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all"
+            >
               <span>🏢 Manage Registered Companies</span>
-              <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">{stats.totalCompanies}</span>
+              <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">
+                {stats.totalCompanies}
+              </span>
             </Link>
-            <Link href="/admin/categories" className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all">
+            <Link
+              href="/admin/categories"
+              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all"
+            >
               <span>🗂️ Manage Industry Categories</span>
-              <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">{stats.totalCategories}</span>
+              <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">
+                {stats.totalCategories}
+              </span>
             </Link>
-            <Link href="/admin/applications" className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all">
+            <Link
+              href="/admin/applications"
+              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all"
+            >
               <span>📄 Inspect Incoming Resumes</span>
-              <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">{stats.totalApplications}</span>
+              <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">
+                {stats.totalApplications}
+              </span>
             </Link>
-            <Link href="/admin/messages" className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all">
+            <Link
+              href="/admin/messages"
+              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all"
+            >
               <span>✉️ Read Client Messages</span>
-              <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">{stats.totalMessages}</span>
+              <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">
+                {stats.totalMessages}
+              </span>
             </Link>
           </div>
         </div>
@@ -178,12 +258,14 @@ export default async function AdminDashboardPage() {
         {/* Audit logs panel */}
         <div className="lg:col-span-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xs space-y-4">
           <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2 border-b pb-2">
-            <Activity className="h-4 w-4 text-emerald-600" /> Recent Administrative Audit Logs
+            <Activity className="h-4 w-4 text-emerald-600" /> Recent
+            Administrative Audit Logs
           </h2>
 
           {stats.recentLogs.length === 0 ? (
             <p className="text-xs text-neutral-400 italic py-8 text-center">
-              No admin logs registered yet. Activity logs appear dynamically as changes are committed.
+              No admin logs registered yet. Activity logs appear dynamically as
+              changes are committed.
             </p>
           ) : (
             <div className="space-y-3">
@@ -200,7 +282,10 @@ export default async function AdminDashboardPage() {
                       {log.action} • {log.details}
                     </p>
                     <p className="text-[10px] text-neutral-400 mt-1">
-                      By: {log.admin_name || log.adminName} • {new Date(log.created_at || log.createdAt).toLocaleString()}
+                      By: {log.admin_name || log.adminName} •{" "}
+                      {new Date(
+                        log.created_at || log.createdAt,
+                      ).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -209,7 +294,6 @@ export default async function AdminDashboardPage() {
           )}
         </div>
       </div>
-
     </div>
   );
 }
