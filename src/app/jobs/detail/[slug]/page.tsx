@@ -1,3 +1,7 @@
+import { headers } from "next/headers";
+import {
+  getTrafficAttribution,
+} from "@/lib/analytics/attribution";
 import React from "react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -30,6 +34,13 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ slug: string }>;
+
+  searchParams: Promise<{
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_content?: string;
+  }>;
 };
 
 // Generate SEO Metadata dynamically
@@ -63,8 +74,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   }
 }
 
-export default async function JobDetailPage(props: Props) {
+export default async function JobDetailPage(
+  props: Props,
+) {
   const params = await props.params;
+  const searchParams =
+    await props.searchParams;
+
   const { slug } = params;
 
   // Query database for complete job details
@@ -186,6 +202,18 @@ export default async function JobDetailPage(props: Props) {
     } : undefined,
   };
 
+  const requestHeaders = await headers();
+
+const attribution =
+  getTrafficAttribution(
+    new URLSearchParams(
+      Object.entries(searchParams).filter(
+        ([, value]) => Boolean(value),
+      ) as [string, string][],
+    ),
+    requestHeaders.get("referer"),
+  );
+
   return (
     <PublicLayout>
       {/* Inject Google SEO Structured Data */}
@@ -213,7 +241,14 @@ export default async function JobDetailPage(props: Props) {
             
             {/* Left Content Area: Core Info (8 cols) */}
             <div className="lg:col-span-8 space-y-6">
-              <JobDetailsClient job={job} company={company} isExpired={expired} category={category} similarJobs={similarJobs} />
+              <JobDetailsClient
+  job={job}
+  company={company}
+  isExpired={expired}
+  category={category}
+  similarJobs={similarJobs}
+  initialAttribution={attribution}
+/>
             </div>
 
             {/* Right Sidebar: Structured Quick Summary Panel (4 cols) */}

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import InstagramTokenHealth from "@/components/admin/InstagramTokenHealth";
 import { getInstagramTokenHealth } from "@/lib/social/instagram-token";
+import TrafficAnalytics from "@/components/admin/TrafficAnalytics";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,10 @@ export default async function AdminDashboardPage() {
     totalViews: 0,
     totalClicks: 0,
     recentLogs: [] as any[],
+    totalTraffic: 0,
+    uniqueVisitors: 0,
+    trafficSources: [] as any[],
+    jobPerformance: [] as any[],
   };
 
   try {
@@ -62,6 +67,10 @@ export default async function AdminDashboardPage() {
       messagesRes,
       sumRes,
       logsRes,
+      trafficRes,
+      uniqueVisitorsRes,
+      trafficSourcesRes,
+      jobPerformanceRes,
     ] = await Promise.all([
       db.execute(sql`SELECT count(*)::integer as count FROM jobs`),
       db.execute(
@@ -83,6 +92,89 @@ export default async function AdminDashboardPage() {
       db.execute(
         sql`SELECT * FROM admin_activity_logs ORDER BY created_at DESC LIMIT 6`,
       ),
+      db.execute(sql`
+  SELECT
+    source,
+    COUNT(*) FILTER (
+      WHERE event_type = 'VIEW'
+    )::integer AS views,
+
+    COUNT(*) FILTER (
+      WHERE event_type = 'APPLY_CLICK'
+    )::integer AS apply_clicks
+
+  FROM job_traffic_events
+
+  GROUP BY source
+
+  ORDER BY views DESC
+`),
+      db.execute(sql`
+  SELECT
+    COUNT(*)::integer AS total_traffic
+  FROM job_traffic_events
+  WHERE event_type = 'VIEW'
+`),
+
+      db.execute(sql`
+  SELECT
+    COUNT(DISTINCT session_id)::integer
+    AS unique_visitors
+  FROM job_traffic_events
+  WHERE session_id IS NOT NULL
+`),
+      db.execute(sql`
+  SELECT
+    j.id AS job_id,
+    j.title,
+    j.slug,
+    j.views_count AS views,
+    j.apply_clicks_count AS apply_clicks,
+
+    COUNT(*) FILTER (
+      WHERE e.source = 'instagram'
+      AND e.event_type = 'VIEW'
+    )::integer AS instagram,
+
+    COUNT(*) FILTER (
+      WHERE e.source = 'telegram'
+      AND e.event_type = 'VIEW'
+    )::integer AS telegram,
+
+    COUNT(*) FILTER (
+      WHERE e.source = 'linkedin'
+      AND e.event_type = 'VIEW'
+    )::integer AS linkedin,
+
+    COUNT(*) FILTER (
+      WHERE e.source = 'x'
+      AND e.event_type = 'VIEW'
+    )::integer AS x,
+
+    COUNT(*) FILTER (
+      WHERE e.source = 'google'
+      AND e.event_type = 'VIEW'
+    )::integer AS google,
+
+    COUNT(*) FILTER (
+      WHERE e.source = 'direct'
+      AND e.event_type = 'VIEW'
+    )::integer AS direct
+
+  FROM jobs j
+
+  LEFT JOIN job_traffic_events e
+    ON e.job_id = j.id
+
+  GROUP BY
+    j.id,
+    j.title,
+    j.slug,
+    j.views_count,
+    j.apply_clicks_count
+
+  ORDER BY j.views_count DESC
+`),
     ]);
 
     stats.totalJobs = Number(totalJobsRes.rows[0]?.count || 0);
@@ -96,6 +188,15 @@ export default async function AdminDashboardPage() {
     stats.totalViews = Number(sumRes.rows[0]?.views || 0);
     stats.totalClicks = Number(sumRes.rows[0]?.clicks || 0);
     stats.recentLogs = logsRes.rows || [];
+    stats.totalTraffic = Number(trafficRes.rows[0]?.total_traffic || 0);
+
+    stats.uniqueVisitors = Number(
+      uniqueVisitorsRes.rows[0]?.unique_visitors || 0,
+    );
+
+    stats.trafficSources = trafficSourcesRes.rows || [];
+
+    stats.jobPerformance = jobPerformanceRes.rows || [];
   } catch (e) {
     console.error("Failed to load direct DB admin analytics:", e);
   }
@@ -207,6 +308,15 @@ export default async function AdminDashboardPage() {
           </div>
         ))}
       </div>
+
+      <TrafficAnalytics
+        totalTraffic={stats.totalTraffic}
+        totalViews={stats.totalViews}
+        totalClicks={stats.totalClicks}
+        uniqueVisitors={stats.uniqueVisitors}
+        trafficSources={stats.trafficSources}
+        jobPerformance={stats.jobPerformance}
+      />
 
       {/* Dashboard split content: Quick Actions & Audit Logs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

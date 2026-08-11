@@ -1,6 +1,7 @@
 import type { SocialJob, SocialPublishResult } from "./types";
 import { generateInstagramJobCard } from "./instagram-card";
 import { uploadInstagramJobCard } from "./instagram-storage";
+import { buildTrackedJobUrl } from "./tracking-url";
 
 type InstagramApiResponse = {
   id?: string;
@@ -39,7 +40,7 @@ function buildCaption(job: SocialJob) {
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://job-portal-zeta-two-46.vercel.app";
 
-  const jobUrl = `${siteUrl.replace(/\/$/, "")}/jobs/detail/${job.slug}`;
+  const jobUrl = buildTrackedJobUrl(job.slug, "instagram");
 
   const location = [job.city, job.state].filter(Boolean).join(", ");
 

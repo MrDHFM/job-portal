@@ -1,4 +1,5 @@
 import type { SocialJob, ManualSocialPost } from "./types";
+import { buildTrackedJobUrl } from "./tracking-url";
 
 function clean(value?: string | null) {
   return value?.trim() || "";
@@ -21,10 +22,7 @@ function getJobUrl(job: SocialJob) {
 }
 
 function getLocation(job: SocialJob) {
-  return [job.city, job.state]
-    .map(clean)
-    .filter(Boolean)
-    .join(", ");
+  return [job.city, job.state].map(clean).filter(Boolean).join(", ");
 }
 
 function getSkills(job: SocialJob) {
@@ -61,10 +59,8 @@ function getSalary(job: SocialJob) {
  *
  * More professional / detailed format.
  */
-export function buildLinkedInPost(
-  job: SocialJob
-): ManualSocialPost {
-  const jobUrl = getJobUrl(job);
+export function buildLinkedInPost(job: SocialJob): ManualSocialPost {
+  const jobUrl = buildTrackedJobUrl(job.slug, "linkedin");
   const location = getLocation(job);
   const skills = getSkills(job);
   const salary = getSalary(job);
@@ -75,12 +71,8 @@ export function buildLinkedInPost(
     "#CareerOpportunity",
     "#Jobs",
     "#Recruitment",
-    job.city
-      ? `#${makeHashtag(job.city)}Jobs`
-      : "",
-    job.sector
-      ? `#${makeHashtag(job.sector)}Jobs`
-      : "",
+    job.city ? `#${makeHashtag(job.city)}Jobs` : "",
+    job.sector ? `#${makeHashtag(job.sector)}Jobs` : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -92,29 +84,17 @@ export function buildLinkedInPost(
 
     `🏢 Company: ${job.companyName}`,
 
-    location
-      ? `📍 Location: ${location}`
-      : "",
+    location ? `📍 Location: ${location}` : "",
 
-    job.workMode
-      ? `💻 Work Mode: ${job.workMode}`
-      : "",
+    job.workMode ? `💻 Work Mode: ${job.workMode}` : "",
 
-    job.employmentType
-      ? `🧑‍💼 Employment Type: ${job.employmentType}`
-      : "",
+    job.employmentType ? `🧑‍💼 Employment Type: ${job.employmentType}` : "",
 
-    job.experienceLevel
-      ? `🎯 Experience: ${job.experienceLevel}`
-      : "",
+    job.experienceLevel ? `🎯 Experience: ${job.experienceLevel}` : "",
 
-    salary
-      ? `💰 Salary: ${salary}`
-      : "",
+    salary ? `💰 Salary: ${salary}` : "",
 
-    skills
-      ? `🛠️ Skills: ${skills}`
-      : "",
+    skills ? `🛠️ Skills: ${skills}` : "",
 
     "",
 
@@ -138,10 +118,7 @@ export function buildLinkedInPost(
 
   return {
     platform: "linkedin",
-    content: lines
-      .filter(Boolean)
-      .join("\n")
-      .trim(),
+    content: lines.filter(Boolean).join("\n").trim(),
     jobUrl,
   };
 }
@@ -151,19 +128,15 @@ export function buildLinkedInPost(
  *
  * Short, punchy format.
  */
-export function buildXPost(
-  job: SocialJob
-): ManualSocialPost {
-  const jobUrl = getJobUrl(job);
+export function buildXPost(job: SocialJob): ManualSocialPost {
+  const jobUrl = buildTrackedJobUrl(job.slug, "x");
   const location = getLocation(job);
 
   const hashtags = [
     "#Hiring",
     "#Jobs",
     "#JobAlert",
-    job.city
-      ? `#${makeHashtag(job.city)}Jobs`
-      : "",
+    job.city ? `#${makeHashtag(job.city)}Jobs` : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -173,21 +146,13 @@ export function buildXPost(
 
     `${job.title}`,
 
-    job.companyName
-      ? `🏢 ${job.companyName}`
-      : "",
+    job.companyName ? `🏢 ${job.companyName}` : "",
 
-    location
-      ? `📍 ${location}`
-      : "",
+    location ? `📍 ${location}` : "",
 
-    job.experienceLevel
-      ? `🎯 ${job.experienceLevel}`
-      : "",
+    job.experienceLevel ? `🎯 ${job.experienceLevel}` : "",
 
-    job.workMode
-      ? `💻 ${job.workMode}`
-      : "",
+    job.workMode ? `💻 ${job.workMode}` : "",
 
     "",
 
@@ -201,10 +166,7 @@ export function buildXPost(
 
   return {
     platform: "x",
-    content: lines
-      .filter(Boolean)
-      .join("\n")
-      .trim(),
+    content: lines.filter(Boolean).join("\n").trim(),
     jobUrl,
   };
 }

@@ -1,8 +1,10 @@
+/* eslint-disable react-hooks/immutability */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { getAnalyticsSessionId } from "@/lib/analytics/session";
 import {
   Heart,
   Share2,
@@ -31,7 +33,48 @@ type JobDetailsClientProps = {
   category: any;
   isExpired: boolean;
   similarJobs: any[];
+
+  initialAttribution?: {
+    source: string;
+    medium?: string | null;
+    campaign?: string | null;
+    content?: string | null;
+  };
 };
+
+function detectSourceFromReferrer() {
+  const referrer = document.referrer.toLowerCase();
+
+  if (!referrer) {
+    return "direct";
+  }
+
+  if (referrer.includes("instagram")) {
+    return "instagram";
+  }
+
+  if (referrer.includes("t.me") || referrer.includes("telegram")) {
+    return "telegram";
+  }
+
+  if (referrer.includes("linkedin")) {
+    return "linkedin";
+  }
+
+  if (referrer.includes("twitter") || referrer.includes("x.com")) {
+    return "x";
+  }
+
+  if (referrer.includes("google")) {
+    return "google";
+  }
+
+  if (referrer.includes("bing")) {
+    return "bing";
+  }
+
+  return "referral";
+}
 
 export default function JobDetailsClient({
   job,
@@ -39,6 +82,7 @@ export default function JobDetailsClient({
   category,
   similarJobs,
   isExpired,
+  initialAttribution,
 }: JobDetailsClientProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
@@ -140,15 +184,16 @@ export default function JobDetailsClient({
   };
 
   // Handle Apply click or form trigger
-const handleApplyClick = () => {
-  if (isExpired) {
-    return;
-  }
+  const handleApplyClick = () => {
+    if (isExpired) {
+      return;
+    }
 
-  if (job.applicationMethod === "EXTERNAL_URL") {
+    if (job.applicationMethod === "EXTERNAL_URL") {
       if (job.applicationUrl) {
         // Safe redirect
         window.open(job.applicationUrl, "_blank", "noopener,noreferrer");
+        trackAnalytics("APPLY_CLICK");
         // Log apply click analytic in backend
         fetch(`/api/v1/jobs/${job.slug}/apply`, {
           method: "POST",
@@ -175,6 +220,8 @@ Thank you for your time and consideration.
 Best regards`,
         );
 
+        trackAnalytics("APPLY_CLICK");
+
         window.location.href = `mailto:${job.recruiterEmail}?subject=${subject}&body=${body}`;
 
         fetch(`/api/v1/jobs/${job.slug}/apply`, {
@@ -185,8 +232,9 @@ Best regards`,
         });
       }
     } else if (job.applicationMethod === "INTERNAL") {
-      setApplyModalOpen(true);
-    }
+  trackAnalytics("APPLY_CLICK");
+  setApplyModalOpen(true);
+}
   };
 
   const handleApplySubmit = async (e: React.FormEvent) => {
@@ -230,6 +278,47 @@ Best regards`,
       setApplyLoading(false);
     }
   };
+
+  const trackAnalytics = async (eventType: "VIEW" | "APPLY_CLICK") => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+
+      const source =
+        initialAttribution?.source ||
+        params.get("utm_source") ||
+        detectSourceFromReferrer();
+
+      const medium = initialAttribution?.medium || params.get("utm_medium");
+
+      const campaign =
+        initialAttribution?.campaign || params.get("utm_campaign");
+
+      const content = initialAttribution?.content || params.get("utm_content");
+
+      await fetch("/api/analytics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jobId: job.id,
+          eventType,
+          source,
+          medium,
+          campaign,
+          content,
+          sessionId: getAnalyticsSessionId(),
+        }),
+        keepalive: true,
+      });
+    } catch (error) {
+      console.error("Analytics tracking failed:", error);
+    }
+  };
+
+  useEffect(() => {
+    trackAnalytics("VIEW");
+  }, [job.id]);
 
   return (
     <div className="space-y-6">
@@ -324,139 +413,126 @@ Best regards`,
           </div>
         </div>
 
-       {/* Application Action */}
-<div className="space-y-4">
-{isExpired ? (
-    <div className="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/20">
-      <div className="flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+        {/* Application Action */}
+        <div className="space-y-4">
+          {isExpired ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/20">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
 
-        <div>
-          <p className="font-extrabold text-red-700 dark:text-red-400">
-            Applications Closed
-          </p>
+                <div>
+                  <p className="font-extrabold text-red-700 dark:text-red-400">
+                    Applications Closed
+                  </p>
 
-          <p className="mt-1 text-sm text-red-600 dark:text-red-300">
-            The application deadline for this job has passed.
-            This position is no longer accepting applications.
-          </p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-300">
+                    The application deadline for this job has passed. This
+                    position is no longer accepting applications.
+                  </p>
 
-          {job.applicationDeadline && (
-            <p className="mt-2 text-xs font-semibold text-red-500 dark:text-red-400">
-              Application deadline:{" "}
-              {new Date(job.applicationDeadline).toLocaleDateString(
-                "en-US",
-                {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                }
-              )}
-            </p>
+                  {job.applicationDeadline && (
+                    <p className="mt-2 text-xs font-semibold text-red-500 dark:text-red-400">
+                      Application deadline:{" "}
+                      {new Date(job.applicationDeadline).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        },
+                      )}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : job.applicationMethod === "EMAIL" && job.recruiterEmail ? (
+            <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 to-indigo-50/50 p-4 sm:p-5 dark:border-blue-900/40 dark:from-blue-950/20 dark:to-indigo-950/10">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
+                {/* Apply button */}
+                <div className="shrink-0">
+                  <button
+                    onClick={handleApplyClick}
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-7 py-3.5 rounded-xl transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-2 text-sm cursor-pointer"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Apply via Email
+                    <ArrowUpRight className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Email information */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+
+                    <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                      Send your resume to
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <a
+                      href={`mailto:${job.recruiterEmail}`}
+                      className="text-sm sm:text-base font-extrabold text-blue-700 dark:text-blue-400 hover:underline break-all"
+                    >
+                      {job.recruiterEmail}
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={handleCopyRecruiterEmail}
+                      className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer dark:border-blue-800 dark:bg-neutral-900 dark:text-blue-400 dark:hover:bg-blue-950/40"
+                    >
+                      {emailCopied ? (
+                        <>
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" />
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <p className="mt-2 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+                    Please send your latest resume to this email address to
+                    apply for this position. Clicking{" "}
+                    <span className="font-semibold text-neutral-700 dark:text-neutral-300">
+                      Apply via Email
+                    </span>{" "}
+                    will open your email app with the application details
+                    pre-filled.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <button
+                onClick={handleApplyClick}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-8 py-3.5 rounded-xl transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-2 text-sm cursor-pointer"
+              >
+                {job.applicationMethod === "INTERNAL"
+                  ? "Apply Now"
+                  : "Apply on Company Website"}
+
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
+
+              <span className="text-xs text-neutral-400">
+                {job.applicationMethod === "EXTERNAL_URL" &&
+                  "You will be redirected to the official application page."}
+
+                {job.applicationMethod === "INTERNAL" &&
+                  "Apply directly through CareerDiscover's secure application system."}
+              </span>
+            </div>
           )}
         </div>
-      </div>
-    </div>
-  ) :
-   job.applicationMethod === "EMAIL" && job.recruiterEmail ? (
-    <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 to-indigo-50/50 p-4 sm:p-5 dark:border-blue-900/40 dark:from-blue-950/20 dark:to-indigo-950/10">
-
-      <div className="flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
-
-        {/* Apply button */}
-        <div className="shrink-0">
-          <button
-            onClick={handleApplyClick}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-7 py-3.5 rounded-xl transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-2 text-sm cursor-pointer"
-          >
-            <Mail className="h-4 w-4" />
-
-            Apply via Email
-
-            <ArrowUpRight className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Email information */}
-        <div className="flex-1 min-w-0">
-
-          <div className="flex items-center gap-2 mb-1.5">
-            <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-
-            <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              Send your resume to
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-
-            <a
-              href={`mailto:${job.recruiterEmail}`}
-              className="text-sm sm:text-base font-extrabold text-blue-700 dark:text-blue-400 hover:underline break-all"
-            >
-              {job.recruiterEmail}
-            </a>
-
-            <button
-              type="button"
-              onClick={handleCopyRecruiterEmail}
-              className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer dark:border-blue-800 dark:bg-neutral-900 dark:text-blue-400 dark:hover:bg-blue-950/40"
-            >
-              {emailCopied ? (
-                <>
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" />
-                  Copy
-                </>
-              )}
-            </button>
-
-          </div>
-
-          <p className="mt-2 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-            Please send your latest resume to this email address to apply for
-            this position. Clicking{" "}
-            <span className="font-semibold text-neutral-700 dark:text-neutral-300">
-              Apply via Email
-            </span>{" "}
-            will open your email app with the application details pre-filled.
-          </p>
-
-        </div>
-
-      </div>
-
-    </div>
-  ) : (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-
-      <button
-        onClick={handleApplyClick}
-        className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-8 py-3.5 rounded-xl transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-2 text-sm cursor-pointer"
-      >
-        {job.applicationMethod === "INTERNAL"
-          ? "Apply Now"
-          : "Apply on Company Website"}
-
-        <ArrowUpRight className="h-4 w-4" />
-      </button>
-
-      <span className="text-xs text-neutral-400">
-        {job.applicationMethod === "EXTERNAL_URL" &&
-          "You will be redirected to the official application page."}
-
-        {job.applicationMethod === "INTERNAL" &&
-          "Apply directly through CareerDiscover's secure application system."}
-      </span>
-
-    </div>
-  )}
-
-</div>
       </div>
 
       {/* Government Specific Information Block */}
@@ -791,8 +867,8 @@ Best regards`,
                 </h3>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
                   Your application and resume details have been safely logged in
-                  CareerDiscover&apos;s backend database. Recruiter personnel will
-                  contact you soon.
+                  CareerDiscover&apos;s backend database. Recruiter personnel
+                  will contact you soon.
                 </p>
                 <button
                   onClick={() => {

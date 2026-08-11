@@ -1,4 +1,5 @@
 import type { SocialJob } from "./types";
+import { buildTrackedJobUrl } from "./tracking-url";
 
 function clean(value?: string | null) {
   return value?.trim() || "";
@@ -51,7 +52,7 @@ export function buildTelegramJobPost(job: SocialJob) {
     process.env.NEXT_PUBLIC_SITE_URL ||
     "https://job-portal-zeta-two-46.vercel.app";
 
-  const jobUrl = `${siteUrl.replace(/\/$/, "")}/jobs/detail/${job.slug}`;
+  const jobUrl = buildTrackedJobUrl(job.slug, "telegram");
 
   const skills = formatSkills(job.requiredSkills);
   const salary = formatSalary(job);

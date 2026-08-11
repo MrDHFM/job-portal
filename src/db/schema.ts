@@ -1,4 +1,5 @@
-import { pgTable, serial, text, timestamp, integer, boolean, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, boolean , index } from "drizzle-orm/pg-core";
+
 import { relations } from "drizzle-orm";
 
 // Users (Admins, Editors, Candidates)
@@ -171,13 +172,56 @@ export const jobSocialPosts = pgTable(
       .notNull(),
   },
   (table) => ({
-    jobPlatformUnique: uniqueIndex(
+    jobPlatformUnique: index(
       "job_social_posts_job_platform_unique"
     ).on(
       table.jobId,
       table.platform
     ),
   })
+);
+
+// Job Traffic Analytics
+export const jobTrafficEvents = pgTable(
+  "job_traffic_events",
+  {
+    id: serial("id").primaryKey(),
+
+    jobId: integer("job_id")
+      .references(() => jobs.id, { onDelete: "cascade" })
+      .notNull(),
+
+    eventType: text("event_type").notNull(),
+
+    source: text("source")
+      .notNull()
+      .default("direct"),
+
+    medium: text("medium"),
+
+    campaign: text("campaign"),
+
+    content: text("content"),
+
+    sessionId: text("session_id"),
+
+    createdAt: timestamp("created_at")
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    jobIdIdx: index("job_traffic_job_id_idx")
+      .on(table.jobId),
+
+    sourceIdx: index("job_traffic_source_idx")
+      .on(table.source),
+
+    eventTypeIdx: index("job_traffic_event_type_idx")
+      .on(table.eventType),
+
+    createdAtIdx: index("job_traffic_created_at_idx")
+      .on(table.createdAt),
+  }),
 );
 
 // Applications for internal submissions
@@ -250,26 +294,23 @@ export const siteSettings = pgTable("site_settings", {
 });
 
 // Relationships
-export const jobsRelations = relations(
-  jobs,
-  ({ one, many }) => ({
-    company: one(companies, {
-      fields: [jobs.companyId],
-      references: [companies.id],
-    }),
+export const jobsRelations = relations(jobs, ({ one, many }) => ({
+  company: one(companies, {
+    fields: [jobs.companyId],
+    references: [companies.id],
+  }),
 
-    category: one(categories, {
-      fields: [jobs.categoryId],
-      references: [categories.id],
-    }),
+  category: one(categories, {
+    fields: [jobs.categoryId],
+    references: [categories.id],
+  }),
 
-    applications: many(applications),
+  applications: many(applications),
 
-    saved: many(savedJobs),
+  saved: many(savedJobs),
 
-    socialPosts: many(jobSocialPosts),
-  })
-);
+  trafficEvents: many(jobTrafficEvents),
+}));
 
 export const jobSocialPostsRelations = relations(
   jobSocialPosts,
