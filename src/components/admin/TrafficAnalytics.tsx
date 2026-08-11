@@ -1,16 +1,11 @@
 "use client";
 
-import {
-  Eye,
-  MousePointerClick,
-  Users,
-  Globe,
-} from "lucide-react";
+import { Eye, MousePointerClick, Users, Globe } from "lucide-react";
 
 type TrafficSource = {
   source: string;
-  views: number;
-  applyClicks: number;
+  views?: number;
+  applyClicks?: number;
 };
 
 type JobPerformance = {
@@ -36,10 +31,7 @@ type Props = {
   jobPerformance: JobPerformance[];
 };
 
-const sourceLabels: Record<
-  string,
-  string
-> = {
+const sourceLabels: Record<string, string> = {
   instagram: "Instagram",
   telegram: "Telegram",
   linkedin: "LinkedIn",
@@ -68,8 +60,8 @@ export default function TrafficAnalytics({
         </h2>
 
         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-          Understand where candidates are coming from
-          and which jobs are generating engagement.
+          Understand where candidates are coming from and which jobs are
+          generating engagement.
         </p>
       </div>
 
@@ -90,9 +82,7 @@ export default function TrafficAnalytics({
         <Metric
           label="Apply Clicks"
           value={totalClicks}
-          icon={
-            <MousePointerClick className="h-5 w-5" />
-          }
+          icon={<MousePointerClick className="h-5 w-5" />}
         />
 
         <Metric
@@ -120,33 +110,24 @@ export default function TrafficAnalytics({
               No traffic data yet.
             </p>
           ) : (
-            trafficSources.map((item) => {
-              const total =
-                trafficSources.reduce(
-                  (sum, current) =>
-                    sum + current.views,
-                  0,
-                );
+            trafficSources.map((item, index) => {
+              const total = trafficSources.reduce(
+                (sum, current) => sum + (current.views ?? 0),
+                0,
+              );
 
               const percentage =
-                total > 0
-                  ? Math.round(
-                      (item.views / total) *
-                        100,
-                    )
-                  : 0;
+                total > 0 ? Math.round(((item.views ?? 0) / total) * 100) : 0;
 
               return (
-                <div key={item.source}>
+                <div key={`${item.source}-${index}`}>
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-neutral-800 dark:text-neutral-200">
-                      {sourceLabels[
-                        item.source
-                      ] || item.source}
+                      {sourceLabels[item.source] || item.source}
                     </span>
 
                     <span className="font-semibold text-neutral-500">
-                      {item.views.toLocaleString()} views
+                      {(item.views ?? 0).toLocaleString()} views
                     </span>
                   </div>
 
@@ -160,12 +141,10 @@ export default function TrafficAnalytics({
                   </div>
 
                   <div className="mt-1 flex justify-between text-[10px] text-neutral-400">
-                    <span>
-                      {percentage}% of traffic
-                    </span>
+                    <span>{percentage}% of traffic</span>
 
                     <span>
-                      {item.applyClicks.toLocaleString()} apply clicks
+                      {(item.applyClicks ?? 0).toLocaleString()} apply clicks
                     </span>
                   </div>
                 </div>
@@ -191,95 +170,63 @@ export default function TrafficAnalytics({
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
               <tr className="border-b bg-neutral-50 text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950">
-                <th className="p-4 pl-6">
-                  Job
-                </th>
+                <th className="p-4 pl-6">Job</th>
 
-                <th className="p-4 text-center">
-                  Views
-                </th>
+                <th className="p-4 text-center">Views</th>
 
-                <th className="p-4 text-center">
-                  Applies
-                </th>
+                <th className="p-4 text-center">Applies</th>
 
-                <th className="p-4 text-center">
-                  Instagram
-                </th>
+                <th className="p-4 text-center">Instagram</th>
 
-                <th className="p-4 text-center">
-                  Telegram
-                </th>
+                <th className="p-4 text-center">Telegram</th>
 
-                <th className="p-4 text-center">
-                  LinkedIn
-                </th>
+                <th className="p-4 text-center">LinkedIn</th>
 
-                <th className="p-4 text-center">
-                  X
-                </th>
+                <th className="p-4 text-center">X</th>
 
-                <th className="p-4 text-center">
-                  Google
-                </th>
+                <th className="p-4 text-center">Google</th>
 
-                <th className="p-4 text-center">
-                  Direct
-                </th>
+                <th className="p-4 text-center">Direct</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-              {jobPerformance.map(
-                (job) => (
-                  <tr
-                    key={job.jobId}
-                    className="hover:bg-neutral-50 dark:hover:bg-neutral-950"
-                  >
-                    <td className="max-w-[260px] p-4 pl-6">
-                      <div className="truncate font-bold text-neutral-900 dark:text-white">
-                        {job.title}
-                      </div>
+              {jobPerformance.map((job, index) => (
+                <tr
+                  key={`${job.jobId ?? "job"}-${index}`}
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-950"
+                >
+                  <td className="max-w-[260px] p-4 pl-6">
+                    <div className="truncate font-bold text-neutral-900 dark:text-white">
+                      {job.title}
+                    </div>
 
-                      <div className="mt-1 text-[10px] text-neutral-400">
-                        Job #{job.jobId}
-                      </div>
-                    </td>
+                    <div className="mt-1 text-[10px] text-neutral-400">
+                      Job #{job.jobId}
+                    </div>
+                  </td>
 
-                    <td className="p-4 text-center font-bold">
-                      {job.views.toLocaleString()}
-                    </td>
+                  <td className="p-4 text-center font-bold">
+                    {(job.views ?? 0).toLocaleString()}
+                  </td>
 
-                    <td className="p-4 text-center font-bold">
-                      {job.applyClicks.toLocaleString()}
-                    </td>
+                  <td className="p-4 text-center font-bold">
+                    {(job.applyClicks ?? 0).toLocaleString()}
+                  </td>
 
-                    <td className="p-4 text-center">
-                      {job.instagram}
-                    </td>
+                  <td className="p-4 text-center">{job.instagram}</td>
 
-                    <td className="p-4 text-center">
-                      {job.telegram}
-                    </td>
+                  <td className="p-4 text-center">{job.telegram}</td>
 
-                    <td className="p-4 text-center">
-                      {job.linkedin}
-                    </td>
+                  <td className="p-4 text-center">{job.linkedin}</td>
 
-                    <td className="p-4 text-center">
-                      {job.x}
-                    </td>
+                  <td className="p-4 text-center">{job.x}</td>
 
-                    <td className="p-4 text-center">
-                      {job.google}
-                    </td>
+                  <td className="p-4 text-center">{job.google}</td>
 
-                    <td className="p-4 text-center">
-                      {job.direct}
-                    </td>
-                  </tr>
-                ),
-              )}
+                  <td className="p-4 text-center">{job.direct}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
