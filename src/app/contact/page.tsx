@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mail, MapPin, Phone, Send, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Mail,
+  MapPin,
+  Phone,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 
 export default function ContactPage() {
@@ -11,18 +18,45 @@ export default function ContactPage() {
     subject: "",
     message: "",
   });
+  const [socialLinks, setSocialLinks] = useState({
+    socialLinkedin: "",
+    socialTwitter: "",
+    socialInstagram: "",
+    socialTelegram: "",
+  });
+  React.useEffect(() => {
+    fetch("/api/settings", {
+      cache: "no-store",
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) {
+          setSocialLinks(json.data);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load social links:", error);
+      });
+  }, []);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.subject ||
+      !formData.message
+    ) {
       setError("Please fill out all required form fields.");
       return;
     }
@@ -40,13 +74,18 @@ export default function ContactPage() {
 
       const json = await response.json();
       if (!response.ok || !json.success) {
-        throw new Error(json.error || "An error occurred while transmitting your message.");
+        throw new Error(
+          json.error || "An error occurred while transmitting your message.",
+        );
       }
 
       setSuccess(json.message || "Your message was transmitted successfully!");
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (err: any) {
-      setError(err.message || "Failed to communicate with our system. Please check your connection.");
+      setError(
+        err.message ||
+          "Failed to communicate with our system. Please check your connection.",
+      );
     } finally {
       setLoading(false);
     }
@@ -60,7 +99,8 @@ export default function ContactPage() {
             Contact Support & Recruitment
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-neutral-500 dark:text-neutral-400">
-            Have questions about database postings, corporate registrations, or job flags? Submit an inquiry directly below.
+            Have questions about database postings, corporate registrations, or
+            job flags? Submit an inquiry directly below.
           </p>
         </div>
       </section>
@@ -68,7 +108,6 @@ export default function ContactPage() {
       <section className="py-16 bg-white dark:bg-neutral-900 transition-colors">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            
             {/* Left Col: Contact Details */}
             <div className="lg:col-span-5 space-y-8">
               <div>
@@ -76,7 +115,9 @@ export default function ContactPage() {
                   Get in Touch
                 </h2>
                 <p className="mt-3 text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                  Our operations team reviews submissions round-the-clock to maintain data sanitation standards on CareerDiscover. Expect replies in less than 24 hours.
+                  Our operations team reviews submissions round-the-clock to
+                  maintain data sanitation standards on CareerDiscover. Expect
+                  replies in less than 24 hours.
                 </p>
               </div>
 
@@ -84,39 +125,116 @@ export default function ContactPage() {
                 <div className="flex gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
                   <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400 shrink-0" />
                   <div>
-                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Email Address</h3>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">recruiting@globaljobportal.com</p>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                      Email Address
+                    </h3>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                      recruiting@globaljobportal.com
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
                   <MapPin className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <div>
-                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">HQ Address</h3>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">100 Tech Venture Way, Suite 400, Austin, TX 78701</p>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                      HQ Address
+                    </h3>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                      100 Tech Venture Way, Suite 400, Austin, TX 78701
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
                   <Phone className="h-6 w-6 text-purple-600 dark:text-purple-400 shrink-0" />
                   <div>
-                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">Phone Helpline</h3>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">+1 (512) 555-0199</p>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                      Phone Helpline
+                    </h3>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                      +1 (512) 555-0199
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
+            {(socialLinks.socialLinkedin ||
+              socialLinks.socialTwitter ||
+              socialLinks.socialInstagram ||
+              socialLinks.socialTelegram) && (
+              <div className="mt-8">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-4">
+                  Follow Us
+                </h3>
+
+                <div className="flex items-center gap-3">
+                  {socialLinks.socialLinkedin && (
+                    <a
+                      href={socialLinks.socialLinkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="LinkedIn"
+                      className="h-10 w-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                      <span className="font-bold text-sm">in</span>
+                    </a>
+                  )}
+
+                  {socialLinks.socialTwitter && (
+                    <a
+                      href={socialLinks.socialTwitter}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="X / Twitter"
+                      className="h-10 w-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                    >
+                      <span className="font-bold text-sm">𝕏</span>
+                    </a>
+                  )}
+
+                  {socialLinks.socialInstagram && (
+                    <a
+                      href={socialLinks.socialInstagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Instagram"
+                      className="h-10 w-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-pink-500 transition-colors"
+                    >
+                      <Send className="h-5 w-5" />
+                    </a>
+                  )}
+
+                  {socialLinks.socialTelegram && (
+                    <a
+                      href={socialLinks.socialTelegram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Telegram"
+                      className="h-10 w-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-sky-500 transition-colors"
+                    >
+                      <Send className="h-5 w-5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Right Col: Form Input */}
             <div className="lg:col-span-7 bg-neutral-50 dark:bg-neutral-800 p-8 rounded-2xl border border-neutral-150 dark:border-neutral-750">
-              <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-6">Send an Inquiry Message</h2>
+              <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-6">
+                Send an Inquiry Message
+              </h2>
 
               {success && (
                 <div className="mb-6 flex gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4 text-emerald-800 dark:text-emerald-300">
                   <CheckCircle2 className="h-5 w-5 shrink-0" />
                   <div className="text-sm">
                     <p className="font-semibold">Transmission Succeeded</p>
-                    <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">{success}</p>
+                    <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
+                      {success}
+                    </p>
                   </div>
                 </div>
               )}
@@ -126,7 +244,9 @@ export default function ContactPage() {
                   <AlertCircle className="h-5 w-5 shrink-0" />
                   <div className="text-sm">
                     <p className="font-semibold">Validation Block</p>
-                    <p className="mt-0.5 text-xs text-red-700 dark:text-red-400">{error}</p>
+                    <p className="mt-0.5 text-xs text-red-700 dark:text-red-400">
+                      {error}
+                    </p>
                   </div>
                 </div>
               )}
@@ -209,7 +329,6 @@ export default function ContactPage() {
                 </div>
               </form>
             </div>
-
           </div>
         </div>
       </section>

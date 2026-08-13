@@ -18,10 +18,13 @@ export async function GET(req: NextRequest) {
       siteName: "GlobalJob Discover",
       contactEmail: "recruiting@globaljobportal.com",
       logoUrl: "",
-      socialLinkedin: "https://linkedin.com",
-      socialTwitter: "https://twitter.com",
+      socialLinkedin: "",
+      socialTwitter: "",
+      socialInstagram: "",
+      socialTelegram: "",
       defaultSeoTitle: "GlobalJob Discover - Premium Job Board",
-      defaultSeoDescription: "Find premium jobs, remote roles, government, Walk-Ins, and private positions worldwide.",
+      defaultSeoDescription:
+        "Find premium jobs, remote roles, government, Walk-Ins, and private positions worldwide.",
     };
 
     return NextResponse.json({
@@ -30,7 +33,10 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error in GET /api/admin/settings:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -38,16 +44,23 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getAdminSession();
     if (!session) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
     const body = await req.json(); // Simple key-value pairs
 
     for (const key of Object.keys(body)) {
       const val = String(body[key]);
-      
+
       // Upsert
-      const existing = await db.select().from(siteSettings).where(eq(siteSettings.key, key)).limit(1);
+      const existing = await db
+        .select()
+        .from(siteSettings)
+        .where(eq(siteSettings.key, key))
+        .limit(1);
       if (existing.length > 0) {
         await db
           .update(siteSettings)
@@ -69,9 +82,15 @@ export async function POST(req: NextRequest) {
       details: "Updated general site configurations.",
     });
 
-    return NextResponse.json({ success: true, message: "Settings saved successfully." });
+    return NextResponse.json({
+      success: true,
+      message: "Settings saved successfully.",
+    });
   } catch (error: any) {
     console.error("Error in POST /api/admin/settings:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
