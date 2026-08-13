@@ -38,6 +38,8 @@ export async function GET(req: Request) {
         isFeatured: jobs.isFeatured,
         isUrgent: jobs.isUrgent,
         createdAt: jobs.createdAt,
+        applicationDeadline: jobs.applicationDeadline,
+        expiresAt: jobs.expiresAt,
         viewsCount: jobs.viewsCount,
         applyClicksCount: jobs.applyClicksCount,
         company: {
