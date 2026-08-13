@@ -33,6 +33,7 @@ export default function AdminJobForm({
   // Form Field State
   const [form, setForm] = useState({
     companyId: initialData?.companyId ? String(initialData.companyId) : "",
+    companyName: initialData?.company?.name || "",
     categoryId: initialData?.categoryId ? String(initialData.categoryId) : "",
     title: initialData?.title || "",
     sector: initialData?.sector || "IT", // IT, Non-IT
@@ -135,7 +136,7 @@ export default function AdminJobForm({
 
     // Core validations
     if (
-      !form.companyId ||
+      !form.companyName.trim() ||
       !form.categoryId ||
       !form.title ||
       !form.city ||
@@ -254,24 +255,51 @@ export default function AdminJobForm({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                <label
+                  htmlFor="companyName"
+                  className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
+                >
                   Hiring Employer *
                 </label>
-                <select
+
+                <input
+                  id="companyName"
+                  type="text"
                   required
-                  value={form.companyId}
-                  onChange={(e) =>
-                    setForm({ ...form, companyId: e.target.value })
-                  }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
-                >
-                  <option value="">-- Choose Corporate Company --</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
+                  list="company-options"
+                  value={form.companyName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    const existingCompany = companies.find(
+                      (company) =>
+                        company.name.trim().toLowerCase() ===
+                        value.trim().toLowerCase(),
+                    );
+
+                    setForm({
+                      ...form,
+                      companyName: value,
+                      companyId: existingCompany
+                        ? String(existingCompany.id)
+                        : "",
+                    });
+                  }}
+                  placeholder="Select existing company or type a new company name"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                />
+
+                <datalist id="company-options">
+                  {companies.map((company) => (
+                    <option key={company.id} value={company.name} />
                   ))}
-                </select>
+                </datalist>
+
+                <p className="mt-1 text-[10px] text-neutral-400">
+                  Select an existing company or type a new company name. New
+                  companies will be created automatically when the job is
+                  published.
+                </p>
               </div>
 
               <div>

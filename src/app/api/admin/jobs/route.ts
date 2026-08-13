@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       companyId,
+      companyName,
       categoryId,
       title,
       sector,
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
 
     // Validation
     if (
-      !companyId ||
+      !companyName?.trim() ||
       !categoryId ||
       !title ||
       !sector ||
@@ -164,14 +165,105 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Duplicate prevention check
+   
+
+    // -----------------------------------------------------
+    // Company handling
+    // -----------------------------------------------------
+    // Existing company:
+    //   companyId is provided.
+    //
+    // New company:
+    //   companyId is empty but companyName is provided.
+    //   We first check whether the company already exists.
+    //   If not, create it automatically.
+    // -----------------------------------------------------
+
+    const normalizedCompanyName = companyName.trim();
+
+    let selectedCompanyId: number;
+    let companyLogoUrl: string | null = null;
+
+    if (companyId) {
+      // Existing company selected from the form
+      selectedCompanyId = parseInt(companyId);
+
+      const existingCompany = await db
+        .select()
+        .from(companies)
+        .where(eq(companies.id, selectedCompanyId))
+        .limit(1);
+
+      if (existingCompany.length === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Selected company was not found.",
+          },
+          { status: 400 },
+        );
+      }
+
+      companyLogoUrl = existingCompany[0].logoUrl || null;
+    } else {
+      // New company typed manually
+      // First check for an existing company with the same name.
+      const existingCompany = await db
+        .select()
+        .from(companies)
+        .where(ilike(companies.name, normalizedCompanyName))
+        .limit(1);
+
+      if (existingCompany.length > 0) {
+        // Reuse existing company instead of creating duplicate
+        selectedCompanyId = existingCompany[0].id;
+        companyLogoUrl = existingCompany[0].logoUrl || null;
+      } else {
+        // Generate a unique company slug
+        const baseSlug = normalizedCompanyName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, "");
+
+        let companySlug = baseSlug || "company";
+        let companySlugCount = 1;
+
+        while (true) {
+          const existingSlug = await db
+            .select()
+            .from(companies)
+            .where(eq(companies.slug, companySlug))
+            .limit(1);
+
+          if (existingSlug.length === 0) {
+            break;
+          }
+
+          companySlug = `${baseSlug}-${companySlugCount++}`;
+        }
+
+        const [newCompany] = await db
+          .insert(companies)
+          .values({
+            name: normalizedCompanyName,
+            slug: companySlug,
+            isActive: true,
+          })
+          .returning();
+
+        selectedCompanyId = newCompany.id;
+        companyLogoUrl = newCompany.logoUrl || null;
+      }
+    }
+
+     // Duplicate prevention check
     if (!force) {
       const possibleDuplicates = await db
         .select()
         .from(jobs)
         .where(
           and(
-            eq(jobs.companyId, parseInt(companyId)),
+            eq(jobs.companyId, selectedCompanyId),
             ilike(jobs.title, title.trim()),
             ilike(jobs.city, city.trim()),
             eq(jobs.status, "PUBLISHED"),
@@ -192,26 +284,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Get company details for slug
-    const comp = await db
-      .select()
-      .from(companies)
-      .where(eq(companies.id, parseInt(companyId)))
-      .limit(1);
-
     const category = await db
       .select()
       .from(categories)
       .where(eq(categories.id, parseInt(categoryId)))
       .limit(1);
 
-    const companyName = comp[0]?.name || "Company";
-
-    const companyLogoUrl = comp[0]?.logoUrl || null;
+    const resolvedCompanyName = normalizedCompanyName;
 
     const categoryName = category[0]?.name || null;
+
     // Create unique slug
-    let slug = makeSlug(title, companyName, city);
+    let slug = makeSlug(title, resolvedCompanyName, city);
     let originalSlug = slug;
     let count = 1;
     while (true) {
@@ -240,7 +324,7 @@ export async function POST(req: NextRequest) {
     const [newJob] = await db
       .insert(jobs)
       .values({
-        companyId: parseInt(companyId),
+        companyId: selectedCompanyId,
         categoryId: parseInt(categoryId),
         title: title.trim(),
         slug,
