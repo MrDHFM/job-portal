@@ -2,14 +2,27 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Save, Sliders, Briefcase, Building2, MapPin } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  ArrowRight,
+  ArrowLeft,
+  Save,
+  Sliders,
+  Briefcase,
+  Building2,
+  MapPin,
+} from "lucide-react";
 
 type AdminJobFormProps = {
   initialData?: any;
   jobId?: number;
 };
 
-export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) {
+export default function AdminJobForm({
+  initialData,
+  jobId,
+}: AdminJobFormProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("basic");
 
@@ -27,7 +40,7 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
     experienceLevel: initialData?.experienceLevel || "Fresher", // Fresher, Experienced
     workMode: initialData?.workMode || "Remote", // Remote, Hybrid, On-site
     vacancies: initialData?.vacancies ? String(initialData.vacancies) : "1",
-    
+
     country: initialData?.country || "United States",
     state: initialData?.state || "",
     city: initialData?.city || "",
@@ -55,13 +68,17 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
     educationQualification: initialData?.educationQualification || "",
     educationDegree: initialData?.educationDegree || "",
     educationBranch: initialData?.educationBranch || "",
-    graduationYear: initialData?.graduationYear ? String(initialData.graduationYear) : "",
+    graduationYear: initialData?.graduationYear
+      ? String(initialData.graduationYear)
+      : "",
     minCgpa: initialData?.minCgpa || "",
 
     applicationMethod: initialData?.applicationMethod || "INTERNAL", // EXTERNAL_URL, EMAIL, INTERNAL
     applicationUrl: initialData?.applicationUrl || "",
     recruiterEmail: initialData?.recruiterEmail || "",
-    applicationDeadline: initialData?.applicationDeadline ? new Date(initialData.applicationDeadline).toISOString().split("T")[0] : "",
+    applicationDeadline: initialData?.applicationDeadline
+      ? new Date(initialData.applicationDeadline).toISOString().split("T")[0]
+      : "",
 
     status: initialData?.status || "PUBLISHED", // DRAFT, SCHEDULED, PUBLISHED, EXPIRED, ARCHIVED
     isFeatured: initialData?.isFeatured || false,
@@ -70,7 +87,9 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
     seoDescription: initialData?.seoDescription || "",
 
     // Walk-In Specific
-    walkinDate: initialData?.walkinDate ? new Date(initialData.walkinDate).toISOString().split("T")[0] : "",
+    walkinDate: initialData?.walkinDate
+      ? new Date(initialData.walkinDate).toISOString().split("T")[0]
+      : "",
     walkinStartTime: initialData?.walkinStartTime || "",
     walkinEndTime: initialData?.walkinEndTime || "",
     walkinVenue: initialData?.walkinVenue || "",
@@ -113,10 +132,18 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
   const handleSubmit = async (e: React.FormEvent, force = false) => {
     if (e) e.preventDefault();
-    
+
     // Core validations
-    if (!form.companyId || !form.categoryId || !form.title || !form.city || !form.description) {
-      setError("Please fill in all core fields (Company, Category, Title, City, and Job Description).");
+    if (
+      !form.companyId ||
+      !form.categoryId ||
+      !form.title ||
+      !form.city ||
+      !form.description
+    ) {
+      setError(
+        "Please fill in all core fields (Company, Category, Title, City, and Job Description).",
+      );
       setActiveTab("basic");
       return;
     }
@@ -141,7 +168,7 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
       });
 
       const json = await res.json();
-      
+
       // Handle Duplicate Job Warning
       if (res.status === 409 && json.warning) {
         setDuplicateWarning(json);
@@ -153,7 +180,11 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
         throw new Error(json.error || "Failed to persist job details.");
       }
 
-      setSuccess(jobId ? "Job posting updated successfully!" : "New job posting published successfully!");
+      setSuccess(
+        jobId
+          ? "Job posting updated successfully!"
+          : "New job posting published successfully!",
+      );
       setDuplicateWarning(null);
 
       setTimeout(() => {
@@ -169,7 +200,6 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
   return (
     <div className="space-y-6">
-      
       {/* Alert indicators */}
       {error && (
         <div className="bg-red-50 text-red-700 border border-red-200 p-4 rounded-xl text-xs font-semibold flex items-center gap-2">
@@ -210,42 +240,57 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
         ))}
       </div>
 
-      <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6 bg-white dark:bg-neutral-900 border p-6 rounded-2xl">
-        
+      <form
+        onSubmit={(e) => handleSubmit(e, false)}
+        className="space-y-6 bg-white dark:bg-neutral-900 border p-6 rounded-2xl"
+      >
         {/* Tab 1: Basic */}
         {activeTab === "basic" && (
           <div className="space-y-4">
             <h3 className="text-base font-bold text-neutral-850 dark:text-neutral-100 flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-blue-600" /> Core Position Details
+              <Briefcase className="h-5 w-5 text-blue-600" /> Core Position
+              Details
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Hiring Employer *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Hiring Employer *
+                </label>
                 <select
                   required
                   value={form.companyId}
-                  onChange={(e) => setForm({ ...form, companyId: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, companyId: e.target.value })
+                  }
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 >
                   <option value="">-- Choose Corporate Company --</option>
                   {companies.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Industry Category *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Industry Category *
+                </label>
                 <select
                   required
                   value={form.categoryId}
-                  onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, categoryId: e.target.value })
+                  }
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 >
                   <option value="">-- Choose Industry Category --</option>
                   {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -253,7 +298,9 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Job Title / Vacancy Title *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Job Title / Vacancy Title *
+                </label>
                 <input
                   type="text"
                   required
@@ -265,11 +312,15 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Vacancy Count</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Vacancy Count
+                </label>
                 <input
                   type="number"
                   value={form.vacancies}
-                  onChange={(e) => setForm({ ...form, vacancies: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, vacancies: e.target.value })
+                  }
                   placeholder="e.g. 3"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
                 />
@@ -278,7 +329,9 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Sector *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Sector *
+                </label>
                 <select
                   value={form.sector}
                   onChange={(e) => setForm({ ...form, sector: e.target.value })}
@@ -290,10 +343,14 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Work Mode *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Work Mode *
+                </label>
                 <select
                   value={form.workMode}
-                  onChange={(e) => setForm({ ...form, workMode: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, workMode: e.target.value })
+                  }
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 >
                   <option value="Remote">Remote</option>
@@ -303,10 +360,14 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Employment Type *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Employment Type *
+                </label>
                 <select
                   value={form.employmentType}
-                  onChange={(e) => setForm({ ...form, employmentType: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, employmentType: e.target.value })
+                  }
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 >
                   <option value="Full-time">Full-time</option>
@@ -319,10 +380,14 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Experience Level *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Experience Level *
+                </label>
                 <select
                   value={form.experienceLevel}
-                  onChange={(e) => setForm({ ...form, experienceLevel: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, experienceLevel: e.target.value })
+                  }
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 >
                   <option value="Fresher">Fresher (0-1 Years)</option>
@@ -337,24 +402,31 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
         {activeTab === "location" && (
           <div className="space-y-4">
             <h3 className="text-base font-bold text-neutral-850 dark:text-neutral-100 flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-red-500" /> Geography Location Parameters
+              <MapPin className="h-5 w-5 text-red-500" /> Geography Location
+              Parameters
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Country *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Country *
+                </label>
                 <input
                   type="text"
                   required
                   value={form.country}
-                  onChange={(e) => setForm({ ...form, country: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, country: e.target.value })
+                  }
                   placeholder="e.g. United States"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">State / Province *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  State / Province *
+                </label>
                 <input
                   type="text"
                   required
@@ -366,7 +438,9 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">City *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  City *
+                </label>
                 <input
                   type="text"
                   required
@@ -379,7 +453,9 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Detailed Venue / Street Address</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                Detailed Venue / Street Address
+              </label>
               <input
                 type="text"
                 value={form.address}
@@ -394,10 +470,15 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
                 type="checkbox"
                 id="isRemoteEligible"
                 checked={form.isRemoteEligible}
-                onChange={(e) => setForm({ ...form, isRemoteEligible: e.target.checked })}
+                onChange={(e) =>
+                  setForm({ ...form, isRemoteEligible: e.target.checked })
+                }
                 className="rounded"
               />
-              <label htmlFor="isRemoteEligible" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+              <label
+                htmlFor="isRemoteEligible"
+                className="text-xs font-semibold text-neutral-700 dark:text-neutral-300"
+              >
                 This position is eligible for full work-from-home models.
               </label>
             </div>
@@ -413,33 +494,45 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Min Annual / Hourly Salary</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Min Annual / Hourly Salary
+                </label>
                 <input
                   type="number"
                   value={form.minSalary}
-                  onChange={(e) => setForm({ ...form, minSalary: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, minSalary: e.target.value })
+                  }
                   placeholder="e.g. 60000"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Max Annual / Hourly Salary</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Max Annual / Hourly Salary
+                </label>
                 <input
                   type="number"
                   value={form.maxSalary}
-                  onChange={(e) => setForm({ ...form, maxSalary: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, maxSalary: e.target.value })
+                  }
                   placeholder="e.g. 90000"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Currency Period</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Currency Period
+                </label>
                 <div className="flex gap-2">
                   <select
                     value={form.currency}
-                    onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, currency: e.target.value })
+                    }
                     className="flex-1 bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-2 py-2 text-sm"
                   >
                     <option value="USD">USD ($)</option>
@@ -449,7 +542,9 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
                   </select>
                   <select
                     value={form.salaryPeriod}
-                    onChange={(e) => setForm({ ...form, salaryPeriod: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, salaryPeriod: e.target.value })
+                    }
                     className="flex-1 bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-2 py-2 text-sm"
                   >
                     <option value="yearly">/ year</option>
@@ -465,11 +560,17 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
                 type="checkbox"
                 id="isSalaryVisible"
                 checked={form.isSalaryVisible}
-                onChange={(e) => setForm({ ...form, isSalaryVisible: e.target.checked })}
+                onChange={(e) =>
+                  setForm({ ...form, isSalaryVisible: e.target.checked })
+                }
                 className="rounded"
               />
-              <label htmlFor="isSalaryVisible" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                Show salary ranges on the public job listings and details cards (Salary visibility).
+              <label
+                htmlFor="isSalaryVisible"
+                className="text-xs font-semibold text-neutral-700 dark:text-neutral-300"
+              >
+                Show salary ranges on the public job listings and details cards
+                (Salary visibility).
               </label>
             </div>
           </div>
@@ -483,7 +584,9 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
             </h3>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Short Role Summary</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                Short Role Summary
+              </label>
               <textarea
                 rows={2}
                 value={form.summary}
@@ -494,34 +597,46 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Job Description (Rich-Text Markdown Compatible) *</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                Job Description (Rich-Text Markdown Compatible) *
+              </label>
               <textarea
                 rows={6}
                 required
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
                 placeholder="Provide full description, overview, team details, technology stack..."
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
               ></textarea>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Responsibilities & Scope</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                Responsibilities & Scope
+              </label>
               <textarea
                 rows={4}
                 value={form.responsibilities}
-                onChange={(e) => setForm({ ...form, responsibilities: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, responsibilities: e.target.value })
+                }
                 placeholder="List core duties (each on a new line)..."
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
               ></textarea>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">About the Team / Corporate Division</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                About the Team / Corporate Division
+              </label>
               <textarea
                 rows={3}
                 value={form.aboutRole}
-                onChange={(e) => setForm({ ...form, aboutRole: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, aboutRole: e.target.value })
+                }
                 placeholder="Describe team size, workflow model, work-life balance..."
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm resize-none"
               ></textarea>
@@ -538,22 +653,30 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Required Core Skills (Comma-separated)</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Required Core Skills (Comma-separated)
+                </label>
                 <input
                   type="text"
                   value={form.requiredSkills}
-                  onChange={(e) => setForm({ ...form, requiredSkills: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, requiredSkills: e.target.value })
+                  }
                   placeholder="e.g. React, TypeScript, Tailwind CSS, PostgreSQL"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Preferred Stack / Tech (Comma-separated)</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Preferred Stack / Tech (Comma-separated)
+                </label>
                 <input
                   type="text"
                   value={form.preferredSkills}
-                  onChange={(e) => setForm({ ...form, preferredSkills: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, preferredSkills: e.target.value })
+                  }
                   placeholder="e.g. Next.js, Docker, AWS, Drizzle ORM"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
@@ -562,33 +685,45 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t">
               <div className="col-span-2">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Education Degree Requirement</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Education Degree Requirement
+                </label>
                 <input
                   type="text"
                   value={form.educationDegree}
-                  onChange={(e) => setForm({ ...form, educationDegree: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, educationDegree: e.target.value })
+                  }
                   placeholder="e.g. B.Tech, B.S., MCA"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Branch / Stream</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Branch / Stream
+                </label>
                 <input
                   type="text"
                   value={form.educationBranch}
-                  onChange={(e) => setForm({ ...form, educationBranch: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, educationBranch: e.target.value })
+                  }
                   placeholder="e.g. Computer Science"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Min GPA / Marks</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Min GPA / Marks
+                </label>
                 <input
                   type="text"
                   value={form.minCgpa}
-                  onChange={(e) => setForm({ ...form, minCgpa: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, minCgpa: e.target.value })
+                  }
                   placeholder="e.g. 3.0 / 4.0 or 60%"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
@@ -596,11 +731,15 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Special Eligibility Criteria & Restrictions</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                Special Eligibility Criteria & Restrictions
+              </label>
               <textarea
                 rows={3}
                 value={form.eligibility}
-                onChange={(e) => setForm({ ...form, eligibility: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, eligibility: e.target.value })
+                }
                 placeholder="List special rules, age limits, visa requirements..."
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm resize-none"
               ></textarea>
@@ -617,27 +756,41 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Application Method *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Application Method *
+                </label>
                 <select
                   value={form.applicationMethod}
-                  onChange={(e) => setForm({ ...form, applicationMethod: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, applicationMethod: e.target.value })
+                  }
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 >
-                  <option value="INTERNAL">INTERNAL RESUME (Apply on CareerDiscover)</option>
-                  <option value="EXTERNAL_URL">EXTERNAL LINK redirection</option>
-                  <option value="EMAIL">EMAIL application (Prefilled Recruit Mail)</option>
+                  <option value="INTERNAL">
+                    INTERNAL RESUME (Apply on CareerDiscover)
+                  </option>
+                  <option value="EXTERNAL_URL">
+                    EXTERNAL LINK redirection
+                  </option>
+                  <option value="EMAIL">
+                    EMAIL application (Prefilled Recruit Mail)
+                  </option>
                 </select>
               </div>
 
               <div className="col-span-2">
                 {form.applicationMethod === "EXTERNAL_URL" && (
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">External Application URL *</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                      External Application URL *
+                    </label>
                     <input
                       type="url"
                       required
                       value={form.applicationUrl}
-                      onChange={(e) => setForm({ ...form, applicationUrl: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, applicationUrl: e.target.value })
+                      }
                       placeholder="https://acme.com/careers/job-apply"
                       className="w-full bg-neutral-50 dark:bg-neutral-800 border border-blue-200 rounded-xl px-3 py-2 text-sm"
                     />
@@ -646,12 +799,16 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
                 {form.applicationMethod === "EMAIL" && (
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Hiring Recruiter Email *</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                      Hiring Recruiter Email *
+                    </label>
                     <input
                       type="email"
                       required
                       value={form.recruiterEmail}
-                      onChange={(e) => setForm({ ...form, recruiterEmail: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, recruiterEmail: e.target.value })
+                      }
                       placeholder="hiring@acme.com"
                       className="w-full bg-neutral-50 dark:bg-neutral-800 border border-blue-200 rounded-xl px-3 py-2 text-sm"
                     />
@@ -660,7 +817,9 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
                 {form.applicationMethod === "INTERNAL" && (
                   <div className="bg-blue-50/50 p-3 rounded-xl border border-dashed border-blue-200 text-xs text-blue-800">
-                    👍 Safe and automated first-party option! Candidates submit standard PDF links, stored securely inside PostgreSQL for recruiters.
+                    👍 Safe and automated first-party option! Candidates submit
+                    standard PDF links, stored securely inside PostgreSQL for
+                    recruiters.
                   </div>
                 )}
               </div>
@@ -668,47 +827,136 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Application Deadline</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Application Deadline
+                </label>
                 <input
                   type="date"
                   value={form.applicationDeadline}
-                  onChange={(e) => setForm({ ...form, applicationDeadline: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, applicationDeadline: e.target.value })
+                  }
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Publishing Status *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Publishing Status *
+                </label>
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 >
-                  <option value="PUBLISHED">PUBLISHED (Instantly visible on portal)</option>
-                  <option value="DRAFT">DRAFT (Hidden, pending admin edits)</option>
-                  <option value="EXPIRED">EXPIRED (Archived from listings)</option>
+                  <option value="PUBLISHED">
+                    PUBLISHED (Instantly visible on portal)
+                  </option>
+                  <option value="DRAFT">
+                    DRAFT (Hidden, pending admin edits)
+                  </option>
+                  <option value="EXPIRED">
+                    EXPIRED (Archived from listings)
+                  </option>
                 </select>
               </div>
             </div>
 
+            {/* Featured / Urgent Controls */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+              {/* Featured Job */}
+              <label
+                htmlFor="isFeatured"
+                className={`flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all ${
+                  form.isFeatured
+                    ? "border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20"
+                    : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  id="isFeatured"
+                  checked={form.isFeatured}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      isFeatured: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-neutral-300 text-yellow-500 focus:ring-yellow-500"
+                />
+
+                <div>
+                  <p className="text-sm font-bold text-neutral-800 dark:text-neutral-100">
+                    ⭐ Featured Job
+                  </p>
+
+                  <p className="mt-0.5 text-[11px] text-neutral-500 dark:text-neutral-400">
+                    Display this job in the Featured Careers section.
+                  </p>
+                </div>
+              </label>
+
+              {/* Urgent Job */}
+              <label
+                htmlFor="isUrgent"
+                className={`flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all ${
+                  form.isUrgent
+                    ? "border-red-400 bg-red-50 dark:border-red-600 dark:bg-red-950/20"
+                    : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  id="isUrgent"
+                  checked={form.isUrgent}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      isUrgent: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-neutral-300 text-red-500 focus:ring-red-500"
+                />
+
+                <div>
+                  <p className="text-sm font-bold text-neutral-800 dark:text-neutral-100">
+                    🔥 Urgent Hiring
+                  </p>
+
+                  <p className="mt-0.5 text-[11px] text-neutral-500 dark:text-neutral-400">
+                    Mark this job as an urgent hiring opportunity.
+                  </p>
+                </div>
+              </label>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Custom SEO Meta Title</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Custom SEO Meta Title
+                </label>
                 <input
                   type="text"
                   value={form.seoTitle}
-                  onChange={(e) => setForm({ ...form, seoTitle: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, seoTitle: e.target.value })
+                  }
                   placeholder="e.g. Senior Node.js Developer | Acme Careers"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Custom SEO Meta Description</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Custom SEO Meta Description
+                </label>
                 <input
                   type="text"
                   value={form.seoDescription}
-                  onChange={(e) => setForm({ ...form, seoDescription: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, seoDescription: e.target.value })
+                  }
                   placeholder="Summarize posting details for Google SERP crawls..."
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
@@ -726,32 +974,44 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Walk-In Date</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Walk-In Date
+                </label>
                 <input
                   type="date"
                   value={form.walkinDate}
-                  onChange={(e) => setForm({ ...form, walkinDate: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, walkinDate: e.target.value })
+                  }
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Interview Start Time</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Interview Start Time
+                </label>
                 <input
                   type="text"
                   value={form.walkinStartTime}
-                  onChange={(e) => setForm({ ...form, walkinStartTime: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, walkinStartTime: e.target.value })
+                  }
                   placeholder="e.g. 09:30 AM"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Interview End Time</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Interview End Time
+                </label>
                 <input
                   type="text"
                   value={form.walkinEndTime}
-                  onChange={(e) => setForm({ ...form, walkinEndTime: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, walkinEndTime: e.target.value })
+                  }
                   placeholder="e.g. 04:30 PM"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
@@ -759,11 +1019,15 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Walk-In Exact Venue / Campus Hall</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                Walk-In Exact Venue / Campus Hall
+              </label>
               <input
                 type="text"
                 value={form.walkinVenue}
-                onChange={(e) => setForm({ ...form, walkinVenue: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, walkinVenue: e.target.value })
+                }
                 placeholder="e.g. Block C, Tech Hub Conference Room, Austin, TX"
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
               />
@@ -771,22 +1035,30 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Required Physical Documents</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Required Physical Documents
+                </label>
                 <input
                   type="text"
                   value={form.walkinDocuments}
-                  onChange={(e) => setForm({ ...form, walkinDocuments: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, walkinDocuments: e.target.value })
+                  }
                   placeholder="e.g. 3 printed resumes, Gov photo ID card, Degree copies"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Walk-In Contact Phone / HR Helpline</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Walk-In Contact Phone / HR Helpline
+                </label>
                 <input
                   type="text"
                   value={form.walkinContactInfo}
-                  onChange={(e) => setForm({ ...form, walkinContactInfo: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, walkinContactInfo: e.target.value })
+                  }
                   placeholder="e.g. Recruiting Desk: +1 (512) 555-0100"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
@@ -794,11 +1066,15 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Walk-In Instructions & Rules</label>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                Walk-In Instructions & Rules
+              </label>
               <textarea
                 rows={3}
                 value={form.walkinInstructions}
-                onChange={(e) => setForm({ ...form, walkinInstructions: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, walkinInstructions: e.target.value })
+                }
                 placeholder="e.g. Smart casual dress code. Arrive 15 minutes before timings..."
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm resize-none"
               ></textarea>
@@ -815,22 +1091,30 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Public Organization / Board</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Public Organization / Board
+                </label>
                 <input
                   type="text"
                   value={form.govOrganization}
-                  onChange={(e) => setForm({ ...form, govOrganization: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, govOrganization: e.target.value })
+                  }
                   placeholder="e.g. Department of Energy, State Civil Board"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Notification / Gazette Reference Number</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Notification / Gazette Reference Number
+                </label>
                 <input
                   type="text"
                   value={form.govNotificationNumber}
-                  onChange={(e) => setForm({ ...form, govNotificationNumber: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, govNotificationNumber: e.target.value })
+                  }
                   placeholder="e.g. GAZETTE-DE-2026-904"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
@@ -839,22 +1123,33 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Official Notification PDF Link</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Official Notification PDF Link
+                </label>
                 <input
                   type="url"
                   value={form.govOfficialNotificationUrl}
-                  onChange={(e) => setForm({ ...form, govOfficialNotificationUrl: e.target.value })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      govOfficialNotificationUrl: e.target.value,
+                    })
+                  }
                   placeholder="https://stateboards.gov/notif.pdf"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Official Department Website Portal</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Official Department Website Portal
+                </label>
                 <input
                   type="url"
                   value={form.govOfficialWebsiteUrl}
-                  onChange={(e) => setForm({ ...form, govOfficialWebsiteUrl: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, govOfficialWebsiteUrl: e.target.value })
+                  }
                   placeholder="https://stateboards.gov"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
                 />
@@ -863,33 +1158,45 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Government Age Limits</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Government Age Limits
+                </label>
                 <input
                   type="text"
                   value={form.govAgeLimit}
-                  onChange={(e) => setForm({ ...form, govAgeLimit: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, govAgeLimit: e.target.value })
+                  }
                   placeholder="e.g. 18 to 35 Years"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Application Fee Details</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Application Fee Details
+                </label>
                 <input
                   type="text"
                   value={form.govApplicationFee}
-                  onChange={(e) => setForm({ ...form, govApplicationFee: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, govApplicationFee: e.target.value })
+                  }
                   placeholder="e.g. General: $50, Reserve: Waived"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Selection Test/Exam Process</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Selection Test/Exam Process
+                </label>
                 <input
                   type="text"
                   value={form.govSelectionProcess}
-                  onChange={(e) => setForm({ ...form, govSelectionProcess: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, govSelectionProcess: e.target.value })
+                  }
                   placeholder="e.g. Preliminary Screening followed by Written Exam"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
                 />
@@ -918,11 +1225,14 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
               className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
             >
               <Save className="h-4 w-4" />
-              {loading ? "Saving Posting..." : jobId ? "Save Posting" : "Publish Posting"}
+              {loading
+                ? "Saving Posting..."
+                : jobId
+                  ? "Save Posting"
+                  : "Publish Posting"}
             </button>
           </div>
         </div>
-
       </form>
 
       {/* Duplicate Alert Modal */}
@@ -932,7 +1242,7 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
             <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 mb-4">
               <AlertCircle className="h-6 w-6" />
             </div>
-            
+
             <h4 className="text-lg font-extrabold text-neutral-900 dark:text-white mb-2">
               Possible Duplicate Job Detected
             </h4>
@@ -959,7 +1269,6 @@ export default function AdminJobForm({ initialData, jobId }: AdminJobFormProps) 
           </div>
         </div>
       )}
-
     </div>
   );
 }
