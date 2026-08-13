@@ -14,6 +14,92 @@ import {
   MapPin,
 } from "lucide-react";
 
+const INDIA_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+];
+
+const POPULAR_INDIAN_CITIES = [
+  "Ahmedabad",
+  "Amritsar",
+  "Bengaluru",
+  "Bhopal",
+  "Bhubaneswar",
+  "Chandigarh",
+  "Chennai",
+  "Coimbatore",
+  "Dehradun",
+  "Delhi",
+  "Faridabad",
+  "Ghaziabad",
+  "Gandhinagar",
+  "Goa",
+  "Gurugram",
+  "Guwahati",
+  "Hyderabad",
+  "Indore",
+  "Jaipur",
+  "Jammu",
+  "Jamshedpur",
+  "Kanpur",
+  "Kochi",
+  "Kolkata",
+  "Kozhikode",
+  "Lucknow",
+  "Ludhiana",
+  "Madurai",
+  "Mangaluru",
+  "Meerut",
+  "Mumbai",
+  "Mysuru",
+  "Nagpur",
+  "Nashik",
+  "Noida",
+  "Patna",
+  "Pimpri-Chinchwad",
+  "Pune",
+  "Raipur",
+  "Rajkot",
+  "Ranchi",
+  "Salem",
+  "Surat",
+  "Thiruvananthapuram",
+  "Thrissur",
+  "Tiruchirappalli",
+  "Udaipur",
+  "Vadodara",
+  "Varanasi",
+  "Vijayawada",
+  "Visakhapatnam",
+  "Warangal",
+];
+
 type AdminJobFormProps = {
   initialData?: any;
   jobId?: number;
@@ -29,6 +115,9 @@ export default function AdminJobForm({
   // Options loaded from DB
   const [companies, setCompanies] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
 
   // Form Field State
   const [form, setForm] = useState({
@@ -42,7 +131,7 @@ export default function AdminJobForm({
     workMode: initialData?.workMode || "Remote", // Remote, Hybrid, On-site
     vacancies: initialData?.vacancies ? String(initialData.vacancies) : "1",
 
-    country: initialData?.country || "United States",
+    country: initialData?.country || "India",
     state: initialData?.state || "",
     city: initialData?.city || "",
     address: initialData?.address || "",
@@ -50,7 +139,7 @@ export default function AdminJobForm({
 
     minSalary: initialData?.minSalary ? String(initialData.minSalary) : "",
     maxSalary: initialData?.maxSalary ? String(initialData.maxSalary) : "",
-    currency: initialData?.currency || "USD",
+    currency: initialData?.currency || "INR",
     salaryPeriod: initialData?.salaryPeriod || "yearly",
     isSalaryVisible: initialData?.isSalaryVisible || false,
 
@@ -135,16 +224,30 @@ export default function AdminJobForm({
     if (e) e.preventDefault();
 
     // Core validations
-    if (
-      !form.companyName.trim() ||
-      !form.categoryId ||
-      !form.title ||
-      !form.city ||
-      !form.description
-    ) {
-      setError(
-        "Please fill in all core fields (Company, Category, Title, City, and Job Description).",
-      );
+    const missingFields: string[] = [];
+
+    if (!form.companyName.trim()) {
+      missingFields.push("Company");
+    }
+
+    if (!form.categoryId) {
+      missingFields.push("Category");
+    }
+
+    if (!form.title.trim()) {
+      missingFields.push("Title");
+    }
+
+    if (!form.city.trim()) {
+      missingFields.push("City");
+    }
+
+    if (!form.description.trim()) {
+      missingFields.push("Job Description");
+    }
+
+    if (missingFields.length > 0) {
+      setError(`Please fill in: ${missingFields.join(", ")}`);
       setActiveTab("basic");
       return;
     }
@@ -252,9 +355,8 @@ export default function AdminJobForm({
               <Briefcase className="h-5 w-5 text-blue-600" /> Core Position
               Details
             </h3>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
+              <div className="relative">
                 <label
                   htmlFor="companyName"
                   className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
@@ -266,8 +368,8 @@ export default function AdminJobForm({
                   id="companyName"
                   type="text"
                   required
-                  list="company-options"
                   value={form.companyName}
+                  onFocus={() => setCompanyDropdownOpen(true)}
                   onChange={(e) => {
                     const value = e.target.value;
 
@@ -284,16 +386,53 @@ export default function AdminJobForm({
                         ? String(existingCompany.id)
                         : "",
                     });
+
+                    setCompanyDropdownOpen(true);
                   }}
                   placeholder="Select existing company or type a new company name"
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
 
-                <datalist id="company-options">
-                  {companies.map((company) => (
-                    <option key={company.id} value={company.name} />
-                  ))}
-                </datalist>
+                {companyDropdownOpen && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg">
+                    {companies
+                      .filter((company) =>
+                        company.name
+                          .toLowerCase()
+                          .includes(form.companyName.toLowerCase()),
+                      )
+                      .map((company) => (
+                        <button
+                          key={company.id}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setForm({
+                              ...form,
+                              companyName: company.name,
+                              companyId: String(company.id),
+                            });
+
+                            setCompanyDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        >
+                          {company.name}
+                        </button>
+                      ))}
+
+                    {companies.filter((company) =>
+                      company.name
+                        .toLowerCase()
+                        .includes(form.companyName.toLowerCase()),
+                    ).length === 0 && (
+                      <div className="px-3 py-2 text-xs text-neutral-400">
+                        No existing company found. You can create&ldquo;
+                        {form.companyName}&ldquo;.
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <p className="mt-1 text-[10px] text-neutral-400">
                   Select an existing company or type a new company name. New
@@ -301,7 +440,6 @@ export default function AdminJobForm({
                   published.
                 </p>
               </div>
-
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
                   Industry Category *
@@ -323,7 +461,6 @@ export default function AdminJobForm({
                 </select>
               </div>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
@@ -435,48 +572,155 @@ export default function AdminJobForm({
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Country */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                <label
+                  htmlFor="country"
+                  className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
+                >
                   Country *
                 </label>
+
                 <input
+                  id="country"
                   type="text"
                   required
                   value={form.country}
                   onChange={(e) =>
-                    setForm({ ...form, country: e.target.value })
+                    setForm({
+                      ...form,
+                      country: e.target.value,
+                    })
                   }
-                  placeholder="e.g. United States"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  placeholder="e.g. India"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+              {/* State */}
+              <div className="relative">
+                <label
+                  htmlFor="state"
+                  className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
+                >
                   State / Province *
                 </label>
+
                 <input
+                  id="state"
                   type="text"
                   required
                   value={form.state}
-                  onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  placeholder="e.g. Texas"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  onFocus={() => setStateDropdownOpen(true)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    setForm({
+                      ...form,
+                      state: value,
+                    });
+
+                    setStateDropdownOpen(true);
+                  }}
+                  placeholder="Type or select a state"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
+
+                {stateDropdownOpen && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg">
+                    {INDIA_STATES.filter((state) =>
+                      state.toLowerCase().includes(form.state.toLowerCase()),
+                    ).map((state) => (
+                      <button
+                        key={state}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setForm({
+                            ...form,
+                            state,
+                          });
+
+                          setStateDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      >
+                        {state}
+                      </button>
+                    ))}
+
+                    {INDIA_STATES.filter((state) =>
+                      state.toLowerCase().includes(form.state.toLowerCase()),
+                    ).length === 0 && (
+                      <div className="px-3 py-2 text-xs text-neutral-400">
+                        No matching state
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+              {/* City */}
+              <div className="relative">
+                <label
+                  htmlFor="city"
+                  className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
+                >
                   City *
                 </label>
+
                 <input
+                  id="city"
                   type="text"
                   required
                   value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  placeholder="e.g. Austin"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  onFocus={() => setCityDropdownOpen(true)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    setForm({
+                      ...form,
+                      city: value,
+                    });
+
+                    setCityDropdownOpen(true);
+                  }}
+                  placeholder="Type or select a city"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
+
+                {cityDropdownOpen && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg">
+                    {POPULAR_INDIAN_CITIES.filter((city) =>
+                      city.toLowerCase().includes(form.city.toLowerCase()),
+                    ).map((city) => (
+                      <button
+                        key={city}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setForm({
+                            ...form,
+                            city,
+                          });
+
+                          setCityDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      >
+                        {city}
+                      </button>
+                    ))}
+
+                    {POPULAR_INDIAN_CITIES.filter((city) =>
+                      city.toLowerCase().includes(form.city.toLowerCase()),
+                    ).length === 0 && (
+                      <div className="px-3 py-2 text-xs text-neutral-400">
+                        No matching city
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
