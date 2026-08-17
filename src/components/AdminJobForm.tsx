@@ -129,7 +129,7 @@ export default function AdminJobForm({
     employmentType: initialData?.employmentType || "Full-time", // Full-time, Part-time, Contract, Internship, Walk-In, Fresher
     experienceLevel: initialData?.experienceLevel || "Fresher", // Fresher, Experienced
     workMode: initialData?.workMode || "Remote", // Remote, Hybrid, On-site
-    vacancies: initialData?.vacancies ? String(initialData.vacancies) : "1",
+    vacancies: initialData?.vacancies ? String(initialData.vacancies) : "",
 
     country: initialData?.country || "India",
     state: initialData?.state || "",
@@ -204,21 +204,50 @@ export default function AdminJobForm({
   // Duplicate Warning Modal states
   const [duplicateWarning, setDuplicateWarning] = useState<any | null>(null);
 
-  useEffect(() => {
-    // Load companies
-    fetch("/api/admin/companies")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) setCompanies(json.data);
-      });
+ useEffect(() => {
+  // Load companies
+  fetch("/api/admin/companies")
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.success) {
+        const companyList = json.data || [];
 
-    // Load categories
-    fetch("/api/admin/categories")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) setCategories(json.data);
-      });
-  }, []);
+        setCompanies(companyList);
+
+        // When editing an existing job, populate company name
+        // using the companyId stored in the job record.
+        if (initialData?.companyId && !initialData?.company?.name) {
+          const existingCompany = companyList.find(
+            (company: any) =>
+              String(company.id) === String(initialData.companyId),
+          );
+
+          if (existingCompany) {
+            setForm((prev) => ({
+              ...prev,
+              companyName: existingCompany.name,
+              companyId: String(existingCompany.id),
+            }));
+          }
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to load companies:", error);
+    });
+
+  // Load categories
+  fetch("/api/admin/categories")
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.success) {
+        setCategories(json.data || []);
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to load categories:", error);
+    });
+}, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent, force = false) => {
     if (e) e.preventDefault();

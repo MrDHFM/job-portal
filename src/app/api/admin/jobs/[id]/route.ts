@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { jobs, adminActivityLogs } from "@/db/schema";
+import { jobs, companies, categories, adminActivityLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
+import { publishJobToSocialMedia } from "@/lib/social/publisher";
 
 export async function PUT(
   req: NextRequest,
@@ -34,12 +35,39 @@ export async function PUT(
 
     const existingJob = existing[0];
 
+    const companyResult = await db
+      .select({
+        id: companies.id,
+        name: companies.name,
+        logoUrl: companies.logoUrl,
+      })
+      .from(companies)
+      .where(eq(companies.id, existingJob.companyId))
+      .limit(1);
+
+    const categoryResult = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+      })
+      .from(categories)
+      .where(eq(categories.id, existingJob.categoryId))
+      .limit(1);
+
+    const companyName = companyResult[0]?.name || "Company";
+
+    const companyLogoUrl = companyResult[0]?.logoUrl || null;
+
+    const categoryName = categoryResult[0]?.name || null;
+
     const nextDeadline =
       body.applicationDeadline !== undefined
         ? body.applicationDeadline
           ? new Date(body.applicationDeadline)
           : null
         : existingJob.applicationDeadline;
+
+    const previousStatus = existingJob.status;
 
     let nextStatus =
       body.status !== undefined ? body.status : existingJob.status;
@@ -138,11 +166,9 @@ export async function PUT(
         recruiterEmail:
           body.recruiterEmail !== undefined ? body.recruiterEmail : undefined,
         applicationDeadline:
-  body.applicationDeadline !== undefined
-    ? nextDeadline
-    : undefined,
+          body.applicationDeadline !== undefined ? nextDeadline : undefined,
 
-status: nextStatus,
+        status: nextStatus,
         isFeatured:
           body.isFeatured !== undefined ? !!body.isFeatured : undefined,
         isUrgent: body.isUrgent !== undefined ? !!body.isUrgent : undefined,
@@ -203,6 +229,74 @@ status: nextStatus,
       .where(eq(jobs.id, id))
       .returning();
 
+    let socialPublishing = null;
+
+    /*
+     * Publish automatically when a job transitions
+     * from DRAFT/other non-published status to PUBLISHED.
+     *
+     * This is especially important for duplicated jobs:
+     *
+     * Duplicate → DRAFT → PUBLISHED
+     */
+    const shouldPublishToSocial =
+      previousStatus !== "PUBLISHED" && nextStatus === "PUBLISHED";
+
+    if (shouldPublishToSocial && updated[0]) {
+      try {
+        socialPublishing = await publishJobToSocialMedia({
+          id: updated[0].id,
+          title: updated[0].title,
+          slug: updated[0].slug,
+
+          companyName,
+
+          city: updated[0].city,
+          state: updated[0].state,
+          country: updated[0].country,
+
+          employmentType: updated[0].employmentType,
+
+          workMode: updated[0].workMode,
+
+          experienceLevel: updated[0].experienceLevel,
+
+          requiredSkills: updated[0].requiredSkills,
+
+          minSalary: updated[0].minSalary,
+
+          maxSalary: updated[0].maxSalary,
+
+          currency: updated[0].currency,
+
+          salaryPeriod: updated[0].salaryPeriod,
+
+          isSalaryVisible: updated[0].isSalaryVisible,
+
+          applicationDeadline: updated[0].applicationDeadline,
+
+          companyLogoUrl,
+
+          categoryName,
+
+          isUrgent: updated[0].isUrgent,
+
+          isFeatured: updated[0].isFeatured,
+        });
+
+        console.log("Social publishing after status change:", socialPublishing);
+      } catch (socialError) {
+        /*
+         * The job is already successfully published.
+         * Social failure must not make the status update fail.
+         */
+        console.error(
+          "Job published successfully, but social publishing failed:",
+          socialError,
+        );
+      }
+    }
+
     // Log admin activity
     await db.insert(adminActivityLogs).values({
       adminName: session.name || session.email,
@@ -212,7 +306,11 @@ status: nextStatus,
       details: `Edited job posting: ${updated[0].title}`,
     });
 
-    return NextResponse.json({ success: true, data: updated[0] });
+    return NextResponse.json({
+      success: true,
+      data: updated[0],
+      socialPublishing,
+    });
   } catch (error: any) {
     console.error("Error in PUT /api/admin/jobs/[id]:", error);
     return NextResponse.json(
