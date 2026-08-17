@@ -1,5 +1,12 @@
-import type { SocialJob, ManualSocialPost } from "./types";
+import type {
+  SocialJob,
+  ManualSocialPost,
+} from "./types";
+
 import { buildTrackedJobUrl } from "./tracking-url";
+
+const TELEGRAM_GROUP_URL =
+  "https://t.me/careerdiscoverjobs";
 
 function clean(value?: string | null) {
   return value?.trim() || "";
@@ -13,20 +20,32 @@ function makeHashtag(value: string) {
     .join("");
 }
 
-function getJobUrl(job: SocialJob) {
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    "https://job-portal-zeta-two-46.vercel.app";
-
-  return `${siteUrl.replace(/\/$/, "")}/jobs/detail/${job.slug}`;
-}
-
 function getLocation(job: SocialJob) {
-  return [job.city, job.state].map(clean).filter(Boolean).join(", ");
+  /*
+   * If the job is remote, only show "Remote".
+   *
+   * Otherwise:
+   * Bengaluru, Karnataka
+   */
+  if (
+    job.workMode
+      ?.trim()
+      .toLowerCase()
+      .includes("remote")
+  ) {
+    return "Remote";
+  }
+
+  return [job.city, job.state]
+    .map(clean)
+    .filter(Boolean)
+    .join(", ");
 }
 
 function getSkills(job: SocialJob) {
-  if (!job.requiredSkills) return "";
+  if (!job.requiredSkills) {
+    return "";
+  }
 
   return job.requiredSkills
     .split(",")
@@ -37,13 +56,24 @@ function getSkills(job: SocialJob) {
 }
 
 function getSalary(job: SocialJob) {
-  if (!job.isSalaryVisible) return "";
-  if (!job.minSalary && !job.maxSalary) return "";
+  if (!job.isSalaryVisible) {
+    return "";
+  }
 
-  const currency = job.currency || "INR";
-  const period = job.salaryPeriod || "year";
+  if (!job.minSalary && !job.maxSalary) {
+    return "";
+  }
 
-  if (job.minSalary && job.maxSalary) {
+  const currency =
+    job.currency || "INR";
+
+  const period =
+    job.salaryPeriod || "year";
+
+  if (
+    job.minSalary &&
+    job.maxSalary
+  ) {
     return `${currency} ${job.minSalary.toLocaleString()} - ${job.maxSalary.toLocaleString()} / ${period}`;
   }
 
@@ -54,16 +84,27 @@ function getSalary(job: SocialJob) {
   return `Up to ${currency} ${job.maxSalary?.toLocaleString()} / ${period}`;
 }
 
-/**
- * LinkedIn
- *
- * More professional / detailed format.
- */
-export function buildLinkedInPost(job: SocialJob): ManualSocialPost {
-  const jobUrl = buildTrackedJobUrl(job.slug, "linkedin");
-  const location = getLocation(job);
-  const skills = getSkills(job);
-  const salary = getSalary(job);
+/* =========================================================
+   LINKEDIN
+   ========================================================= */
+
+export function buildLinkedInPost(
+  job: SocialJob,
+): ManualSocialPost {
+  const jobUrl =
+    buildTrackedJobUrl(
+      job.slug,
+      "linkedin",
+    );
+
+  const location =
+    getLocation(job);
+
+  const skills =
+    getSkills(job);
+
+  const salary =
+    getSalary(job);
 
   const hashtags = [
     "#Hiring",
@@ -71,45 +112,67 @@ export function buildLinkedInPost(job: SocialJob): ManualSocialPost {
     "#CareerOpportunity",
     "#Jobs",
     "#Recruitment",
-    job.city ? `#${makeHashtag(job.city)}Jobs` : "",
-    job.sector ? `#${makeHashtag(job.sector)}Jobs` : "",
+
+    job.city
+      ? `#${makeHashtag(job.city)}Jobs`
+      : "",
+
+    job.sector
+      ? `#${makeHashtag(job.sector)}Jobs`
+      : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   const lines = [
-    `🚀 We're Hiring: ${job.title}`,
+    `🚨 Hiring Alert!`,
 
     "",
 
-    `🏢 Company: ${job.companyName}`,
+    `${job.title}`,
 
-    location ? `📍 Location: ${location}` : "",
+    job.companyName
+      ? `🏢 Company: ${job.companyName}`
+      : "",
 
-    job.workMode ? `💻 Work Mode: ${job.workMode}` : "",
+    location
+      ? `📍 ${location}`
+      : "",
 
-    job.employmentType ? `🧑‍💼 Employment Type: ${job.employmentType}` : "",
+    skills
+      ? `🛠️ Skills: ${skills}`
+      : "",
 
-    job.experienceLevel ? `🎯 Experience: ${job.experienceLevel}` : "",
+    job.experienceLevel
+      ? `🎯 ${job.experienceLevel}`
+      : "",
 
-    salary ? `💰 Salary: ${salary}` : "",
+    job.workMode &&
+    !job.workMode
+      .toLowerCase()
+      .includes("remote")
+      ? `💼 ${job.workMode}`
+      : "",
 
-    skills ? `🛠️ Skills: ${skills}` : "",
+    salary
+      ? `💰 Salary: ${salary}`
+      : "",
 
     "",
 
-    `Looking for your next career opportunity?`,
-    `This could be the role you've been waiting for.`,
+    "Apply now 👇",
 
-    "",
-
-    `👉 Apply here:`,
     jobUrl,
 
     "",
 
-    `Know someone who could be a great fit?`,
-    `Share this opportunity with them.`,
+    "📲 Join our Telegram group for more job updates:",
+
+    TELEGRAM_GROUP_URL,
+
+    "",
+
+    "Follow CareerDiscoverJobs for more opportunities.",
 
     "",
 
@@ -118,46 +181,82 @@ export function buildLinkedInPost(job: SocialJob): ManualSocialPost {
 
   return {
     platform: "linkedin",
-    content: lines.filter(Boolean).join("\n").trim(),
+
+    content: lines
+      .filter(Boolean)
+      .join("\n")
+      .trim(),
+
     jobUrl,
   };
 }
 
-/**
- * X / Twitter
- *
- * Short, punchy format.
- */
-export function buildXPost(job: SocialJob): ManualSocialPost {
-  const jobUrl = buildTrackedJobUrl(job.slug, "x");
-  const location = getLocation(job);
+/* =========================================================
+   X / TWITTER
+   ========================================================= */
+
+export function buildXPost(
+  job: SocialJob,
+): ManualSocialPost {
+  const jobUrl =
+    buildTrackedJobUrl(
+      job.slug,
+      "x",
+    );
+
+  const location =
+    getLocation(job);
+
+  const skills =
+    getSkills(job);
 
   const hashtags = [
     "#Hiring",
     "#Jobs",
     "#JobAlert",
-    job.city ? `#${makeHashtag(job.city)}Jobs` : "",
+
+    job.city &&
+    !location
+      .toLowerCase()
+      .includes("remote")
+      ? `#${makeHashtag(job.city)}Jobs`
+      : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   const lines = [
-    `🚨 Hiring Alert!`,
+    "🚨 Hiring Alert!",
 
-    `${job.title}`,
+    job.title,
 
-    job.companyName ? `🏢 ${job.companyName}` : "",
+    job.companyName
+      ? `🏢 Company: ${job.companyName}`
+      : "",
 
-    location ? `📍 ${location}` : "",
+    location
+      ? `📍 ${location}`
+      : "",
 
-    job.experienceLevel ? `🎯 ${job.experienceLevel}` : "",
+    skills
+      ? `Skills: ${skills}`
+      : "",
 
-    job.workMode ? `💻 ${job.workMode}` : "",
+    job.experienceLevel
+      ? `🎯 ${job.experienceLevel}`
+      : "",
 
     "",
 
-    `Apply now 👇`,
+    "Apply now 👇",
+
     jobUrl,
+
+    "",
+
+    "📲 Join our Telegram group for more job updates:",
+
+    TELEGRAM_GROUP_URL,
 
     "",
 
@@ -166,7 +265,12 @@ export function buildXPost(job: SocialJob): ManualSocialPost {
 
   return {
     platform: "x",
-    content: lines.filter(Boolean).join("\n").trim(),
+
+    content: lines
+      .filter(Boolean)
+      .join("\n")
+      .trim(),
+
     jobUrl,
   };
 }
