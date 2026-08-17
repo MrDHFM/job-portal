@@ -1,11 +1,30 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Layers, CheckCircle, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Layers,
+  CheckCircle,
+  AlertTriangle,
+  Search,
+} from "lucide-react";
+import Pagination from "@/components/admin/Pagination";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [page, setPage] = useState(1);
+
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [totalCategories, setTotalCategories] = useState(0);
+
+  const CATEGORIES_PER_PAGE = 25;
 
   // Modal forms
   const [modalOpen, setModalOpen] = useState(false);
@@ -20,20 +39,44 @@ export default function AdminCategoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const loadCategories = () => {
+  const loadCategories = (requestedPage = page) => {
     setLoading(true);
-    fetch("/api/admin/categories")
+
+    const params = new URLSearchParams();
+
+    params.set("page", String(requestedPage));
+
+    params.set("limit", String(CATEGORIES_PER_PAGE));
+
+    if (searchTerm.trim()) {
+      params.set("search", searchTerm.trim());
+    }
+
+    fetch(`/api/admin/categories?${params.toString()}`)
       .then((res) => res.json())
       .then((json) => {
-        if (json.success) setCategories(json.data);
+        if (json.success) {
+          setCategories(json.data || []);
+
+          setPage(json.pagination?.page || requestedPage);
+
+          setTotalPages(json.pagination?.totalPages || 1);
+
+          setTotalCategories(json.pagination?.total || 0);
+        }
       })
       .catch((e) => console.error("Error loading categories:", e))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    loadCategories();
-  }, []);
+    const timer = setTimeout(() => {
+      setPage(1);
+      loadCategories(1);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const openCreateModal = () => {
     setEditId(null);
@@ -72,7 +115,9 @@ export default function AdminCategoriesPage() {
     setSuccess(null);
 
     const method = editId ? "PUT" : "POST";
-    const url = editId ? `/api/admin/categories/${editId}` : "/api/admin/categories";
+    const url = editId
+      ? `/api/admin/categories/${editId}`
+      : "/api/admin/categories";
 
     try {
       const res = await fetch(url, {
@@ -86,7 +131,11 @@ export default function AdminCategoriesPage() {
         throw new Error(json.error || "Failed to persist category.");
       }
 
-      setSuccess(editId ? "Category updated successfully!" : "Category created successfully!");
+      setSuccess(
+        editId
+          ? "Category updated successfully!"
+          : "Category created successfully!",
+      );
       setTimeout(() => {
         setModalOpen(false);
         loadCategories();
@@ -97,10 +146,17 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This will check if any jobs depend on it.`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete "${name}"? This will check if any jobs depend on it.`,
+      )
+    )
+      return;
 
     try {
-      const res = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/categories/${id}`, {
+        method: "DELETE",
+      });
       const json = await res.json();
       if (!res.ok || !json.success) {
         throw new Error(json.error || "Deletion failed.");
@@ -108,13 +164,15 @@ export default function AdminCategoriesPage() {
       alert("Category deleted successfully.");
       loadCategories();
     } catch (err: any) {
-      alert(err.message || "Cannot delete category. Verify there are no active jobs inside this category.");
+      alert(
+        err.message ||
+          "Cannot delete category. Verify there are no active jobs inside this category.",
+      );
     }
   };
 
   return (
     <div className="space-y-6">
-      
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-neutral-900 border p-6 rounded-2xl shadow-xs">
         <div>
@@ -122,8 +180,20 @@ export default function AdminCategoriesPage() {
             <Layers className="h-6 w-6 text-blue-600" /> Categories Management
           </h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            Group jobs into industry categories. Order display sequences for public listings.
+            Group jobs into industry categories. Order display sequences for
+            public listings.
           </p>
+        </div>
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search categories..."
+            className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-9 pr-3 text-xs outline-none focus:border-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+          />
         </div>
         <button
           onClick={openCreateModal}
@@ -134,11 +204,15 @@ export default function AdminCategoriesPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">Loading categories database...</div>
+        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">
+          Loading categories database...
+        </div>
       ) : categories.length === 0 ? (
         <div className="bg-white dark:bg-neutral-900 border border-dashed rounded-2xl p-16 text-center">
           <Layers className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
-          <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No Registered Categories</h3>
+          <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
+            No Registered Categories
+          </h3>
           <p className="text-xs text-neutral-500 mt-1">
             Build your first industry classification to host active jobs.
           </p>
@@ -158,13 +232,26 @@ export default function AdminCategoriesPage() {
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {categories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/50 transition-colors">
-                  <td className="p-4 pl-6 font-extrabold text-neutral-850 dark:text-neutral-200">{cat.name}</td>
-                  <td className="p-4 text-xs font-mono text-neutral-500">{cat.slug}</td>
-                  <td className="p-4 text-neutral-600 dark:text-neutral-400 truncate max-w-xs">{cat.description || "—"}</td>
-                  <td className="p-4 text-center font-bold text-neutral-700 dark:text-neutral-300">{cat.displayOrder}</td>
+                <tr
+                  key={cat.id}
+                  className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/50 transition-colors"
+                >
+                  <td className="p-4 pl-6 font-extrabold text-neutral-850 dark:text-neutral-200">
+                    {cat.name}
+                  </td>
+                  <td className="p-4 text-xs font-mono text-neutral-500">
+                    {cat.slug}
+                  </td>
+                  <td className="p-4 text-neutral-600 dark:text-neutral-400 truncate max-w-xs">
+                    {cat.description || "—"}
+                  </td>
+                  <td className="p-4 text-center font-bold text-neutral-700 dark:text-neutral-300">
+                    {cat.displayOrder}
+                  </td>
                   <td className="p-4 text-center">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${cat.isVisible ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${cat.isVisible ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}
+                    >
                       {cat.isVisible ? "Yes" : "No"}
                     </span>
                   </td>
@@ -191,11 +278,31 @@ export default function AdminCategoriesPage() {
         </div>
       )}
 
+      {!loading && categories.length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={totalCategories}
+            limit={CATEGORIES_PER_PAGE}
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              loadCategories(nextPage);
+            }}
+          />
+        </div>
+      )}
+
       {/* Form Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-neutral-900 rounded-2xl max-w-md w-full border p-6 shadow-xl relative animate-in zoom-in-95 duration-200">
-            <button onClick={() => setModalOpen(false)} className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700">✕</button>
+            <button
+              onClick={() => setModalOpen(false)}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700"
+            >
+              ✕
+            </button>
 
             <h3 className="text-lg font-black text-neutral-900 dark:text-white mb-2">
               {editId ? "Edit Category Details" : "Create Industry Category"}
@@ -218,7 +325,9 @@ export default function AdminCategoriesPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Category Name *</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Category Name *
+                </label>
                 <input
                   type="text"
                   required
@@ -231,20 +340,28 @@ export default function AdminCategoriesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Display Sequence</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    Display Sequence
+                  </label>
                   <input
                     type="number"
                     value={form.displayOrder}
-                    onChange={(e) => setForm({ ...form, displayOrder: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, displayOrder: e.target.value })
+                    }
                     className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Visible on Portal</label>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    Visible on Portal
+                  </label>
                   <select
                     value={form.isVisible ? "true" : "false"}
-                    onChange={(e) => setForm({ ...form, isVisible: e.target.value === "true" })}
+                    onChange={(e) =>
+                      setForm({ ...form, isVisible: e.target.value === "true" })
+                    }
                     className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm focus:border-blue-500"
                   >
                     <option value="true">Yes, Visible</option>
@@ -254,11 +371,15 @@ export default function AdminCategoriesPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">Summary Description</label>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                  Summary Description
+                </label>
                 <textarea
                   rows={3}
                   value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
                   placeholder="e.g. Technical roles, engineering careers, coder stacks..."
                   className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm text-neutral-850 dark:text-neutral-50 focus:border-blue-500 resize-none"
                 ></textarea>
@@ -283,7 +404,6 @@ export default function AdminCategoriesPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

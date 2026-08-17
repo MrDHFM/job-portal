@@ -206,7 +206,7 @@ export default function AdminJobForm({
 
  useEffect(() => {
   // Load companies
-  fetch("/api/admin/companies")
+  fetch("/api/admin/companies?all=true")
     .then((res) => res.json())
     .then((json) => {
       if (json.success) {
@@ -237,7 +237,7 @@ export default function AdminJobForm({
     });
 
   // Load categories
-  fetch("/api/admin/categories")
+  fetch("/api/admin/categories?all=true")
     .then((res) => res.json())
     .then((json) => {
       if (json.success) {

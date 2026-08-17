@@ -1,26 +1,85 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Mail, CheckCircle2, Circle, Trash2, ShieldAlert, AlertTriangle } from "lucide-react";
+import {
+  Mail,
+  CheckCircle2,
+  Circle,
+  Trash2,
+  ShieldAlert,
+  AlertTriangle,
+} from "lucide-react";
+import Pagination from "@/components/admin/Pagination";
 
 export default function AdminMessagesPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
-  const loadMessages = () => {
-    setLoading(true);
-    fetch("/api/admin/messages")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) setMessages(json.data);
-      })
-      .catch((e) => console.error("Error loading messages:", e))
-      .finally(() => setLoading(false));
-  };
+  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    loadMessages();
-  }, []);
+  const [totalMessages, setTotalMessages] = useState(0);
+
+  const MESSAGES_PER_PAGE = 20;
+
+const loadMessages = (
+  requestedPage = page,
+) => {
+  setLoading(true);
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "page",
+    String(requestedPage),
+  );
+
+  params.set(
+    "limit",
+    String(MESSAGES_PER_PAGE),
+  );
+
+  fetch(
+    `/api/admin/messages?${params.toString()}`,
+  )
+    .then((res) => res.json())
+    .then((json) => {
+      if (json.success) {
+        setMessages(
+          json.data || [],
+        );
+
+        setPage(
+          json.pagination?.page ||
+            requestedPage,
+        );
+
+        setTotalPages(
+          json.pagination?.totalPages ||
+            1,
+        );
+
+        setTotalMessages(
+          json.pagination?.total || 0,
+        );
+      }
+    })
+    .catch((e) =>
+      console.error(
+        "Error loading messages:",
+        e,
+      ),
+    )
+    .finally(() =>
+      setLoading(false),
+    );
+};
+
+useEffect(() => {
+  loadMessages(1);
+}, []);
 
   const handleToggleRead = async (id: number, currentRead: boolean) => {
     try {
@@ -55,10 +114,13 @@ export default function AdminMessagesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this message inquiry?")) return;
+    if (!confirm("Are you sure you want to delete this message inquiry?"))
+      return;
 
     try {
-      const res = await fetch(`/api/admin/messages/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/messages/${id}`, {
+        method: "DELETE",
+      });
       const json = await res.json();
       if (json.success) {
         loadMessages();
@@ -70,7 +132,6 @@ export default function AdminMessagesPage() {
 
   return (
     <div className="space-y-6">
-      
       {/* Header Banner */}
       <div className="bg-white dark:bg-neutral-900 border p-6 rounded-2xl shadow-xs">
         <h1 className="text-xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
@@ -82,11 +143,15 @@ export default function AdminMessagesPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">Loading inquiries...</div>
+        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">
+          Loading inquiries...
+        </div>
       ) : messages.length === 0 ? (
         <div className="bg-white dark:bg-neutral-900 border border-dashed rounded-2xl p-16 text-center">
           <Mail className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
-          <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No messages registered</h3>
+          <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
+            No messages registered
+          </h3>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
             Incoming communications from the Contact Us form will appear here.
           </p>
@@ -110,7 +175,10 @@ export default function AdminMessagesPage() {
                   <h3 className="text-base font-extrabold text-neutral-850 dark:text-neutral-100 mt-1">
                     {msg.subject}
                   </h3>
-                  <p className="text-[10px] text-neutral-400 mt-0.5">Submitted: {new Date(msg.createdAt || msg.createdAt).toLocaleString()}</p>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">
+                    Submitted:{" "}
+                    {new Date(msg.createdAt || msg.createdAt).toLocaleString()}
+                  </p>
                 </div>
 
                 <div className="flex gap-1.5 flex-wrap shrink-0">
@@ -155,7 +223,21 @@ export default function AdminMessagesPage() {
           ))}
         </div>
       )}
-
+      {!loading &&
+  messages.length > 0 && (
+    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={totalMessages}
+        limit={MESSAGES_PER_PAGE}
+        onPageChange={(nextPage) => {
+          setPage(nextPage);
+          loadMessages(nextPage);
+        }}
+      />
+    </div>
+  )}
     </div>
   );
 }

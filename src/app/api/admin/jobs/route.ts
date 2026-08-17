@@ -17,50 +17,157 @@ function makeSlug(title: string, companyName: string, city: string): string {
 export async function GET(req: Request) {
   try {
     const session = await getAdminSession();
+
     if (!session) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized" },
+        {
+          success: false,
+          error: "Unauthorized",
+        },
         { status: 401 },
       );
     }
 
-    const adminJobs = await db
-      .select({
-        id: jobs.id,
-        title: jobs.title,
-        slug: jobs.slug,
-        status: jobs.status,
-        sector: jobs.sector,
-        employmentType: jobs.employmentType,
-        experienceLevel: jobs.experienceLevel,
-        workMode: jobs.workMode,
-        city: jobs.city,
-        isFeatured: jobs.isFeatured,
-        isUrgent: jobs.isUrgent,
-        createdAt: jobs.createdAt,
-        applicationDeadline: jobs.applicationDeadline,
-        expiresAt: jobs.expiresAt,
-        viewsCount: jobs.viewsCount,
-        applyClicksCount: jobs.applyClicksCount,
-        company: {
-          id: companies.id,
-          name: companies.name,
-        },
-        category: {
-          id: categories.id,
-          name: categories.name,
-        },
-      })
-      .from(jobs)
-      .innerJoin(companies, eq(jobs.companyId, companies.id))
-      .innerJoin(categories, eq(jobs.categoryId, categories.id))
-      .orderBy(desc(jobs.createdAt));
+    const { searchParams } = new URL(req.url);
 
-    return NextResponse.json({ success: true, data: adminJobs });
+    const page = Math.max(
+      1,
+      Number(searchParams.get("page") || "1"),
+    );
+
+    const limit = Math.min(
+      100,
+      Math.max(
+        1,
+        Number(searchParams.get("limit") || "25"),
+      ),
+    );
+
+    const offset = (page - 1) * limit;
+
+    const search = (
+      searchParams.get("search") || ""
+    ).trim();
+
+    const status =
+      searchParams.get("status") || "";
+
+    const conditions = [];
+
+    if (search) {
+      conditions.push(
+        sql`(
+          ${jobs.title} ILIKE ${`%${search}%`}
+          OR ${companies.name} ILIKE ${`%${search}%`}
+        )`,
+      );
+    }
+
+    if (
+      status &&
+      ["PUBLISHED", "DRAFT", "ARCHIVED"].includes(status)
+    ) {
+      conditions.push(
+        eq(jobs.status, status),
+      );
+    }
+
+    const whereCondition =
+      conditions.length > 0
+        ? and(...conditions)
+        : undefined;
+
+    const [adminJobs, countResult] =
+      await Promise.all([
+        db
+          .select({
+            id: jobs.id,
+            title: jobs.title,
+            slug: jobs.slug,
+            status: jobs.status,
+            sector: jobs.sector,
+            employmentType:
+              jobs.employmentType,
+            experienceLevel:
+              jobs.experienceLevel,
+            workMode: jobs.workMode,
+            city: jobs.city,
+            isFeatured: jobs.isFeatured,
+            isUrgent: jobs.isUrgent,
+            createdAt: jobs.createdAt,
+            applicationDeadline:
+              jobs.applicationDeadline,
+            expiresAt: jobs.expiresAt,
+            viewsCount: jobs.viewsCount,
+            applyClicksCount:
+              jobs.applyClicksCount,
+
+            company: {
+              id: companies.id,
+              name: companies.name,
+            },
+
+            category: {
+              id: categories.id,
+              name: categories.name,
+            },
+          })
+          .from(jobs)
+          .innerJoin(
+            companies,
+            eq(jobs.companyId, companies.id),
+          )
+          .innerJoin(
+            categories,
+            eq(jobs.categoryId, categories.id),
+          )
+          .where(whereCondition)
+          .orderBy(desc(jobs.createdAt))
+          .limit(limit)
+          .offset(offset),
+
+        db
+          .select({
+            count: sql<number>`count(*)::int`,
+          })
+          .from(jobs)
+          .innerJoin(
+            companies,
+            eq(jobs.companyId, companies.id),
+          )
+          .innerJoin(
+            categories,
+            eq(jobs.categoryId, categories.id),
+          )
+          .where(whereCondition),
+      ]);
+
+    const total = countResult[0]?.count || 0;
+
+    const totalPages =
+      Math.ceil(total / limit);
+
+    return NextResponse.json({
+      success: true,
+      data: adminJobs,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
   } catch (error: any) {
-    console.error("Error in GET /api/admin/jobs:", error);
+    console.error(
+      "Error in GET /api/admin/jobs:",
+      error,
+    );
+
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
+      {
+        success: false,
+        error: "Internal server error",
+      },
       { status: 500 },
     );
   }

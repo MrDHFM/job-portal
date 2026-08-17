@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { categories, adminActivityLogs } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import {
+  eq,
+  desc,
+  asc,
+  ilike,
+  sql,
+} from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
 
 // Helper to make slug
@@ -12,22 +18,145 @@ function makeSlug(name: string): string {
     .replace(/(^-|-$)+/g, "");
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(
+  req: NextRequest,
+) {
   try {
-    const session = await getAdminSession();
+    const session =
+      await getAdminSession();
+
     if (!session) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
+        },
+        { status: 401 },
+      );
     }
 
-    const allCategories = await db
-      .select()
-      .from(categories)
-      .orderBy(categories.displayOrder, categories.name);
+    const { searchParams } =
+      new URL(req.url);
 
-    return NextResponse.json({ success: true, data: allCategories });
+    /*
+     * Dropdowns can request every category.
+     */
+    const getAll =
+      searchParams.get("all") === "true";
+
+    const search =
+      (
+        searchParams.get("search") || ""
+      ).trim();
+
+    const whereCondition =
+      search
+        ? ilike(
+            categories.name,
+            `%${search}%`,
+          )
+        : undefined;
+
+    if (getAll) {
+      const allCategories =
+        await db
+          .select()
+          .from(categories)
+          .where(whereCondition)
+          .orderBy(
+            asc(
+              categories.displayOrder,
+            ),
+            asc(categories.name),
+          );
+
+      return NextResponse.json({
+        success: true,
+        data: allCategories,
+        pagination: {
+          page: 1,
+          limit: allCategories.length,
+          total: allCategories.length,
+          totalPages: 1,
+        },
+      });
+    }
+
+    const page = Math.max(
+      1,
+      Number(
+        searchParams.get("page") || "1",
+      ),
+    );
+
+    const limit = Math.min(
+      100,
+      Math.max(
+        1,
+        Number(
+          searchParams.get("limit") || "25",
+        ),
+      ),
+    );
+
+    const offset =
+      (page - 1) * limit;
+
+    const [
+      allCategories,
+      countResult,
+    ] = await Promise.all([
+      db
+        .select()
+        .from(categories)
+        .where(whereCondition)
+        .orderBy(
+          asc(
+            categories.displayOrder,
+          ),
+          asc(categories.name),
+        )
+        .limit(limit)
+        .offset(offset),
+
+      db
+        .select({
+          count:
+            sql<number>`count(*)::int`,
+        })
+        .from(categories)
+        .where(whereCondition),
+    ]);
+
+    const total =
+      countResult[0]?.count || 0;
+
+    const totalPages =
+      Math.ceil(total / limit);
+
+    return NextResponse.json({
+      success: true,
+      data: allCategories,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
   } catch (error: any) {
-    console.error("Error in GET /api/admin/categories:", error);
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+    console.error(
+      "Error in GET /api/admin/categories:",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+      },
+      { status: 500 },
+    );
   }
 }
 

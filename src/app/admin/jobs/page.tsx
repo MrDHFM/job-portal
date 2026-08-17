@@ -25,8 +25,15 @@ import {
 import SocialMediaPostManager from "@/components/SocialMediaPostManager";
 import { isJobExpired } from "@/lib/jobs/job-expiry";
 
+import Pagination from "@/components/admin/Pagination";
+
 export default function AdminJobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
+
+  const JOBS_PER_PAGE = 6;
   const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,14 +46,34 @@ export default function AdminJobsPage() {
   const [selectedJobIds, setSelectedJobIds] = useState<number[]>([]);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  const loadJobs = () => {
+  const loadJobs = (requestedPage = page) => {
     setLoading(true);
 
-    fetch("/api/admin/jobs")
+    const params = new URLSearchParams();
+
+    params.set("page", String(requestedPage));
+
+    params.set("limit", String(JOBS_PER_PAGE));
+
+    if (searchTerm.trim()) {
+      params.set("search", searchTerm.trim());
+    }
+
+    if (statusFilter && statusFilter !== "EXPIRED") {
+      params.set("status", statusFilter);
+    }
+
+    fetch(`/api/admin/jobs?${params.toString()}`)
       .then((res) => res.json())
       .then((json) => {
         if (json.success) {
-          setJobs(json.data);
+          setJobs(json.data || []);
+
+          setTotalPages(json.pagination?.totalPages || 1);
+
+          setTotalJobs(json.pagination?.total || 0);
+
+          setPage(json.pagination?.page || requestedPage);
         }
       })
       .catch((e) => console.error("Error loading jobs:", e))
@@ -54,8 +81,8 @@ export default function AdminJobsPage() {
   };
 
   useEffect(() => {
-    loadJobs();
-  }, []);
+    loadJobs(1);
+  }, [searchTerm, statusFilter]);
 
   const handleDuplicate = async (id: number, title: string) => {
     if (
@@ -84,12 +111,8 @@ export default function AdminJobsPage() {
     }
   };
 
-  const handleToggleStatus = async (
-    id: number,
-    currentStatus: string,
-  ) => {
-    const newStatus =
-      currentStatus === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
+  const handleToggleStatus = async (id: number, currentStatus: string) => {
+    const newStatus = currentStatus === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
 
     try {
       const res = await fetch(`/api/admin/jobs/${id}`, {
@@ -131,9 +154,7 @@ export default function AdminJobsPage() {
       const json = await res.json();
 
       if (json.success) {
-        setSelectedJobIds((current) =>
-          current.filter((jobId) => jobId !== id),
-        );
+        setSelectedJobIds((current) => current.filter((jobId) => jobId !== id));
 
         loadJobs();
       } else {
@@ -152,18 +173,14 @@ export default function AdminJobsPage() {
     const company = String(job.company?.name || "").toLowerCase();
     const search = searchTerm.toLowerCase();
 
-    const matchesSearch =
-      title.includes(search) || company.includes(search);
+    const matchesSearch = title.includes(search) || company.includes(search);
 
     const expired = isJobExpired(job);
 
-    const effectiveStatus = expired
-      ? "EXPIRED"
-      : job.status;
+    const effectiveStatus = expired ? "EXPIRED" : job.status;
 
     const matchesStatus =
-      statusFilter === "" ||
-      effectiveStatus === statusFilter;
+      statusFilter === "" || effectiveStatus === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -174,21 +191,17 @@ export default function AdminJobsPage() {
    * This is important because Select All should only select
    * jobs currently displayed after search/filter.
    */
-  const visibleJobIds = filteredJobs.map(
-    (job) => Number(job.id),
-  );
+  const visibleJobIds = filteredJobs.map((job) => Number(job.id));
 
   const selectedVisibleCount = visibleJobIds.filter((id) =>
     selectedJobIds.includes(id),
   ).length;
 
   const allVisibleSelected =
-    filteredJobs.length > 0 &&
-    selectedVisibleCount === filteredJobs.length;
+    filteredJobs.length > 0 && selectedVisibleCount === filteredJobs.length;
 
   const someVisibleSelected =
-    selectedVisibleCount > 0 &&
-    selectedVisibleCount < filteredJobs.length;
+    selectedVisibleCount > 0 && selectedVisibleCount < filteredJobs.length;
 
   /*
    * Select / deselect one job
@@ -209,9 +222,7 @@ export default function AdminJobsPage() {
   const toggleSelectAll = () => {
     if (allVisibleSelected) {
       setSelectedJobIds((current) =>
-        current.filter(
-          (id) => !visibleJobIds.includes(id),
-        ),
+        current.filter((id) => !visibleJobIds.includes(id)),
       );
 
       return;
@@ -261,12 +272,9 @@ export default function AdminJobsPage() {
        */
       const results = await Promise.all(
         selectedJobIds.map(async (id) => {
-          const res = await fetch(
-            `/api/admin/jobs/${id}`,
-            {
-              method: "DELETE",
-            },
-          );
+          const res = await fetch(`/api/admin/jobs/${id}`, {
+            method: "DELETE",
+          });
 
           const json = await res.json();
 
@@ -278,17 +286,13 @@ export default function AdminJobsPage() {
         }),
       );
 
-      const failed = results.filter(
-        (result) => !result.success,
-      );
+      const failed = results.filter((result) => !result.success);
 
       if (failed.length > 0) {
         alert(
           `${count - failed.length} job${
             count - failed.length === 1 ? "" : "s"
-          } deleted successfully.\n\n${
-            failed.length
-          } job${
+          } deleted successfully.\n\n${failed.length} job${
             failed.length === 1 ? "" : "s"
           } could not be deleted.`,
         );
@@ -307,16 +311,10 @@ export default function AdminJobsPage() {
   /*
    * Status badge
    */
-  const StatusBadge = ({
-    job,
-  }: {
-    job: any;
-  }) => {
+  const StatusBadge = ({ job }: { job: any }) => {
     const expired = isJobExpired(job);
 
-    const effectiveStatus = expired
-      ? "EXPIRED"
-      : job.status;
+    const effectiveStatus = expired ? "EXPIRED" : job.status;
 
     const classes =
       effectiveStatus === "PUBLISHED"
@@ -337,15 +335,9 @@ export default function AdminJobsPage() {
           }
         }}
         className={`inline-flex items-center rounded-md border px-2 py-1 text-[10px] font-black tracking-wider uppercase ${classes} ${
-          expired
-            ? "cursor-default"
-            : "cursor-pointer hover:opacity-80"
+          expired ? "cursor-default" : "cursor-pointer hover:opacity-80"
         }`}
-        title={
-          expired
-            ? "This job has expired"
-            : "Click to toggle status"
-        }
+        title={expired ? "This job has expired" : "Click to toggle status"}
       >
         {effectiveStatus}
       </button>
@@ -355,11 +347,7 @@ export default function AdminJobsPage() {
   /*
    * Job selection checkbox
    */
-  const JobCheckbox = ({
-    job,
-  }: {
-    job: any;
-  }) => {
+  const JobCheckbox = ({ job }: { job: any }) => {
     const id = Number(job.id);
     const checked = selectedJobIds.includes(id);
 
@@ -367,11 +355,7 @@ export default function AdminJobsPage() {
       <button
         type="button"
         onClick={() => toggleJobSelection(id)}
-        aria-label={
-          checked
-            ? `Deselect ${job.title}`
-            : `Select ${job.title}`
-        }
+        aria-label={checked ? `Deselect ${job.title}` : `Select ${job.title}`}
         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
           checked
             ? "border-blue-600 bg-blue-600 text-white"
@@ -386,11 +370,7 @@ export default function AdminJobsPage() {
   /*
    * Job actions
    */
-  const JobActions = ({
-    job,
-  }: {
-    job: any;
-  }) => {
+  const JobActions = ({ job }: { job: any }) => {
     return (
       <div className="flex items-center justify-end gap-0.5">
         <Link
@@ -404,9 +384,7 @@ export default function AdminJobsPage() {
 
         <button
           type="button"
-          onClick={() =>
-            handleDuplicate(job.id, job.title)
-          }
+          onClick={() => handleDuplicate(job.id, job.title)}
           className="rounded-md p-1.5 text-neutral-500 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
           title="Duplicate as DRAFT"
         >
@@ -423,9 +401,7 @@ export default function AdminJobsPage() {
 
         <button
           type="button"
-          onClick={() =>
-            handleDelete(job.id, job.title)
-          }
+          onClick={() => handleDelete(job.id, job.title)}
           className="rounded-md p-1.5 text-neutral-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/20"
           title="Delete Permanently"
         >
@@ -446,8 +422,8 @@ export default function AdminJobsPage() {
           </h1>
 
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Create, duplicate, edit, or archive job postings.
-            Duplicating a job creates a new draft.
+            Create, duplicate, edit, or archive job postings. Duplicating a job
+            creates a new draft.
           </p>
         </div>
 
@@ -471,9 +447,7 @@ export default function AdminJobsPage() {
               type="text"
               placeholder="Search job title or company..."
               value={searchTerm}
-              onChange={(e) =>
-                setSearchTerm(e.target.value)
-              }
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-2 pl-9 pr-4 text-sm text-neutral-800 outline-none transition placeholder:text-neutral-400 focus:border-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
             />
           </div>
@@ -491,16 +465,10 @@ export default function AdminJobsPage() {
               className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-800 outline-none transition focus:border-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
             >
               <option value="">All Statuses</option>
-              <option value="PUBLISHED">
-                Published
-              </option>
+              <option value="PUBLISHED">Published</option>
               <option value="DRAFT">Draft</option>
-              <option value="EXPIRED">
-                Expired
-              </option>
-              <option value="ARCHIVED">
-                Archived
-              </option>
+              <option value="EXPIRED">Expired</option>
+              <option value="ARCHIVED">Archived</option>
             </select>
           </div>
 
@@ -556,14 +524,11 @@ export default function AdminJobsPage() {
                   : "Select all visible jobs"
               }
             >
-              {allVisibleSelected && (
-                <Check className="h-3 w-3" />
-              )}
+              {allVisibleSelected && <Check className="h-3 w-3" />}
 
-              {someVisibleSelected &&
-                !allVisibleSelected && (
-                  <span className="h-0.5 w-2 bg-blue-600" />
-                )}
+              {someVisibleSelected && !allVisibleSelected && (
+                <span className="h-0.5 w-2 bg-blue-600" />
+              )}
             </button>
 
             <button
@@ -571,16 +536,11 @@ export default function AdminJobsPage() {
               onClick={toggleSelectAll}
               className="text-xs font-bold text-neutral-700 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400"
             >
-              {allVisibleSelected
-                ? "Deselect All"
-                : "Select All"}
+              {allVisibleSelected ? "Deselect All" : "Select All"}
             </button>
 
             <span className="text-xs text-neutral-400">
-              {filteredJobs.length}{" "}
-              {filteredJobs.length === 1
-                ? "job"
-                : "jobs"}{" "}
+              {filteredJobs.length} {filteredJobs.length === 1 ? "job" : "jobs"}{" "}
               shown
             </span>
           </div>
@@ -633,9 +593,8 @@ export default function AdminJobsPage() {
           </h3>
 
           <p className="mx-auto mt-1 max-w-sm text-xs text-neutral-500 dark:text-neutral-400">
-            All positions come from legitimate PostgreSQL
-            records. Create your first job by tapping the
-            button above.
+            All positions come from legitimate PostgreSQL records. Create your
+            first job by tapping the button above.
           </p>
         </div>
       ) : viewMode === "list" ? (
@@ -659,48 +618,29 @@ export default function AdminJobsPage() {
                     }`}
                     aria-label="Select all jobs"
                   >
-                    {allVisibleSelected && (
-                      <Check className="h-3 w-3" />
-                    )}
+                    {allVisibleSelected && <Check className="h-3 w-3" />}
 
-                    {someVisibleSelected &&
-                      !allVisibleSelected && (
-                        <span className="h-0.5 w-2 bg-blue-600" />
-                      )}
+                    {someVisibleSelected && !allVisibleSelected && (
+                      <span className="h-0.5 w-2 bg-blue-600" />
+                    )}
                   </button>
                 </th>
 
-                <th className="px-4 py-3">
-                  Job Posting
-                </th>
+                <th className="px-4 py-3">Job Posting</th>
 
-                <th className="px-4 py-3">
-                  Category
-                </th>
+                <th className="px-4 py-3">Category</th>
 
-                <th className="px-4 py-3">
-                  Location
-                </th>
+                <th className="px-4 py-3">Location</th>
 
-                <th className="px-4 py-3">
-                  Status
-                </th>
+                <th className="px-4 py-3">Status</th>
 
-                <th className="px-4 py-3">
-                  Social
-                </th>
+                <th className="px-4 py-3">Social</th>
 
-                <th className="px-4 py-3 text-center">
-                  Views
-                </th>
+                <th className="px-4 py-3 text-center">Views</th>
 
-                <th className="px-4 py-3 text-center">
-                  Apply Clicks
-                </th>
+                <th className="px-4 py-3 text-center">Apply Clicks</th>
 
-                <th className="px-4 py-3 text-right">
-                  Actions
-                </th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
 
@@ -709,9 +649,7 @@ export default function AdminJobsPage() {
                 <tr
                   key={job.id}
                   className={`transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/40 ${
-                    selectedJobIds.includes(
-                      Number(job.id),
-                    )
+                    selectedJobIds.includes(Number(job.id))
                       ? "bg-blue-50/40 dark:bg-blue-950/10"
                       : ""
                   }`}
@@ -754,18 +692,14 @@ export default function AdminJobsPage() {
                   <td className="px-4 py-3 text-center text-xs font-bold text-neutral-700 dark:text-neutral-300">
                     <span className="inline-flex items-center gap-1">
                       <Eye className="h-3 w-3 text-neutral-400" />
-                      {Number(
-                        job.viewsCount ?? 0,
-                      ).toLocaleString()}
+                      {Number(job.viewsCount ?? 0).toLocaleString()}
                     </span>
                   </td>
 
                   <td className="px-4 py-3 text-center text-xs font-bold text-neutral-700 dark:text-neutral-300">
                     <span className="inline-flex items-center gap-1">
                       <MousePointerClick className="h-3 w-3 text-neutral-400" />
-                      {Number(
-                        job.applyClicksCount ?? 0,
-                      ).toLocaleString()}
+                      {Number(job.applyClicksCount ?? 0).toLocaleString()}
                     </span>
                   </td>
 
@@ -783,9 +717,7 @@ export default function AdminJobsPage() {
          */
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredJobs.map((job) => {
-            const selected = selectedJobIds.includes(
-              Number(job.id),
-            );
+            const selected = selectedJobIds.includes(Number(job.id));
 
             return (
               <div
@@ -849,9 +781,7 @@ export default function AdminJobsPage() {
                       </p>
 
                       <p className="text-sm font-black text-neutral-800 dark:text-neutral-200">
-                        {Number(
-                          job.viewsCount ?? 0,
-                        ).toLocaleString()}
+                        {Number(job.viewsCount ?? 0).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -865,9 +795,7 @@ export default function AdminJobsPage() {
                       </p>
 
                       <p className="text-sm font-black text-neutral-800 dark:text-neutral-200">
-                        {Number(
-                          job.applyClicksCount ?? 0,
-                        ).toLocaleString()}
+                        {Number(job.applyClicksCount ?? 0).toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -879,10 +807,7 @@ export default function AdminJobsPage() {
                     Social
                   </span>
 
-                  <SocialMediaPostManager
-                    jobId={job.id}
-                    jobTitle={job.title}
-                  />
+                  <SocialMediaPostManager jobId={job.id} jobTitle={job.title} />
                 </div>
 
                 {/* Actions */}
@@ -892,6 +817,21 @@ export default function AdminJobsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+      {!loading && jobs.length > 0 && (
+        <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={totalJobs}
+            limit={JOBS_PER_PAGE}
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              setSelectedJobIds([]);
+              loadJobs(nextPage);
+            }}
+          />
         </div>
       )}
     </div>
