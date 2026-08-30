@@ -57,7 +57,7 @@ const platformConfig = {
   linkedin: {
     label: "LinkedIn",
     short: "IN",
-    description: "Manual publishing",
+    description: "Automatic publishing (Company Page)",
   },
   x: {
     label: "X",
@@ -81,7 +81,7 @@ function StatusIcon({ status }: { status: SocialStatus["status"] }) {
 
   if (status === "MANUAL_READY") {
     return (
-      <ClipboardCheck className="h-4 w-4 text-blue-500 shrink-0" />
+      <ClipboardCheck className="h-4 w-4 text-[var(--color-primary)] shrink-0" />
     );
   }
 
@@ -97,7 +97,7 @@ function StatusBadge({ status }: { status: SocialStatus["status"] }) {
     FAILED:
       "bg-red-50 text-red-700 border-red-200",
     MANUAL_READY:
-      "bg-blue-50 text-blue-700 border-blue-200",
+      "bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] border-[var(--color-primary)]/30",
     PENDING:
       "bg-amber-50 text-amber-700 border-amber-200",
   };
@@ -144,6 +144,10 @@ export default function SocialMediaPostManager({
 
   const [markingPlatform, setMarkingPlatform] = useState<
     "linkedin" | "x" | null
+  >(null);
+
+  const [retryingPlatform, setRetryingPlatform] = useState<
+    Platform | null
   >(null);
 
   const loadSocialPosts = async () => {
@@ -200,10 +204,7 @@ export default function SocialMediaPostManager({
 
     return {
       platform,
-      status:
-        platform === "linkedin" || platform === "x"
-          ? "MANUAL_READY"
-          : "PENDING",
+      status: platform === "x" ? "MANUAL_READY" : "PENDING",
     };
   };
 
@@ -294,12 +295,55 @@ export default function SocialMediaPostManager({
     );
   };
 
+  const retryPlatform = async (
+    platform: "telegram" | "instagram" | "linkedin"
+  ) => {
+    try {
+      setRetryingPlatform(platform);
+
+      const response = await fetch(
+        `/api/admin/jobs/${jobId}/social-posts/${platform}`,
+        { method: "POST" }
+      );
+
+      const json = await response.json();
+
+      if (!response.ok && !json.data) {
+        throw new Error(
+          json.error || "Failed to retry publishing."
+        );
+      }
+
+      await loadSocialPosts();
+
+      if (!json.success) {
+        alert(
+          json.error ||
+            `${platform} retry did not succeed. Check the error details on the card.`
+        );
+      }
+    } catch (error) {
+      console.error(
+        `Failed to retry ${platform}:`,
+        error
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to retry publishing."
+      );
+    } finally {
+      setRetryingPlatform(null);
+    }
+  };
+
   const renderPlatformIcon = (
     platform: Platform
   ) => {
     if (platform === "telegram") {
       return (
-        <div className="h-9 w-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+        <div className="h-9 w-9 rounded-md bg-sky-50 text-sky-600 flex items-center justify-center">
           <Send className="h-4 w-4" />
         </div>
       );
@@ -307,7 +351,7 @@ export default function SocialMediaPostManager({
 
     if (platform === "instagram") {
       return (
-        <div className="h-9 w-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center">
+        <div className="h-9 w-9 rounded-md bg-pink-50 text-pink-600 flex items-center justify-center">
           <span className="font-bold text-sm">IG</span>
         </div>
       );
@@ -315,14 +359,14 @@ export default function SocialMediaPostManager({
 
     if (platform === "linkedin") {
       return (
-        <div className="h-9 w-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+        <div className="h-9 w-9 rounded-md bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] flex items-center justify-center">
           <span className="font-bold text-sm">in</span>
         </div>
       );
     }
 
     return (
-      <div className="h-9 w-9 rounded-xl bg-neutral-100 text-neutral-900 flex items-center justify-center font-black text-sm">
+      <div className="h-9 w-9 rounded-md bg-neutral-100 text-neutral-900 flex items-center justify-center font-black text-sm">
         𝕏
       </div>
     );
@@ -334,12 +378,12 @@ export default function SocialMediaPostManager({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary-light)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--color-primary-dark)] hover:opacity-80 transition-colors"
         title="Manage social media publishing"
       >
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-50" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600" />
+          <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--color-primary)] opacity-50" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--color-primary)]" />
         </span>
 
         Social
@@ -357,16 +401,16 @@ export default function SocialMediaPostManager({
           />
 
           {/* Modal */}
-          <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 shadow-2xl">
+          <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-lg bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 shadow-2xl">
             {/* Header */}
             <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-neutral-200 dark:border-neutral-800">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="h-8 w-8 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-md bg-[var(--color-primary)] text-white flex items-center justify-center">
                     <Send className="h-4 w-4" />
                   </div>
 
-                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-primary)]">
                     Social Distribution
                   </span>
                 </div>
@@ -385,7 +429,7 @@ export default function SocialMediaPostManager({
                   type="button"
                   onClick={loadSocialPosts}
                   disabled={loading}
-                  className="h-9 w-9 rounded-xl border border-neutral-200 dark:border-neutral-800 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-900 disabled:opacity-50"
+                  className="h-9 w-9 rounded-md border border-neutral-200 dark:border-neutral-800 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-900 disabled:opacity-50"
                   title="Refresh"
                 >
                   <RefreshCw
@@ -398,7 +442,7 @@ export default function SocialMediaPostManager({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="h-9 w-9 rounded-xl border border-neutral-200 dark:border-neutral-800 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-900"
+                  className="h-9 w-9 rounded-md border border-neutral-200 dark:border-neutral-800 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-900"
                   title="Close"
                 >
                   <X className="h-4 w-4" />
@@ -410,7 +454,7 @@ export default function SocialMediaPostManager({
             <div className="overflow-y-auto max-h-[calc(90vh-145px)] p-6">
               {loading && statuses.length === 0 ? (
                 <div className="py-16 flex flex-col items-center justify-center">
-                  <Loader2 className="h-7 w-7 animate-spin text-blue-600 mb-3" />
+                  <Loader2 className="h-7 w-7 animate-spin text-[var(--color-primary)] mb-3" />
 
                   <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
                     Loading social media status...
@@ -430,11 +474,12 @@ export default function SocialMediaPostManager({
                       <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {(
                         [
                           "telegram",
                           "instagram",
+                          "linkedin",
                         ] as Platform[]
                       ).map((platform) => {
                         const status =
@@ -443,7 +488,7 @@ export default function SocialMediaPostManager({
                         return (
                           <div
                             key={platform}
-                            className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/60 p-4"
+                            className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-900/60 p-4"
                           >
                             <div className="flex items-center justify-between gap-3">
                               <div className="flex items-center gap-3">
@@ -480,7 +525,7 @@ export default function SocialMediaPostManager({
                             {status.status ===
                               "FAILED" &&
                               status.errorMessage && (
-                                <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3">
+                                <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3">
                                   <div className="flex gap-2">
                                     <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
 
@@ -493,6 +538,34 @@ export default function SocialMediaPostManager({
                                 </div>
                               )}
 
+                            {status.status ===
+                              "FAILED" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  retryPlatform(
+                                    platform as
+                                      | "telegram"
+                                      | "instagram"
+                                      | "linkedin"
+                                  )
+                                }
+                                disabled={
+                                  retryingPlatform ===
+                                  platform
+                                }
+                                className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-neutral-200 dark:border-neutral-700 px-3 py-1.5 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50"
+                              >
+                                {retryingPlatform ===
+                                platform ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="h-3.5 w-3.5" />
+                                )}
+                                Retry
+                              </button>
+                            )}
+
                             {status.externalPostUrl && (
                               <button
                                 type="button"
@@ -501,7 +574,7 @@ export default function SocialMediaPostManager({
                                     status.externalPostUrl
                                   )
                                 }
-                                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
+                                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-primary)] hover:opacity-80"
                               >
                                 View published post
                                 <ExternalLink className="h-3 w-3" />
@@ -526,12 +599,7 @@ export default function SocialMediaPostManager({
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                      {(
-                        [
-                          "linkedin",
-                          "x",
-                        ] as const
-                      ).map((platform) => {
+                      {(["x"] as const).map((platform) => {
                         const status =
                           getStatus(platform);
 
@@ -545,7 +613,7 @@ export default function SocialMediaPostManager({
                         return (
                           <div
                             key={platform}
-                            className="rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+                            className="rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden"
                           >
                             {/* Platform header */}
                             <div className="flex items-center justify-between gap-3 p-4 bg-neutral-50 dark:bg-neutral-900">
@@ -593,9 +661,9 @@ export default function SocialMediaPostManager({
                                     className="w-full text-left"
                                   >
                                     <div
-                                      className={`rounded-xl border bg-white dark:bg-neutral-950 p-4 transition-all ${
+                                      className={`rounded-md border bg-white dark:bg-neutral-950 p-4 transition-all ${
                                         isActive
-                                          ? "border-blue-300 ring-2 ring-blue-100 dark:ring-blue-950"
+                                          ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary-light)]"
                                           : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-300"
                                       }`}
                                     >
@@ -613,7 +681,7 @@ export default function SocialMediaPostManager({
                                           platform
                                         )
                                       }
-                                      className="inline-flex items-center gap-2 rounded-xl bg-neutral-950 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-neutral-950 hover:opacity-90 transition-opacity"
+                                      className="inline-flex items-center gap-2 rounded-md bg-neutral-950 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-neutral-950 hover:opacity-90 transition-opacity"
                                     >
                                       {copiedPlatform ===
                                       platform ? (
@@ -642,7 +710,7 @@ export default function SocialMediaPostManager({
                                           markingPlatform ===
                                           platform
                                         }
-                                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                                        className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
                                       >
                                         {markingPlatform ===
                                         platform ? (
@@ -663,7 +731,7 @@ export default function SocialMediaPostManager({
                                             status.externalPostUrl
                                           )
                                         }
-                                        className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-100"
+                                        className="inline-flex items-center gap-2 rounded-md border border-[var(--color-primary)]/30 bg-[var(--color-primary-light)] px-4 py-2.5 text-xs font-bold text-[var(--color-primary-dark)] hover:opacity-80"
                                       >
                                         <ExternalLink className="h-4 w-4" />
                                         View Post
@@ -673,7 +741,7 @@ export default function SocialMediaPostManager({
                                 </>
                               ) : (
                                 <div className="py-8 text-center">
-                                  <Loader2 className="h-5 w-5 animate-spin text-blue-600 mx-auto mb-2" />
+                                  <Loader2 className="h-5 w-5 animate-spin text-[var(--color-primary)] mx-auto mb-2" />
 
                                   <p className="text-xs text-neutral-500">
                                     Generating manual
@@ -695,9 +763,8 @@ export default function SocialMediaPostManager({
             <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <p className="text-[10px] text-neutral-500">
-                  Telegram & Instagram publish
-                  automatically. LinkedIn & X are
-                  intentionally manual.
+                  Telegram, Instagram & LinkedIn publish
+                  automatically. X remains manual by design.
                 </p>
 
                 <button

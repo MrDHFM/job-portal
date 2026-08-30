@@ -4,17 +4,51 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Building2, Search, MapPin, Layers, ChevronRight, Briefcase } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import Pagination from "@/components/admin/Pagination";
+import { CompanyCardSkeleton } from "@/components/Skeletons";
+
+const COMPANIES_PER_PAGE = 12;
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [industryFilter, setIndustryFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [industries, setIndustries] = useState<string[]>([]);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  // Debounce the free-text search box so we don't fire a request per keystroke.
   useEffect(() => {
+    const timer = setTimeout(() => setSearchTerm(searchInput.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Populate the industry dropdown independently of the current page,
+  // so filter options don't shrink to whatever happens to be on page 1.
+  useEffect(() => {
+    fetch(`/api/v1/companies?limit=50&page=1`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) {
+          const unique = Array.from(
+            new Set((json.data || []).map((c: any) => c.industry).filter(Boolean)),
+          ) as string[];
+          setIndustries(unique);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const loadCompanies = (requestedPage = page) => {
     setLoading(true);
     const query = new URLSearchParams();
+    query.set("page", String(requestedPage));
+    query.set("limit", String(COMPANIES_PER_PAGE));
     if (searchTerm) query.set("search", searchTerm);
     if (industryFilter) query.set("industry", industryFilter);
     if (locationFilter) query.set("location", locationFilter);
@@ -24,14 +58,21 @@ export default function CompaniesPage() {
       .then((json) => {
         if (json.success) {
           setCompanies(json.data);
+          setPage(json.pagination?.page || requestedPage);
+          setTotalPages(json.pagination?.totalPages || 1);
+          setTotal(json.pagination?.total || 0);
         }
       })
       .catch((e) => console.error("Failed to load companies:", e))
       .finally(() => setLoading(false));
-  }, [searchTerm, industryFilter, locationFilter]);
+  };
 
-  // Derive unique industries list from active companies for the filter
-  const industries = Array.from(new Set(companies.map((c) => c.industry).filter(Boolean)));
+  // Reset to page 1 whenever a filter changes (Part 7).
+  useEffect(() => {
+    setPage(1);
+    loadCompanies(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, industryFilter, locationFilter]);
 
   return (
     <PublicLayout>
@@ -48,15 +89,15 @@ export default function CompaniesPage() {
           </div>
 
           {/* Interactive Filters Grid */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 rounded-2xl shadow-sm mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 rounded-lg shadow-sm mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3.5 h-4 w-4 text-neutral-400" />
               <input
                 type="text"
                 placeholder="Search company name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:border-blue-500 text-neutral-850 dark:text-neutral-50"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md pl-9 pr-4 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] text-neutral-850 dark:text-neutral-50"
               />
             </div>
 
@@ -65,7 +106,7 @@ export default function CompaniesPage() {
               <select
                 value={industryFilter}
                 onChange={(e) => setIndustryFilter(e.target.value)}
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:border-blue-500 text-neutral-850 dark:text-neutral-50 appearance-none"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md pl-9 pr-4 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] text-neutral-850 dark:text-neutral-50 appearance-none"
               >
                 <option value="">All Industries</option>
                 {industries.map((ind) => (
@@ -81,7 +122,7 @@ export default function CompaniesPage() {
                 placeholder="HQ Location..."
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:border-blue-500 text-neutral-850 dark:text-neutral-50"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md pl-9 pr-4 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] text-neutral-850 dark:text-neutral-50"
               />
             </div>
           </div>
@@ -90,27 +131,34 @@ export default function CompaniesPage() {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="p-6 bg-white dark:bg-neutral-900 border rounded-2xl animate-pulse h-40"></div>
+                <CompanyCardSkeleton key={n} />
               ))}
             </div>
           ) : companies.length === 0 ? (
-            <div className="bg-white dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl p-16 text-center max-w-lg mx-auto">
+            <div className="bg-white dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg p-16 text-center max-w-lg mx-auto">
               <Building2 className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
-              <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No companies found</h3>
+              <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
+                {searchTerm || industryFilter || locationFilter
+                  ? "No companies match your search"
+                  : "No companies found"}
+              </h3>
               <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                We have zero mock companies. New firms appear here dynamically as employers sign up and register active jobs.
+                {searchTerm || industryFilter || locationFilter
+                  ? "Try broadening your search or clearing a filter."
+                  : "We have zero mock companies. New firms appear here dynamically as employers sign up and register active jobs."}
               </p>
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {companies.map((comp) => (
                 <div
                   key={comp.id}
-                  className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl flex flex-col justify-between hover:border-blue-400 dark:hover:border-blue-500/50 hover:shadow-md transition-all group"
+                  className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-lg flex flex-col justify-between hover:border-[var(--color-primary)] hover:shadow-md transition-all group"
                 >
                   <div>
                     <div className="flex gap-4 items-center mb-4">
-                      <div className="h-12 w-12 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-150 dark:border-neutral-700 flex items-center justify-center shrink-0">
+                      <div className="h-12 w-12 rounded-md bg-neutral-50 dark:bg-neutral-800 border border-neutral-150 dark:border-neutral-700 flex items-center justify-center shrink-0">
                         {comp.logoUrl ? (
                           <img src={comp.logoUrl} alt={comp.name} className="h-8 w-8 object-contain rounded" />
                         ) : (
@@ -118,7 +166,7 @@ export default function CompaniesPage() {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-extrabold text-neutral-900 dark:text-white leading-tight group-hover:text-blue-600 transition-colors">
+                        <h3 className="font-extrabold text-neutral-900 dark:text-white leading-tight group-hover:text-[var(--color-primary)] transition-colors">
                           <Link href={`/companies/${comp.slug}`}>{comp.name}</Link>
                         </h3>
                         <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{comp.industry}</p>
@@ -131,12 +179,12 @@ export default function CompaniesPage() {
                   </div>
 
                   <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-primary)]">
                       <Briefcase className="h-3.5 w-3.5" /> {comp.activeJobsCount} Active Jobs
                     </span>
                     <Link
                       href={`/companies/${comp.slug}`}
-                      className="text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-blue-600 inline-flex items-center gap-0.5"
+                      className="text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-[var(--color-primary)] inline-flex items-center gap-0.5"
                     >
                       View Profile <ChevronRight className="h-3 w-3" />
                     </Link>
@@ -144,6 +192,20 @@ export default function CompaniesPage() {
                 </div>
               ))}
             </div>
+
+            <div className="mt-8 overflow-hidden rounded-md border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                limit={COMPANIES_PER_PAGE}
+                onPageChange={(nextPage) => {
+                  setPage(nextPage);
+                  loadCompanies(nextPage);
+                }}
+              />
+            </div>
+            </>
           )}
 
         </div>

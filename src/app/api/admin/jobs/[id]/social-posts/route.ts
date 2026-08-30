@@ -103,44 +103,36 @@ export async function GET(
       .where(eq(jobSocialPosts.jobId, jobId))
       .orderBy(desc(jobSocialPosts.updatedAt));
 
-    // Generate manual LinkedIn/X content
+    // Generate manual X content (LinkedIn is now published
+    // automatically by the publisher pipeline, so we no longer
+    // fabricate a MANUAL_READY row for it here).
     const linkedin = buildLinkedInPost(job);
     const x = buildXPost(job);
 
-    // Make sure manual posts exist in database.
-    for (const post of [linkedin, x]) {
-      const existing = existingPosts.find(
-        (item) =>
-          item.platform === post.platform
-      );
+    // Make sure a manual X post placeholder exists in database.
+    const existingX = existingPosts.find(
+      (item) => item.platform === "x"
+    );
 
-      if (!existing) {
-        await db
-          .insert(jobSocialPosts)
-          .values({
-            jobId,
-            platform: post.platform,
-            status: "MANUAL_READY",
-            postContent: post.content,
-            updatedAt: new Date(),
-          });
-      } else if (
-        existing.status !== "PUBLISHED"
-      ) {
-        await db
-          .update(jobSocialPosts)
-          .set({
-            status: "MANUAL_READY",
-            postContent: post.content,
-            updatedAt: new Date(),
-          })
-          .where(
-            eq(
-              jobSocialPosts.id,
-              existing.id
-            )
-          );
-      }
+    if (!existingX) {
+      await db
+        .insert(jobSocialPosts)
+        .values({
+          jobId,
+          platform: "x",
+          status: "MANUAL_READY",
+          postContent: x.content,
+          updatedAt: new Date(),
+        });
+    } else if (existingX.status !== "PUBLISHED") {
+      await db
+        .update(jobSocialPosts)
+        .set({
+          status: "MANUAL_READY",
+          postContent: x.content,
+          updatedAt: new Date(),
+        })
+        .where(eq(jobSocialPosts.id, existingX.id));
     }
 
     // Get latest state after insert/update

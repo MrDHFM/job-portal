@@ -9,8 +9,10 @@ import {
   Trash2,
   ShieldAlert,
   AlertTriangle,
+  Search,
 } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
+import { ApplicationSkeleton } from "@/components/Skeletons";
 
 export default function AdminMessagesPage() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -20,6 +22,11 @@ export default function AdminMessagesPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   const [totalMessages, setTotalMessages] = useState(0);
+
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [readFilter, setReadFilter] = useState(""); // "", "true", "false"
+  const [resolvedFilter, setResolvedFilter] = useState(""); // "", "true", "false"
 
   const MESSAGES_PER_PAGE = 20;
 
@@ -40,6 +47,18 @@ const loadMessages = (
     "limit",
     String(MESSAGES_PER_PAGE),
   );
+
+  if (search) {
+    params.set("search", search);
+  }
+
+  if (readFilter) {
+    params.set("isRead", readFilter);
+  }
+
+  if (resolvedFilter) {
+    params.set("isResolved", resolvedFilter);
+  }
 
   fetch(
     `/api/admin/messages?${params.toString()}`,
@@ -77,9 +96,21 @@ const loadMessages = (
     );
 };
 
+// Debounce the search box.
 useEffect(() => {
+  const timer = setTimeout(() => {
+    setSearch(searchInput.trim());
+  }, 350);
+
+  return () => clearTimeout(timer);
+}, [searchInput]);
+
+// Reset to page 1 whenever any filter changes (Part 7).
+useEffect(() => {
+  setPage(1);
   loadMessages(1);
-}, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [search, readFilter, resolvedFilter]);
 
   const handleToggleRead = async (id: number, currentRead: boolean) => {
     try {
@@ -133,27 +164,68 @@ useEffect(() => {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-white dark:bg-neutral-900 border p-6 rounded-2xl shadow-xs">
-        <h1 className="text-xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
-          <Mail className="h-6 w-6 text-blue-600" /> Contact Inquiries
-        </h1>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-          Review and resolve feedback or questions submitted by portal visitors.
-        </p>
+      <div className="bg-white dark:bg-neutral-900 border p-6 rounded-lg shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
+            <Mail className="h-6 w-6 text-[var(--color-primary)]" /> Contact Inquiries
+          </h1>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+            Review and resolve feedback or questions submitted by portal visitors.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search name, email, subject..."
+              className="app-input pl-8 py-2 text-sm w-full sm:w-56"
+            />
+          </div>
+
+          <select
+            value={readFilter}
+            onChange={(e) => setReadFilter(e.target.value)}
+            className="bg-white dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm text-neutral-800 dark:text-neutral-300 outline-none"
+          >
+            <option value="">All (Read/Unread)</option>
+            <option value="false">Unread only</option>
+            <option value="true">Read only</option>
+          </select>
+
+          <select
+            value={resolvedFilter}
+            onChange={(e) => setResolvedFilter(e.target.value)}
+            className="bg-white dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm text-neutral-800 dark:text-neutral-300 outline-none"
+          >
+            <option value="">All (Resolved/Open)</option>
+            <option value="false">Unresolved only</option>
+            <option value="true">Resolved only</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
-        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">
-          Loading inquiries...
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <ApplicationSkeleton key={i} />
+          ))}
         </div>
       ) : messages.length === 0 ? (
-        <div className="bg-white dark:bg-neutral-900 border border-dashed rounded-2xl p-16 text-center">
+        <div className="bg-white dark:bg-neutral-900 border border-dashed rounded-lg p-16 text-center">
           <Mail className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
           <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
-            No messages registered
+            {search || readFilter || resolvedFilter
+              ? "No messages match your search"
+              : "No messages registered"}
           </h3>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-            Incoming communications from the Contact Us form will appear here.
+            {search || readFilter || resolvedFilter
+              ? "Try clearing the search or filters above."
+              : "Incoming communications from the Contact Us form will appear here."}
           </p>
         </div>
       ) : (
@@ -161,15 +233,15 @@ useEffect(() => {
           {messages.map((msg) => (
             <div
               key={msg.id}
-              className={`p-6 rounded-2xl border transition-all ${
+              className={`p-6 rounded-lg border transition-all ${
                 msg.isRead
                   ? "bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
-                  : "bg-blue-50/20 dark:bg-blue-950/10 border-blue-200 dark:border-blue-900/60"
+                  : "bg-[var(--color-primary-light)]/40 border-[var(--color-primary)]/30"
               }`}
             >
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                 <div>
-                  <span className="text-[10px] uppercase font-black text-blue-600 tracking-wider">
+                  <span className="text-[10px] uppercase font-black text-[var(--color-primary)] tracking-wider">
                     From: {msg.name} ({msg.email})
                   </span>
                   <h3 className="text-base font-extrabold text-neutral-850 dark:text-neutral-100 mt-1">
@@ -187,7 +259,7 @@ useEffect(() => {
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 cursor-pointer transition-colors ${
                       msg.isRead
                         ? "bg-neutral-100 hover:bg-neutral-200 text-neutral-700 dark:bg-neutral-850 dark:text-neutral-300"
-                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                     }`}
                   >
                     {msg.isRead ? "Mark Unread" : "Mark Read"}
@@ -214,7 +286,7 @@ useEffect(() => {
                 </div>
               </div>
 
-              <div className="bg-neutral-50 dark:bg-neutral-850 p-4 rounded-xl border border-neutral-100 dark:border-neutral-800">
+              <div className="bg-neutral-50 dark:bg-neutral-850 p-4 rounded-md border border-neutral-100 dark:border-neutral-800">
                 <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-line leading-relaxed">
                   {msg.message}
                 </p>
@@ -225,7 +297,7 @@ useEffect(() => {
       )}
       {!loading &&
   messages.length > 0 && (
-    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="overflow-hidden rounded-md border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
       <Pagination
         page={page}
         totalPages={totalPages}

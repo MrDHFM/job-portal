@@ -19,7 +19,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useTheme } from "@/app/theme-provider";
+import { useTheme } from "../theme-provider";
 
 type AdminSidebarProps = {
   session: {
@@ -148,7 +148,7 @@ export default function AdminSidebar({ session }: AdminSidebarProps) {
       {/* Mobile Top Bar */}
       <div className="md:hidden flex h-16 items-center justify-between px-4 bg-neutral-900 text-white border-b border-neutral-800 w-full sticky top-0 z-50">
         <Link href="/" className="flex items-center gap-1.5">
-          <Briefcase className="h-5 w-5 text-blue-500" />
+          <Briefcase className="h-5 w-5 text-[var(--color-primary)]" />
           <span className="font-bold tracking-tight text-sm">
             CareerDiscover Admin
           </span>
@@ -189,7 +189,7 @@ export default function AdminSidebar({ session }: AdminSidebarProps) {
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center justify-between gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold ${
                   isActive
-                    ? "bg-blue-600 text-white"
+                    ? "bg-[var(--color-primary)] text-white"
                     : "text-neutral-400 hover:bg-neutral-850 hover:text-white"
                 }`}
               >
@@ -202,7 +202,7 @@ export default function AdminSidebar({ session }: AdminSidebarProps) {
                   <span
                     className={`min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-black ${
                       isActive
-                        ? "bg-white text-blue-600"
+                        ? "bg-white text-[var(--color-primary)]"
                         : "bg-red-500 text-white"
                     }`}
                   >
@@ -233,17 +233,17 @@ export default function AdminSidebar({ session }: AdminSidebarProps) {
             href="/"
             className="flex items-center gap-2 pb-4 border-b border-neutral-800"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-white">
               <Briefcase className="h-4 w-4" />
             </div>
             <span className="text-base font-extrabold tracking-tight">
-              Career<span className="text-blue-500">Discover</span>
+              Career<span className="text-[var(--color-primary)]">Discover</span>
             </span>
           </Link>
 
           {/* User Profile */}
-          <div className="flex items-center gap-2.5 bg-neutral-850/50 p-3 rounded-xl border border-neutral-800">
-            <div className="h-9 w-9 rounded-full bg-blue-600/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+          <div className="flex items-center gap-2.5 bg-neutral-850/50 p-3 rounded-md border border-neutral-800">
+            <div className="h-9 w-9 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] flex items-center justify-center border border-[var(--color-primary)]/20">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div className="truncate text-xs">
@@ -264,9 +264,9 @@ export default function AdminSidebar({ session }: AdminSidebarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-md text-xs font-bold transition-all ${
                     isActive
-                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/10"
+                      ? "bg-[var(--color-primary)] text-white shadow-md"
                       : "text-neutral-400 hover:bg-neutral-850 hover:text-white"
                   }`}
                 >
@@ -280,7 +280,7 @@ export default function AdminSidebar({ session }: AdminSidebarProps) {
                     <span
                       className={`min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-black ${
                         isActive
-                          ? "bg-white text-blue-600"
+                          ? "bg-white text-[var(--color-primary)]"
                           : "bg-red-500 text-white"
                       }`}
                     >

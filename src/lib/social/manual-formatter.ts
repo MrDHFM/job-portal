@@ -4,9 +4,7 @@ import type {
 } from "./types";
 
 import { buildTrackedJobUrl } from "./tracking-url";
-
-const TELEGRAM_GROUP_URL =
-  "https://t.me/careerdiscoverjobs";
+import { TELEGRAM_GROUP_URL, TELEGRAM_GROUP_CTA } from "./constants";
 
 function clean(value?: string | null) {
   return value?.trim() || "";
@@ -166,7 +164,7 @@ export function buildLinkedInPost(
 
     "",
 
-    "📲 Join our Telegram group for more job updates:",
+    `📲 ${TELEGRAM_GROUP_CTA}:`,
 
     TELEGRAM_GROUP_URL,
 
@@ -254,7 +252,7 @@ export function buildXPost(
 
     "",
 
-    "📲 Join our Telegram group for more job updates:",
+    `📲 ${TELEGRAM_GROUP_CTA}:`,
 
     TELEGRAM_GROUP_URL,
 

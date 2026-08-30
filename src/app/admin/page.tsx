@@ -48,7 +48,6 @@ export default async function AdminDashboardPage() {
     totalTraffic: 0,
     uniqueVisitors: 0,
     trafficSources: [] as any[],
-    jobPerformance: [] as any[],
   };
 
   try {
@@ -70,17 +69,30 @@ export default async function AdminDashboardPage() {
       trafficRes,
       uniqueVisitorsRes,
       trafficSourcesRes,
-      jobPerformanceRes,
     ] = await Promise.all([
       db.execute(sql`SELECT count(*)::integer as count FROM jobs`),
+      // "Active" means PUBLISHED *and* not past its deadline/expiry —
+      // the status column alone doesn't flip automatically when a
+      // deadline passes, so we check both here (matches the effective
+      // status logic used in the admin jobs list and public API).
       db.execute(
-        sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'PUBLISHED'`,
+        sql`SELECT count(*)::integer as count FROM jobs
+            WHERE status = 'PUBLISHED'
+            AND (application_deadline IS NULL OR application_deadline >= NOW())
+            AND (expires_at IS NULL OR expires_at >= NOW())`,
       ),
       db.execute(
         sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'DRAFT'`,
       ),
+      // "Expired" includes jobs explicitly marked EXPIRED *and* PUBLISHED
+      // jobs whose deadline/expiry has silently passed.
       db.execute(
-        sql`SELECT count(*)::integer as count FROM jobs WHERE status = 'EXPIRED'`,
+        sql`SELECT count(*)::integer as count FROM jobs
+            WHERE status = 'EXPIRED'
+            OR (status = 'PUBLISHED' AND (
+              (application_deadline IS NOT NULL AND application_deadline < NOW())
+              OR (expires_at IS NOT NULL AND expires_at < NOW())
+            ))`,
       ),
       db.execute(sql`SELECT count(*)::integer as count FROM companies`),
       db.execute(sql`SELECT count(*)::integer as count FROM categories`),
@@ -123,58 +135,6 @@ export default async function AdminDashboardPage() {
   FROM job_traffic_events
   WHERE session_id IS NOT NULL
 `),
-      db.execute(sql`
-  SELECT
-    j.id AS job_id,
-    j.title,
-    j.slug,
-    j.views_count AS views,
-    j.apply_clicks_count AS apply_clicks,
-
-    COUNT(*) FILTER (
-      WHERE e.source = 'instagram'
-      AND e.event_type = 'VIEW'
-    )::integer AS instagram,
-
-    COUNT(*) FILTER (
-      WHERE e.source = 'telegram'
-      AND e.event_type = 'VIEW'
-    )::integer AS telegram,
-
-    COUNT(*) FILTER (
-      WHERE e.source = 'linkedin'
-      AND e.event_type = 'VIEW'
-    )::integer AS linkedin,
-
-    COUNT(*) FILTER (
-      WHERE e.source = 'x'
-      AND e.event_type = 'VIEW'
-    )::integer AS x,
-
-    COUNT(*) FILTER (
-      WHERE e.source = 'google'
-      AND e.event_type = 'VIEW'
-    )::integer AS google,
-
-    COUNT(*) FILTER (
-      WHERE e.source = 'direct'
-      AND e.event_type = 'VIEW'
-    )::integer AS direct
-
-  FROM jobs j
-
-  LEFT JOIN job_traffic_events e
-    ON e.job_id = j.id
-
-  GROUP BY
-    j.id,
-    j.title,
-    j.slug,
-    j.views_count,
-    j.apply_clicks_count
-
-  ORDER BY j.views_count DESC
-`),
     ]);
 
     stats.totalJobs = Number(totalJobsRes.rows[0]?.count || 0);
@@ -196,7 +156,6 @@ export default async function AdminDashboardPage() {
 
     stats.trafficSources = trafficSourcesRes.rows || [];
 
-    stats.jobPerformance = jobPerformanceRes.rows || [];
   } catch (e) {
     console.error("Failed to load direct DB admin analytics:", e);
   }
@@ -206,8 +165,8 @@ export default async function AdminDashboardPage() {
       label: "Active Jobs",
       value: stats.activeJobs,
       sub: "Published on portal",
-      icon: <Briefcase className="h-5 w-5 text-blue-500" />,
-      bg: "border-blue-100 dark:border-blue-950 bg-blue-50/10",
+      icon: <Briefcase className="h-5 w-5 text-[var(--color-primary)]" />,
+      bg: "border-[var(--color-primary)]/20 bg-[var(--color-primary-light)]/30",
     },
     {
       label: "Draft Postings",
@@ -250,7 +209,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <InstagramTokenHealth health={instagramTokenHealth} />
       {/* Welcome Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-lg shadow-xs">
         <div>
           <h1 className="text-2xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
             Welcome Back, {session.name}!
@@ -261,7 +220,7 @@ export default async function AdminDashboardPage() {
               {session.email}
             </strong>{" "}
             • Role:{" "}
-            <span className="bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full">
+            <span className="app-badge app-badge-primary text-[10px] uppercase tracking-widest">
               {session.role}
             </span>
           </p>
@@ -270,14 +229,14 @@ export default async function AdminDashboardPage() {
         <div className="flex gap-2">
           <Link
             href="/admin/jobs/new"
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 text-xs font-bold inline-flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/15"
+            className="app-button-primary rounded-md px-4 py-2.5 text-xs shadow-md"
           >
             <Plus className="h-4 w-4" /> Create New Job
           </Link>
           <Link
             href="/"
             target="_blank"
-            className="bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-750 text-neutral-800 dark:text-neutral-200 rounded-xl px-4 py-2.5 text-xs font-bold transition-all"
+            className="bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-750 text-neutral-800 dark:text-neutral-200 rounded-md px-4 py-2.5 text-xs font-bold transition-all"
           >
             View Public Portal &rarr;
           </Link>
@@ -289,9 +248,9 @@ export default async function AdminDashboardPage() {
         {statCards.map((card, idx) => (
           <div
             key={idx}
-            className={`border rounded-2xl p-6 flex items-start gap-4 shadow-sm bg-white dark:bg-neutral-900 transition-all ${card.bg}`}
+            className={`border rounded-lg p-6 flex items-start gap-4 shadow-sm bg-white dark:bg-neutral-900 transition-all ${card.bg}`}
           >
-            <div className="p-3 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-100 dark:border-neutral-750 shadow-xs">
+            <div className="p-3 bg-white dark:bg-neutral-800 rounded-md border border-neutral-100 dark:border-neutral-750 shadow-xs">
               {card.icon}
             </div>
             <div>
@@ -315,20 +274,19 @@ export default async function AdminDashboardPage() {
         totalClicks={stats.totalClicks}
         uniqueVisitors={stats.uniqueVisitors}
         trafficSources={stats.trafficSources}
-        jobPerformance={stats.jobPerformance}
       />
 
       {/* Dashboard split content: Quick Actions & Audit Logs */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Quick Operations panel */}
-        <div className="lg:col-span-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="lg:col-span-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-xs space-y-4">
           <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2 border-b pb-2">
-            <TrendingUp className="h-4 w-4 text-blue-600" /> Quick Operations
+            <TrendingUp className="h-4 w-4 text-[var(--color-primary)]" /> Quick Operations
           </h2>
           <div className="grid grid-cols-1 gap-2.5 text-xs font-bold text-neutral-750 dark:text-neutral-300">
             <Link
               href="/admin/companies"
-              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all"
+              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-[var(--color-primary-light)]/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-md transition-all"
             >
               <span>🏢 Manage Registered Companies</span>
               <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">
@@ -337,7 +295,7 @@ export default async function AdminDashboardPage() {
             </Link>
             <Link
               href="/admin/categories"
-              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all"
+              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-[var(--color-primary-light)]/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-md transition-all"
             >
               <span>🗂️ Manage Industry Categories</span>
               <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">
@@ -346,7 +304,7 @@ export default async function AdminDashboardPage() {
             </Link>
             <Link
               href="/admin/applications"
-              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all"
+              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-[var(--color-primary-light)]/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-md transition-all"
             >
               <span>📄 Inspect Incoming Resumes</span>
               <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">
@@ -355,7 +313,7 @@ export default async function AdminDashboardPage() {
             </Link>
             <Link
               href="/admin/messages"
-              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-blue-50/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-xl transition-all"
+              className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-[var(--color-primary-light)]/40 dark:bg-neutral-850 dark:hover:bg-neutral-800 border rounded-md transition-all"
             >
               <span>✉️ Read Client Messages</span>
               <span className="bg-neutral-200 dark:bg-neutral-750 px-2 py-0.5 rounded text-[10px]">
@@ -366,7 +324,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Audit logs panel */}
-        <div className="lg:col-span-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="lg:col-span-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-xs space-y-4">
           <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2 border-b pb-2">
             <Activity className="h-4 w-4 text-emerald-600" /> Recent
             Administrative Audit Logs
@@ -382,9 +340,9 @@ export default async function AdminDashboardPage() {
               {stats.recentLogs.map((log: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex gap-3 text-xs items-center p-3 bg-neutral-50 dark:bg-neutral-850 border border-neutral-100 dark:border-neutral-800 rounded-xl"
+                  className="flex gap-3 text-xs items-center p-3 bg-neutral-50 dark:bg-neutral-850 border border-neutral-100 dark:border-neutral-800 rounded-md"
                 >
-                  <div className="h-6 w-6 rounded-md bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                  <div className="h-6 w-6 rounded-md bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center shrink-0">
                     <ShieldCheck className="h-3.5 w-3.5" />
                   </div>
                   <div className="flex-1 min-w-0">

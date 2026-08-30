@@ -68,7 +68,7 @@ export default function Footer() {
                   href={socialLinks.socialLinkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-[var(--color-primary)] transition-colors"
                   title="LinkedIn"
                   aria-label="LinkedIn"
                 >
@@ -144,7 +144,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/jobs"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   All Jobs
                 </Link>
@@ -152,7 +152,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/jobs/it"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   IT Sector Jobs
                 </Link>
@@ -160,7 +160,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/jobs/government"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Government Jobs
                 </Link>
@@ -168,7 +168,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/jobs/internships"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Internships
                 </Link>
@@ -176,7 +176,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/jobs/walk-ins"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Walk-In Drives
                 </Link>
@@ -184,7 +184,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/jobs/remote"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Remote Openings
                 </Link>
@@ -201,7 +201,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/about"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   About Us
                 </Link>
@@ -209,7 +209,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/contact"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Contact Us
                 </Link>
@@ -217,7 +217,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/companies"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Company Directory
                 </Link>
@@ -225,7 +225,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/categories"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Categories List
                 </Link>
@@ -233,7 +233,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/admin/login"
-                  className="text-sm text-neutral-400 hover:text-blue-600 dark:text-neutral-500 dark:hover:text-blue-400"
+                  className="text-sm app-text-light transition-colors hover:text-[var(--color-primary)]"
                 >
                   Employer Portal Login
                 </Link>
@@ -250,7 +250,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/privacy"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Privacy Policy
                 </Link>
@@ -258,7 +258,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/terms"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Terms & Conditions
                 </Link>
@@ -266,7 +266,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/disclaimer"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Disclaimer
                 </Link>
@@ -274,7 +274,7 @@ export default function Footer() {
               <li>
                 <Link
                   href="/cookie-policy"
-                  className="text-sm text-neutral-500 hover:text-blue-600 dark:text-neutral-400 dark:hover:text-blue-400"
+                  className="text-sm app-text-muted transition-colors hover:text-[var(--color-primary)]"
                 >
                   Cookie Policy
                 </Link>

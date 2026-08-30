@@ -1,6 +1,7 @@
 import { buildTelegramJobPost } from "./formatter";
 import { publishToTelegram } from "./telegram";
 import { publishToInstagram } from "./instagram";
+import { publishToLinkedIn } from "./linkedin";
 import { db } from "@/db";
 import { jobSocialPosts } from "@/db/schema";
 
@@ -9,7 +10,7 @@ import type {
   SocialPublishResult,
 } from "./types";
 
-async function saveSocialPostStatus(
+export async function saveSocialPostStatus(
   jobId: number,
   result: SocialPublishResult
 ) {
@@ -183,6 +184,43 @@ export async function publishJobToSocialMedia(
   );
 
   // ==================================================
+  // LINKEDIN (Company Page)
+  // ==================================================
+
+  let linkedinResult: SocialPublishResult;
+
+  try {
+    linkedinResult = await publishToLinkedIn(job);
+
+    console.log(
+      "LinkedIn publishing result:",
+      linkedinResult
+    );
+  } catch (error) {
+    console.error(
+      "LinkedIn publishing failed:",
+      error
+    );
+
+    linkedinResult = {
+      success: false,
+      platform: "linkedin",
+      error:
+        error instanceof Error
+          ? error.message
+          : "LinkedIn publishing failed.",
+    };
+  }
+
+  results.push(linkedinResult);
+
+  // Always attempt to save the result
+  await saveSocialPostStatus(
+    job.id,
+    linkedinResult
+  );
+
+  // ==================================================
   // FINAL RESULTS
   // ==================================================
 
@@ -192,4 +230,42 @@ export async function publishJobToSocialMedia(
   );
 
   return results;
+}
+
+/**
+ * (Re)publishes a job to a single automated platform.
+ * Used by the admin "Retry" button when one platform failed
+ * but the others succeeded — avoids re-posting everywhere.
+ */
+export async function publishSinglePlatform(
+  job: SocialJob,
+  platform: "telegram" | "instagram" | "linkedin",
+): Promise<SocialPublishResult> {
+  let result: SocialPublishResult;
+
+  try {
+    if (platform === "telegram") {
+      const telegramMessage = buildTelegramJobPost(job);
+      result = await publishToTelegram(telegramMessage);
+    } else if (platform === "instagram") {
+      result = await publishToInstagram(job);
+    } else {
+      result = await publishToLinkedIn(job);
+    }
+  } catch (error) {
+    console.error(`${platform} retry failed:`, error);
+
+    result = {
+      success: false,
+      platform,
+      error:
+        error instanceof Error
+          ? error.message
+          : `${platform} publishing failed.`,
+    };
+  }
+
+  await saveSocialPostStatus(job.id, result);
+
+  return result;
 }

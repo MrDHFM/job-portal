@@ -122,8 +122,8 @@ export default function ContactPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
-                  <Mail className="h-6 w-6 text-blue-600 dark:text-blue-400 shrink-0" />
+                <div className="flex gap-4 p-4 rounded-md bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
+                  <Mail className="h-6 w-6 text-[var(--color-primary)] shrink-0" />
                   <div>
                     <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
                       Email Address
@@ -134,7 +134,7 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
+                <div className="flex gap-4 p-4 rounded-md bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
                   <MapPin className="h-6 w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <div>
                     <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
@@ -146,7 +146,7 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-4 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
+                <div className="flex gap-4 p-4 rounded-md bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750">
                   <Phone className="h-6 w-6 text-purple-600 dark:text-purple-400 shrink-0" />
                   <div>
                     <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
@@ -176,7 +176,7 @@ export default function ContactPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="LinkedIn"
-                      className="h-10 w-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-colors"
                     >
                       <span className="font-bold text-sm">in</span>
                     </a>
@@ -188,7 +188,7 @@ export default function ContactPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="X / Twitter"
-                      className="h-10 w-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                      className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                     >
                       <span className="font-bold text-sm">𝕏</span>
                     </a>
@@ -200,7 +200,7 @@ export default function ContactPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Instagram"
-                      className="h-10 w-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-pink-500 transition-colors"
+                      className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-pink-500 transition-colors"
                     >
                       <Send className="h-5 w-5" />
                     </a>
@@ -212,7 +212,7 @@ export default function ContactPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Telegram"
-                      className="h-10 w-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-sky-500 transition-colors"
+                      className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-sky-500 transition-colors"
                     >
                       <Send className="h-5 w-5" />
                     </a>
@@ -222,13 +222,13 @@ export default function ContactPage() {
             )}
 
             {/* Right Col: Form Input */}
-            <div className="lg:col-span-7 bg-neutral-50 dark:bg-neutral-800 p-8 rounded-2xl border border-neutral-150 dark:border-neutral-750">
+            <div className="lg:col-span-7 bg-neutral-50 dark:bg-neutral-800 p-8 rounded-lg border border-neutral-150 dark:border-neutral-750">
               <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-6">
                 Send an Inquiry Message
               </h2>
 
               {success && (
-                <div className="mb-6 flex gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4 text-emerald-800 dark:text-emerald-300">
+                <div className="mb-6 flex gap-3 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-4 text-emerald-800 dark:text-emerald-300">
                   <CheckCircle2 className="h-5 w-5 shrink-0" />
                   <div className="text-sm">
                     <p className="font-semibold">Transmission Succeeded</p>
@@ -240,7 +240,7 @@ export default function ContactPage() {
               )}
 
               {error && (
-                <div className="mb-6 flex gap-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4 text-red-800 dark:text-red-300">
+                <div className="mb-6 flex gap-3 rounded-md bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4 text-red-800 dark:text-red-300">
                   <AlertCircle className="h-5 w-5 shrink-0" />
                   <div className="text-sm">
                     <p className="font-semibold">Validation Block</p>
@@ -263,7 +263,7 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="e.g. John Doe"
-                      className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                      className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md px-4 py-3 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
                     />
                   </div>
                   <div>
@@ -276,7 +276,7 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="john@example.com"
-                      className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                      className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md px-4 py-3 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
                     />
                   </div>
                 </div>
@@ -291,7 +291,7 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={handleChange}
                     placeholder="e.g. Question about government jobs"
-                    className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                    className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md px-4 py-3 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
 
@@ -305,7 +305,7 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Enter your message details here..."
-                    className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500 resize-none"
+                    className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md px-4 py-3 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)] resize-none"
                   ></textarea>
                 </div>
 
@@ -313,7 +313,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto app-button-primary font-semibold py-3 px-6 rounded-md text-sm shadow-md gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">

@@ -20,6 +20,7 @@ import {
   ArrowUpDown,
   BookOpen
 } from "lucide-react";
+import { JobListSkeleton } from "@/components/Skeletons";
 
 type JobListingViewProps = {
   title?: string;
@@ -69,6 +70,18 @@ export default function JobListingView({
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 10 });
   const [loading, setLoading] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Close the mobile filter drawer on Escape.
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMobileFiltersOpen(false);
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileFiltersOpen]);
 
   // Load Categories list once
   useEffect(() => {
@@ -224,12 +237,12 @@ export default function JobListingView({
         <aside className="hidden lg:block space-y-6 shrink-0">
           <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-850 pb-4">
             <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-950 dark:text-neutral-200 flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-blue-600" /> Filters
+              <SlidersHorizontal className="h-4 w-4 text-[var(--color-primary)]" /> Filters
             </h2>
             {hasActiveFilters && (
               <button
                 onClick={handleClearAll}
-                className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-0.5 cursor-pointer"
+                className="text-xs font-semibold text-[var(--color-primary)] hover:opacity-80 flex items-center gap-0.5 cursor-pointer"
               >
                 <RotateCcw className="h-3 w-3" /> Clear All
               </button>
@@ -250,7 +263,7 @@ export default function JobListingView({
                     setKeyword(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                  className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md pl-9 pr-4 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -267,7 +280,7 @@ export default function JobListingView({
                     setLocation(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl pl-9 pr-4 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                  className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md pl-9 pr-4 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -283,7 +296,7 @@ export default function JobListingView({
                   setCategoryId(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
               >
                 <option value="">All Categories</option>
                 {categories.map((c) => (
@@ -305,7 +318,7 @@ export default function JobListingView({
                   setSector(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
               >
                 <option value="">All Sectors</option>
                 <option value="IT">IT Sector</option>
@@ -324,7 +337,7 @@ export default function JobListingView({
                   setWorkMode(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
               >
                 <option value="">All Modes</option>
                 <option value="Remote">Remote</option>
@@ -344,7 +357,7 @@ export default function JobListingView({
                   setEmploymentType(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
               >
                 <option value="">All Types</option>
                 <option value="Full-time">Full-time</option>
@@ -367,7 +380,7 @@ export default function JobListingView({
                   setExperienceLevel(e.target.value);
                   setPage(1);
                 }}
-                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
               >
                 <option value="">All Levels</option>
                 <option value="Fresher">Fresher (0-1 Years)</option>
@@ -387,7 +400,7 @@ export default function JobListingView({
                 setMinSalary(e.target.value);
                 setPage(1);
               }}
-              className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-blue-500"
+              className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-md px-3 py-2.5 text-sm text-neutral-850 dark:text-neutral-50 outline-none focus:border-[var(--color-primary)]"
             />
           </div>
         </aside>
@@ -395,7 +408,7 @@ export default function JobListingView({
         {/* Results Area */}
         <section className="lg:col-span-3 space-y-6">
           {/* Controls Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 rounded-xl">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 rounded-md">
             <div className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
               {loading ? "Searching database..." : `${pagination.total} genuine positions found`}
             </div>
@@ -430,42 +443,42 @@ export default function JobListingView({
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Active Criteria:</span>
               {keyword && (
-                <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
+                <span className="app-badge app-badge-primary">
                   Keyword: "{keyword}" <X className="h-3 w-3 cursor-pointer" onClick={() => setKeyword("")} />
                 </span>
               )}
               {location && (
-                <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
+                <span className="app-badge app-badge-primary">
                   Location: "{location}" <X className="h-3 w-3 cursor-pointer" onClick={() => setLocation("")} />
                 </span>
               )}
               {sector && !preSector && (
-                <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
+                <span className="app-badge app-badge-primary">
                   Sector: {sector} <X className="h-3 w-3 cursor-pointer" onClick={() => setSector("")} />
                 </span>
               )}
               {workMode && !preWorkMode && (
-                <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
+                <span className="app-badge app-badge-primary">
                   Mode: {workMode} <X className="h-3 w-3 cursor-pointer" onClick={() => setWorkMode("")} />
                 </span>
               )}
               {employmentType && !preEmploymentType && (
-                <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
+                <span className="app-badge app-badge-primary">
                   Type: {employmentType} <X className="h-3 w-3 cursor-pointer" onClick={() => setEmploymentType("")} />
                 </span>
               )}
               {experienceLevel && !preExperienceLevel && (
-                <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
+                <span className="app-badge app-badge-primary">
                   Level: {experienceLevel} <X className="h-3 w-3 cursor-pointer" onClick={() => setExperienceLevel("")} />
                 </span>
               )}
               {categoryId && !preCategoryId && (
-                <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
+                <span className="app-badge app-badge-primary">
                   Category Filter <X className="h-3 w-3 cursor-pointer" onClick={() => setCategoryId("")} />
                 </span>
               )}
               {minSalary && (
-                <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full text-xs font-bold">
+                <span className="app-badge app-badge-primary">
                   &gt;= ${minSalary} <X className="h-3 w-3 cursor-pointer" onClick={() => setMinSalary("")} />
                 </span>
               )}
@@ -474,25 +487,9 @@ export default function JobListingView({
 
           {/* Job Postings list */}
           {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((n) => (
-                <div
-                  key={n}
-                  className="p-6 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 animate-pulse space-y-3"
-                >
-                  <div className="flex gap-4">
-                    <div className="h-10 w-10 bg-neutral-200 dark:bg-neutral-800 rounded-lg"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-1/3"></div>
-                      <div className="h-3 bg-neutral-200 dark:bg-neutral-800 rounded w-1/4"></div>
-                    </div>
-                  </div>
-                  <div className="h-3 bg-neutral-200 dark:bg-neutral-800 rounded w-full"></div>
-                </div>
-              ))}
-            </div>
+            <JobListSkeleton count={4} />
           ) : jobs.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 p-16 text-center bg-white dark:bg-neutral-900">
+            <div className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 p-16 text-center bg-white dark:bg-neutral-900">
               <Briefcase className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-750 mb-4" />
               <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No jobs match your search.</h3>
               <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 max-w-sm mx-auto">
@@ -500,7 +497,7 @@ export default function JobListingView({
               </p>
               <button
                 onClick={handleClearAll}
-                className="mt-6 inline-flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow cursor-pointer"
+                className="mt-6 app-button-primary text-xs shadow"
               >
                 <RotateCcw className="h-3 w-3" /> Clear All Filters
               </button>
@@ -510,10 +507,10 @@ export default function JobListingView({
               {jobs.map((job) => (
                 <div
                   key={job.id}
-                  className="group relative p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-blue-500 shadow-sm transition-all duration-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                  className="group relative p-6 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-[var(--color-primary)] shadow-sm transition-all duration-300 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                 >
                   <div className="flex gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200 dark:border-neutral-700">
+                    <div className="h-12 w-12 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200 dark:border-neutral-700">
                       {job.company?.logoUrl ? (
                         <img src={job.company.logoUrl} alt={job.company.name} className="h-8 w-8 object-contain rounded" />
                       ) : (
@@ -522,7 +519,7 @@ export default function JobListingView({
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <h3 className="text-base font-bold text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <h3 className="text-base font-bold text-neutral-900 dark:text-white group-hover:text-[var(--color-primary)] transition-colors">
                           <Link href={`/jobs/detail/${job.slug}`}>{job.title}</Link>
                         </h3>
                         {job.isFeatured && (
@@ -577,7 +574,7 @@ export default function JobListingView({
                       </span>
                       <Link
                         href={`/jobs/detail/${job.slug}`}
-                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold transition-all shadow-sm cursor-pointer"
+                        className="app-button-primary px-3 py-1.5 text-xs shadow-sm"
                       >
                         View & Apply
                       </Link>
@@ -605,7 +602,7 @@ export default function JobListingView({
                   onClick={() => setPage(p)}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg ${
                     page === p
-                      ? "bg-blue-600 text-white"
+                      ? "bg-[var(--color-primary)] text-white"
                       : "border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
@@ -627,12 +624,19 @@ export default function JobListingView({
 
       {/* Mobile Drawer Overlay */}
       {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex justify-end">
-          <div className="bg-white dark:bg-neutral-900 w-full max-w-xs p-6 overflow-y-auto flex flex-col justify-between">
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex justify-end"
+          onClick={() => setMobileFiltersOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="bg-white dark:bg-neutral-900 w-full max-w-xs p-6 overflow-y-auto flex flex-col justify-between"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div>
               <div className="flex items-center justify-between border-b pb-4 mb-6">
                 <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-1.5">
-                  <SlidersHorizontal className="h-4 w-4 text-blue-600" /> Filters
+                  <SlidersHorizontal className="h-4 w-4 text-[var(--color-primary)]" /> Filters
                 </h3>
                 <button onClick={() => setMobileFiltersOpen(false)} className="p-1 rounded hover:bg-neutral-100">
                   <X className="h-5 w-5" />
@@ -650,7 +654,7 @@ export default function JobListingView({
                       setKeyword(e.target.value);
                       setPage(1);
                     }}
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-neutral-50"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2 text-sm text-neutral-900 dark:text-neutral-50"
                   />
                 </div>
 
@@ -663,7 +667,7 @@ export default function JobListingView({
                       setLocation(e.target.value);
                       setPage(1);
                     }}
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-neutral-50"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2 text-sm text-neutral-900 dark:text-neutral-50"
                   />
                 </div>
 
@@ -677,7 +681,7 @@ export default function JobListingView({
                         setCategoryId(e.target.value);
                         setPage(1);
                       }}
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm"
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2 text-sm"
                     >
                       <option value="">All Categories</option>
                       {categories.map((c) => (
@@ -699,7 +703,7 @@ export default function JobListingView({
                         setSector(e.target.value);
                         setPage(1);
                       }}
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm"
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2 text-sm"
                     >
                       <option value="">All Sectors</option>
                       <option value="IT">IT Sector</option>
@@ -718,7 +722,7 @@ export default function JobListingView({
                         setWorkMode(e.target.value);
                         setPage(1);
                       }}
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm"
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2 text-sm"
                     >
                       <option value="">All Modes</option>
                       <option value="Remote">Remote</option>
@@ -738,7 +742,7 @@ export default function JobListingView({
                         setEmploymentType(e.target.value);
                         setPage(1);
                       }}
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm"
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2 text-sm"
                     >
                       <option value="">All Types</option>
                       <option value="Full-time">Full-time</option>
@@ -761,7 +765,7 @@ export default function JobListingView({
                         setExperienceLevel(e.target.value);
                         setPage(1);
                       }}
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm"
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2 text-sm"
                     >
                       <option value="">All Levels</option>
                       <option value="Fresher">Fresher (0-1 Years)</option>
@@ -780,7 +784,7 @@ export default function JobListingView({
                       setMinSalary(e.target.value);
                       setPage(1);
                     }}
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2 text-sm"
                   />
                 </div>
               </div>
@@ -789,13 +793,13 @@ export default function JobListingView({
             <div className="pt-6 border-t mt-6 flex gap-2">
               <button
                 onClick={handleClearAll}
-                className="flex-1 py-2 rounded-xl text-xs font-bold border hover:bg-neutral-50 text-neutral-700"
+                className="flex-1 py-2 rounded-md text-xs font-bold border hover:bg-neutral-50 text-neutral-700"
               >
                 Reset
               </button>
               <button
                 onClick={() => setMobileFiltersOpen(false)}
-                className="flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                className="flex-1 py-2 rounded-md text-xs font-bold app-button-primary"
               >
                 Apply
               </button>

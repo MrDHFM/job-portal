@@ -134,7 +134,22 @@ export const jobs = pgTable("jobs", {
   publishedAt: timestamp("published_at").defaultNow().notNull(),
   scheduledPublishAt: timestamp("scheduled_publish_at"),
   expiresAt: timestamp("expires_at"),
-});
+},
+  (table) => ({
+    statusIdx: index("jobs_status_idx").on(table.status),
+    createdAtIdx: index("jobs_created_at_idx").on(table.createdAt),
+    publishedAtIdx: index("jobs_published_at_idx").on(table.publishedAt),
+    expiresAtIdx: index("jobs_expires_at_idx").on(table.expiresAt),
+    companyIdIdx: index("jobs_company_id_idx").on(table.companyId),
+    categoryIdIdx: index("jobs_category_id_idx").on(table.categoryId),
+    // Composite index matching the public listing's most common query:
+    // WHERE status = 'PUBLISHED' ORDER BY published_at DESC
+    statusPublishedAtIdx: index("jobs_status_published_at_idx").on(
+      table.status,
+      table.publishedAt,
+    ),
+  }),
+);
 
 export const jobSocialPosts = pgTable(
   "job_social_posts",
@@ -178,6 +193,7 @@ export const jobSocialPosts = pgTable(
       table.jobId,
       table.platform
     ),
+    statusIdx: index("job_social_posts_status_idx").on(table.status),
   })
 );
 
@@ -239,7 +255,13 @@ export const applications = pgTable("applications", {
   portfolioUrl: text("portfolio_url"),
   status: text("status").default("pending").notNull(), // "pending", "reviewed", "shortlisted", "rejected", "offered"
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+},
+  (table) => ({
+    jobIdIdx: index("applications_job_id_idx").on(table.jobId),
+    statusIdx: index("applications_status_idx").on(table.status),
+    createdAtIdx: index("applications_created_at_idx").on(table.createdAt),
+  }),
+);
 
 // Saved Jobs (using local session ID or email or userId)
 export const savedJobs = pgTable("saved_jobs", {

@@ -103,15 +103,14 @@ export default async function JobDetailPage(
   const { job, company, category } = jobResults[0];
   const expired = isJobExpired(job);
 
-  // Increment views count in PostgreSQL
-  try {
-    await db
-      .update(jobs)
-      .set({ viewsCount: sql`${jobs.viewsCount} + 1` })
-      .where(eq(jobs.id, job.id));
-  } catch (e) {
-    console.error("Failed to increment views on detail:", e);
-  }
+  // NOTE: view counting intentionally does NOT happen here.
+  // This route uses `dynamic = "force-dynamic"`, so it re-runs on
+  // every request to this path — including Next.js <Link> prefetches
+  // that fire when a job card merely scrolls into view, and search
+  // engine/bot crawls. None of those are a real view. The single
+  // source of truth for views is the client-side VIEW event in
+  // JobDetailsClient, which only fires once the page actually mounts
+  // and hydrates in a real browser (see /api/analytics).
 
   // Fetch real similar jobs (same category or company, excluding current job)
   let similarJobs: any[] = [];
@@ -226,12 +225,12 @@ const attribution =
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           
           {/* Breadcrumbs Navigation */}
-          <nav className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-6 bg-white dark:bg-neutral-900 px-4 py-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800">
-            <Link href="/" className="hover:text-blue-600 transition-colors font-medium">Home</Link>
+          <nav className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-6 bg-white dark:bg-neutral-900 px-4 py-3.5 rounded-md border border-neutral-200 dark:border-neutral-800">
+            <Link href="/" className="hover:text-[var(--color-primary)] transition-colors font-medium">Home</Link>
             <ChevronRight className="h-3 w-3" />
-            <Link href="/jobs" className="hover:text-blue-600 transition-colors font-medium">Jobs</Link>
+            <Link href="/jobs" className="hover:text-[var(--color-primary)] transition-colors font-medium">Jobs</Link>
             <ChevronRight className="h-3 w-3" />
-            <Link href={`/categories/${category.slug}`} className="hover:text-blue-600 transition-colors font-medium">{category.name}</Link>
+            <Link href={`/categories/${category.slug}`} className="hover:text-[var(--color-primary)] transition-colors font-medium">{category.name}</Link>
             <ChevronRight className="h-3 w-3" />
             <span className="text-neutral-800 dark:text-neutral-200 font-semibold truncate max-w-[200px]">{job.title}</span>
           </nav>
@@ -255,14 +254,14 @@ const attribution =
             <aside className="lg:col-span-4 space-y-6">
               
               {/* Job Summary Panel */}
-              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm">
                 <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4 border-b pb-2">
                   Job Summary
                 </h3>
 
                 <div className="space-y-4">
                   {[
-                    { label: "Role Title", value: job.title, icon: <Briefcase className="h-4 w-4 text-blue-600 shrink-0" /> },
+                    { label: "Role Title", value: job.title, icon: <Briefcase className="h-4 w-4 text-[var(--color-primary)] shrink-0" /> },
                     { label: "Employer", value: company.name, icon: <Building2 className="h-4 w-4 text-emerald-600 shrink-0" /> },
                     { label: "Location", value: `${job.city}, ${job.state}, ${job.country}`, icon: <MapPin className="h-4 w-4 text-red-500 shrink-0" /> },
                     { label: "Employment", value: job.employmentType, icon: <Clock className="h-4 w-4 text-purple-600 shrink-0" /> },
@@ -296,13 +295,13 @@ const attribution =
               </div>
 
               {/* Hiring Company Profile Card */}
-              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm">
                 <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4 border-b pb-2">
                   Company Info
                 </h3>
 
                 <div className="flex gap-4 items-center mb-4">
-                  <div className="h-12 w-12 bg-neutral-100 dark:bg-neutral-800 rounded-xl flex items-center justify-center border border-neutral-200 dark:border-neutral-700 shrink-0">
+                  <div className="h-12 w-12 bg-neutral-100 dark:bg-neutral-800 rounded-md flex items-center justify-center border border-neutral-200 dark:border-neutral-700 shrink-0">
                     {company.logoUrl ? (
                       <img src={company.logoUrl} alt={company.name} className="h-8 w-8 object-contain rounded" />
                     ) : (
@@ -339,7 +338,7 @@ const attribution =
                       href={company.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-bold flex items-center justify-center transition-all"
+                      className="p-2 bg-[var(--color-primary-light)] hover:opacity-80 text-[var(--color-primary)] rounded-lg text-xs font-bold flex items-center justify-center transition-all"
                       title="Visit Website"
                     >
                       <ExternalLink className="h-4 w-4" />

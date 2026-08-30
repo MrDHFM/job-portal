@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, Briefcase, Trash2, ArrowUpRight, RotateCcw } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { JobListSkeleton } from "@/components/Skeletons";
 
 export default function SavedJobsPage() {
   const [savedJobs, setSavedJobs] = useState<any[]>([]);
@@ -68,13 +69,9 @@ export default function SavedJobsPage() {
           </div>
 
           {loading ? (
-            <div className="space-y-4">
-              {[1, 2].map((n) => (
-                <div key={n} className="bg-white p-6 rounded-2xl h-24 animate-pulse"></div>
-              ))}
-            </div>
+            <JobListSkeleton count={2} />
           ) : savedJobs.length === 0 ? (
-            <div className="bg-white dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl p-16 text-center">
+            <div className="bg-white dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg p-16 text-center">
               <Heart className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-750 mb-4" />
               <h3 className="text-lg font-bold text-neutral-900 dark:text-white">Your saved list is empty</h3>
               <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 max-w-sm mx-auto">
@@ -82,7 +79,7 @@ export default function SavedJobsPage() {
               </p>
               <Link
                 href="/jobs"
-                className="mt-6 inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold px-4 py-2 shadow"
+                className="mt-6 inline-flex items-center gap-1 app-button-primary rounded-lg text-xs px-4 py-2 shadow"
               >
                 Browse Active Jobs
               </Link>
@@ -92,13 +89,13 @@ export default function SavedJobsPage() {
               {savedJobs.map((job) => (
                 <div
                   key={job.id}
-                  className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-xs transition-shadow"
+                  className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:shadow-xs transition-shadow"
                 >
                   <div>
-                    <h3 className="text-base font-bold text-neutral-900 dark:text-white hover:text-blue-600">
+                    <h3 className="text-base font-bold text-neutral-900 dark:text-white hover:text-[var(--color-primary)]">
                       <Link href={`/jobs/detail/${job.slug}`}>{job.title}</Link>
                     </h3>
-                    <p className="text-xs font-semibold text-blue-600 mt-0.5">{job.companyName}</p>
+                    <p className="text-xs font-semibold text-[var(--color-primary)] mt-0.5">{job.companyName}</p>
                     <p className="text-[11px] text-neutral-400 mt-0.5">
                       {job.city}, {job.country} • {job.workMode} • {job.employmentType}
                     </p>
@@ -107,14 +104,14 @@ export default function SavedJobsPage() {
                   <div className="flex gap-2 items-center w-full sm:w-auto shrink-0 border-t sm:border-0 pt-3 sm:pt-0 justify-end">
                     <button
                       onClick={() => handleRemove(job.id)}
-                      className="p-2 border border-neutral-100 hover:bg-red-50 hover:text-red-600 dark:border-neutral-800 dark:hover:bg-red-950/20 rounded-xl text-neutral-400 transition-colors cursor-pointer"
+                      className="p-2 border border-neutral-100 hover:bg-red-50 hover:text-red-600 dark:border-neutral-800 dark:hover:bg-red-950/20 rounded-md text-neutral-400 transition-colors cursor-pointer"
                       title="Remove Bookmark"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                     <Link
                       href={`/jobs/detail/${job.slug}`}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl inline-flex items-center gap-1 transition-colors"
+                      className="app-button-primary text-xs px-4 py-2.5 rounded-md gap-1"
                     >
                       Apply Now <ArrowUpRight className="h-3.5 w-3.5" />
                     </Link>

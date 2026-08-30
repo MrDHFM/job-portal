@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -12,11 +12,15 @@ import {
   X,
   ShieldAlert,
 } from "lucide-react";
-import { useTheme } from "@/app/theme-provider";
 import Image from "next/image";
+import { useClickOutside } from "../lib/hooks/useClickOutside";
+import { useTheme } from "../app/theme-provider";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  // useClickOutside also handles Escape internally.
+  useClickOutside(mobileMenuRef, isOpen, () => setIsOpen(false));
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const [savedCount, setSavedCount] = useState(0);
@@ -101,9 +105,9 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
+                className={`text-sm font-medium transition-colors hover:text-[var(--color-primary)] ${
                   isActive
-                    ? "text-blue-600 dark:text-blue-400"
+                    ? "text-[var(--color-primary)]"
                     : "text-neutral-600 dark:text-neutral-300"
                 }`}
               >
@@ -117,7 +121,7 @@ export default function Navbar() {
         <div className="hidden sm:flex items-center gap-4">
           <Link
             href="/saved-jobs"
-            className="relative p-2 text-neutral-600 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400"
+            className="relative p-2 text-neutral-600 hover:text-[var(--color-primary)] dark:text-neutral-300 "
             title="Saved Jobs"
           >
             <Heart className="h-5 w-5" />
@@ -130,7 +134,7 @@ export default function Navbar() {
 
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 text-neutral-600 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400 rounded-lg bg-neutral-100 dark:bg-neutral-800 transition-colors cursor-pointer"
+            className="p-2 text-neutral-600 hover:text-[var(--color-primary)] dark:text-neutral-300  rounded-lg bg-neutral-100 dark:bg-neutral-800 transition-colors cursor-pointer"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? (
@@ -144,9 +148,9 @@ export default function Navbar() {
           {isAdmin && (
             <Link
               href="/admin"
-              className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition-all"
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary-light)] px-3 py-1.5 text-xs font-semibold text-[var(--color-primary-dark)] hover:opacity-80 transition-all"
             >
-              <ShieldAlert className="h-3.5 w-3.5 text-blue-600" />
+              <ShieldAlert className="h-3.5 w-3.5 text-[var(--color-primary)]" />
               Admin Dashboard
             </Link>
           )}
@@ -156,7 +160,7 @@ export default function Navbar() {
         <div className="flex items-center gap-2 lg:hidden">
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 text-neutral-600 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400 rounded-lg bg-neutral-100 dark:bg-neutral-800 transition-colors"
+            className="p-2 text-neutral-600 hover:text-[var(--color-primary)] dark:text-neutral-300  rounded-lg bg-neutral-100 dark:bg-neutral-800 transition-colors"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? (
@@ -178,7 +182,10 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isOpen && (
-        <div className="lg:hidden border-b border-neutral-200 bg-white px-4 pt-2 pb-4 dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
+        <div
+          ref={mobileMenuRef}
+          className="lg:hidden border-b border-neutral-200 bg-white px-4 pt-2 pb-4 dark:border-neutral-800 dark:bg-neutral-900 transition-colors"
+        >
           <div className="flex flex-col gap-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
@@ -189,7 +196,7 @@ export default function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className={`block rounded-lg px-3 py-2 text-base font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
                     isActive
-                      ? "text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20"
+                      ? "text-[var(--color-primary)] bg-[var(--color-primary-light)]"
                       : "text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
@@ -218,9 +225,9 @@ export default function Navbar() {
                 <Link
                   href="/admin"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2 py-2 text-blue-600 dark:text-blue-400 font-semibold"
+                  className="flex items-center gap-2 py-2 text-[var(--color-primary)] font-semibold"
                 >
-                  <ShieldAlert className="h-5 w-5 text-blue-600" /> Admin
+                  <ShieldAlert className="h-5 w-5 text-[var(--color-primary)]" /> Admin
                   Dashboard
                 </Link>
               )}

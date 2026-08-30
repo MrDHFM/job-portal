@@ -323,13 +323,13 @@ Best regards`,
   return (
     <div className="space-y-6">
       {/* Premium Job Header Card */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 sm:p-8 shadow-sm">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-6 sm:p-8 shadow-sm">
         {/* Urgent/Featured Badges Row */}
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 text-xs font-bold px-3 py-1 rounded-full">
             {job.sector} Sector
           </span>
-          <span className="bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1 rounded-full">
+          <span className="app-badge app-badge-primary text-xs px-3 py-1">
             {category.name}
           </span>
           {job.isUrgent && (
@@ -344,7 +344,7 @@ Best regards`,
             <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 dark:text-white leading-tight">
               {job.title}
             </h1>
-            <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1.5">
+            <p className="text-sm font-bold text-[var(--color-primary)] mt-1.5">
               {company.name} • {job.city}, {job.country}
             </p>
           </div>
@@ -353,7 +353,7 @@ Best regards`,
           <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={handleSaveToggle}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl border px-4 py-2.5 text-xs font-bold transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-md border px-4 py-2.5 text-xs font-bold transition-all cursor-pointer ${
                 isSaved
                   ? "bg-red-50 border-red-200 text-red-600 dark:bg-red-950/20 dark:border-red-900"
                   : "bg-white border-neutral-200 text-neutral-700 hover:bg-neutral-50 dark:bg-neutral-800 dark:border-neutral-750 dark:text-neutral-300 dark:hover:bg-neutral-700"
@@ -367,7 +367,7 @@ Best regards`,
 
             <button
               onClick={handleShare}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-xs font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-750 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 transition-all cursor-pointer"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-4 py-2.5 text-xs font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-750 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 transition-all cursor-pointer"
             >
               <Share2 className="h-4 w-4" />
               {shareSuccess ? "Copied Link!" : "Share"}
@@ -416,7 +416,7 @@ Best regards`,
         {/* Application Action */}
         <div className="space-y-4">
           {isExpired ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/20">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-5 dark:border-red-900/40 dark:bg-red-950/20">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
 
@@ -447,13 +447,13 @@ Best regards`,
               </div>
             </div>
           ) : job.applicationMethod === "EMAIL" && job.recruiterEmail ? (
-            <div className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/80 to-indigo-50/50 p-4 sm:p-5 dark:border-blue-900/40 dark:from-blue-950/20 dark:to-indigo-950/10">
+            <div className="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary-light)]/60 p-4 sm:p-5">
               <div className="flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-8">
                 {/* Apply button */}
                 <div className="shrink-0">
                   <button
                     onClick={handleApplyClick}
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-7 py-3.5 rounded-xl transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-2 text-sm cursor-pointer"
+                    className="w-full sm:w-auto app-button-primary font-extrabold px-7 py-3.5 rounded-md shadow-md gap-2 text-sm cursor-pointer"
                   >
                     <Mail className="h-4 w-4" />
                     Apply via Email
@@ -464,7 +464,7 @@ Best regards`,
                 {/* Email information */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <Mail className="h-4 w-4 text-[var(--color-primary)]" />
 
                     <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                       Send your resume to
@@ -474,7 +474,7 @@ Best regards`,
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                     <a
                       href={`mailto:${job.recruiterEmail}`}
-                      className="text-sm sm:text-base font-extrabold text-blue-700 dark:text-blue-400 hover:underline break-all"
+                      className="text-sm sm:text-base font-extrabold text-[var(--color-primary-dark)] hover:underline break-all"
                     >
                       {job.recruiterEmail}
                     </a>
@@ -482,7 +482,7 @@ Best regards`,
                     <button
                       type="button"
                       onClick={handleCopyRecruiterEmail}
-                      className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer dark:border-blue-800 dark:bg-neutral-900 dark:text-blue-400 dark:hover:bg-blue-950/40"
+                      className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-primary)]/30 bg-white px-2.5 py-1.5 text-[11px] font-bold text-[var(--color-primary-dark)] hover:bg-[var(--color-primary-light)] transition-colors cursor-pointer dark:bg-neutral-900"
                     >
                       {emailCopied ? (
                         <>
@@ -514,7 +514,7 @@ Best regards`,
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <button
                 onClick={handleApplyClick}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-8 py-3.5 rounded-xl transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-2 text-sm cursor-pointer"
+                className="w-full sm:w-auto app-button-primary font-extrabold px-8 py-3.5 rounded-md shadow-md gap-2 text-sm cursor-pointer"
               >
                 {job.applicationMethod === "INTERNAL"
                   ? "Apply Now"
@@ -537,7 +537,7 @@ Best regards`,
 
       {/* Government Specific Information Block */}
       {job.govOrganization && (
-        <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-2xl p-6 shadow-sm">
+        <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-lg p-6 shadow-sm">
           <h2 className="text-lg font-bold text-neutral-900 dark:text-white flex items-center gap-2 mb-4">
             🏛️ Government Sector Details
           </h2>
@@ -605,7 +605,7 @@ Best regards`,
 
       {/* Walk-In Specific Information Block */}
       {job.walkinVenue && (
-        <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-2xl p-6 shadow-sm">
+        <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-lg p-6 shadow-sm">
           <h2 className="text-lg font-bold text-neutral-900 dark:text-white flex items-center gap-2 mb-4">
             🚶 Walk-In Interview Information
           </h2>
@@ -665,7 +665,7 @@ Best regards`,
       )}
 
       {/* Job Description & Long Texts */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 sm:p-8 space-y-6">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-6 sm:p-8 space-y-6">
         {job.summary && (
           <div>
             <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2">
@@ -752,7 +752,7 @@ Best regards`,
                 {job.preferredSkills.split(",").map((s: string, i: number) => (
                   <span
                     key={i}
-                    className="text-xs font-semibold bg-blue-50/50 dark:bg-neutral-800 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-neutral-700"
+                    className="text-xs font-semibold bg-[var(--color-primary-light)]/50 dark:bg-neutral-800 text-[var(--color-primary-dark)] px-3 py-1.5 rounded-lg border border-[var(--color-primary)]/20 dark:border-neutral-700"
                   >
                     {s.trim()}
                   </span>
@@ -788,7 +788,7 @@ Best regards`,
                 .map((stage: string, idx: number) => (
                   <React.Fragment key={idx}>
                     {idx > 0 && <span className="text-neutral-400">&gt;</span>}
-                    <div className="bg-blue-50 dark:bg-neutral-800 border border-blue-100 dark:border-neutral-700 rounded-xl px-4 py-2.5 text-xs font-bold text-blue-800 dark:text-blue-300">
+                    <div className="bg-[var(--color-primary-light)] dark:bg-neutral-800 border border-[var(--color-primary)]/20 dark:border-neutral-700 rounded-md px-4 py-2.5 text-xs font-bold text-[var(--color-primary-dark)]">
                       Stage {idx + 1}: {stage.trim()}
                     </div>
                   </React.Fragment>
@@ -805,7 +805,7 @@ Best regards`,
         </h3>
 
         {similarJobs.length === 0 ? (
-          <p className="text-xs text-neutral-500 italic bg-white dark:bg-neutral-900 border p-4 rounded-xl text-center">
+          <p className="text-xs text-neutral-500 italic bg-white dark:bg-neutral-900 border p-4 rounded-md text-center">
             No similar jobs available at the moment. All listings come from
             genuine entries.
           </p>
@@ -815,12 +815,12 @@ Best regards`,
               <Link
                 key={item.id}
                 href={`/jobs/detail/${item.slug}`}
-                className="block p-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl hover:border-blue-500 transition-all shadow-xs"
+                className="block p-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:border-[var(--color-primary)] transition-all shadow-xs"
               >
-                <h4 className="font-extrabold text-neutral-900 dark:text-white text-sm line-clamp-1 group-hover:text-blue-600">
+                <h4 className="font-extrabold text-neutral-900 dark:text-white text-sm line-clamp-1 group-hover:text-[var(--color-primary)]">
                   {item.title}
                 </h4>
-                <p className="text-xs font-semibold text-blue-600 mt-1">
+                <p className="text-xs font-semibold text-[var(--color-primary)] mt-1">
                   {item.companyName}
                 </p>
                 <p className="text-[11px] text-neutral-400 mt-0.5">
@@ -844,7 +844,7 @@ Best regards`,
       {/* Resume submit dialog for internal application */}
       {applyModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl max-w-lg w-full border border-neutral-200 dark:border-neutral-850 p-6 shadow-xl relative animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg max-w-lg w-full border border-neutral-200 dark:border-neutral-850 p-6 shadow-xl relative animate-in zoom-in-95 duration-200">
             {/* Close button */}
             <button
               onClick={() => {
@@ -875,7 +875,7 @@ Best regards`,
                     setApplyModalOpen(false);
                     setApplySuccess(false);
                   }}
-                  className="mt-6 px-6 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700"
+                  className="mt-6 px-6 py-2.5 app-button-primary rounded-lg text-xs"
                 >
                   Done
                 </button>
@@ -913,7 +913,7 @@ Best regards`,
                             setApplyForm({ ...applyForm, name: e.target.value })
                           }
                           placeholder="Jane Doe"
-                          className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl pl-9 pr-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md pl-9 pr-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                         />
                       </div>
                     </div>
@@ -935,7 +935,7 @@ Best regards`,
                             })
                           }
                           placeholder="jane@doe.com"
-                          className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl pl-9 pr-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md pl-9 pr-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                         />
                       </div>
                     </div>
@@ -959,7 +959,7 @@ Best regards`,
                             })
                           }
                           placeholder="+1 (555) 012-3456"
-                          className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl pl-9 pr-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md pl-9 pr-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                         />
                       </div>
                     </div>
@@ -981,7 +981,7 @@ Best regards`,
                             })
                           }
                           placeholder="https://drive.google.com/resume.pdf"
-                          className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl pl-9 pr-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                          className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md pl-9 pr-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                         />
                       </div>
                     </div>
@@ -1002,7 +1002,7 @@ Best regards`,
                           })
                         }
                         placeholder="https://linkedin.com/in/username"
-                        className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                        className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                       />
                     </div>
 
@@ -1020,7 +1020,7 @@ Best regards`,
                           })
                         }
                         placeholder="https://github.com/username"
-                        className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                        className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                       />
                     </div>
                   </div>
@@ -1039,7 +1039,7 @@ Best regards`,
                         })
                       }
                       placeholder="Why are you a good fit for this role?"
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500 resize-none"
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)] resize-none"
                     ></textarea>
                   </div>
 
@@ -1054,7 +1054,7 @@ Best regards`,
                     <button
                       type="submit"
                       disabled={applyLoading}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 disabled:bg-blue-400 inline-flex items-center gap-1.5"
+                      className="px-6 py-2 app-button-primary rounded-lg text-xs disabled:opacity-50 inline-flex items-center gap-1.5"
                     >
                       {applyLoading ? (
                         "Submitting..."

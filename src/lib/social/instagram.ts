@@ -2,6 +2,7 @@ import type { SocialJob, SocialPublishResult } from "./types";
 import { generateInstagramJobCard } from "./instagram-card";
 import { uploadInstagramJobCard } from "./instagram-storage";
 import { buildTrackedJobUrl } from "./tracking-url";
+import { TELEGRAM_GROUP_URL, TELEGRAM_GROUP_CTA, INSTAGRAM_HANDLE } from "./constants";
 
 type InstagramApiResponse = {
   id?: string;
@@ -84,6 +85,11 @@ function buildCaption(job: SocialJob) {
     "",
     `🔗 Apply here:`,
     jobUrl,
+    "",
+    `📲 ${TELEGRAM_GROUP_CTA}:`,
+    TELEGRAM_GROUP_URL,
+    "",
+    `Instagram: ${INSTAGRAM_HANDLE}`,
     "",
     "#CareerDiscover #Hiring #Jobs #JobOpening",
     job.city ? `#${job.city.replace(/[^a-zA-Z0-9]/g, "")}Jobs` : "",

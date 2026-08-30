@@ -4,13 +4,19 @@ import {
 } from "next/server";
 
 import { db } from "@/db";
-import { jobTrafficEvents } from "@/db/schema";
+import { jobTrafficEvents, jobs } from "@/db/schema";
 
 import {
   normalizeTrafficSource,
 } from "@/lib/analytics/attribution";
 
-import { eq } from "drizzle-orm";
+import { eq, and, gte, sql } from "drizzle-orm";
+
+// How long to suppress a repeat VIEW from the same browser session for
+// the same job. Prevents React re-renders / StrictMode double-invokes /
+// rapid refreshes from inflating the count, while still counting a
+// genuine return visit later as a new view.
+const VIEW_DEDUP_WINDOW_MS = 30 * 60 * 1000;
 
 export async function POST(
   request: NextRequest,
@@ -42,6 +48,35 @@ export async function POST(
         body.source,
       );
 
+    const sessionId: string | null =
+      body.sessionId || null;
+
+    // Dedup check for VIEW events: if this session already viewed this
+    // job within the window, skip both the event log AND the counter
+    // increment — this is the single source of truth for jobs.viewsCount,
+    // so double-firing here would double-count everywhere downstream.
+    if (eventType === "VIEW" && sessionId) {
+      const recentDuplicate = await db
+        .select({ id: jobTrafficEvents.id })
+        .from(jobTrafficEvents)
+        .where(
+          and(
+            eq(jobTrafficEvents.jobId, jobId),
+            eq(jobTrafficEvents.eventType, "VIEW"),
+            eq(jobTrafficEvents.sessionId, sessionId),
+            gte(
+              jobTrafficEvents.createdAt,
+              new Date(Date.now() - VIEW_DEDUP_WINDOW_MS),
+            ),
+          ),
+        )
+        .limit(1);
+
+      if (recentDuplicate.length > 0) {
+        return NextResponse.json({ success: true, deduped: true });
+      }
+    }
+
     await db
       .insert(jobTrafficEvents)
       .values({
@@ -54,9 +89,18 @@ export async function POST(
           body.campaign || null,
         content:
           body.content || null,
-        sessionId:
-          body.sessionId || null,
+        sessionId,
       });
+
+    // Keep the denormalized jobs.viewsCount column in sync with the
+    // same event that drives the traffic-source breakdown, instead of
+    // incrementing it from a separate, less reliable code path.
+    if (eventType === "VIEW") {
+      await db
+        .update(jobs)
+        .set({ viewsCount: sql`${jobs.viewsCount} + 1` })
+        .where(eq(jobs.id, jobId));
+    }
 
     return NextResponse.json({
       success: true,

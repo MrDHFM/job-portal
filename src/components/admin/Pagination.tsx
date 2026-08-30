@@ -20,8 +20,8 @@ export default function Pagination({
 }: PaginationProps) {
   if (totalPages <= 1) {
     return (
-      <div className="flex items-center justify-between border-t border-neutral-200 px-4 py-3 dark:border-neutral-800">
-        <p className="text-xs text-neutral-500">
+      <div className="app-border-t flex items-center justify-between px-4 py-3">
+        <p className="app-text-muted text-xs">
           {total === 0
             ? "No records"
             : `Showing 1-${Math.min(limit, total)} of ${total}`}
@@ -61,16 +61,13 @@ export default function Pagination({
   const endRecord = Math.min(page * limit, total);
 
   return (
-    <div className="flex flex-col gap-3 border-t border-neutral-200 px-4 py-3 dark:border-neutral-800 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+    <div className="app-border-t flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="app-text-muted text-xs">
         Showing{" "}
-        <span className="font-bold text-neutral-700 dark:text-neutral-200">
+        <span className="app-text font-bold">
           {startRecord}-{endRecord}
         </span>{" "}
-        of{" "}
-        <span className="font-bold text-neutral-700 dark:text-neutral-200">
-          {total}
-        </span>
+        of <span className="app-text font-bold">{total}</span>
       </p>
 
       <div className="flex items-center gap-1">
@@ -78,7 +75,8 @@ export default function Pagination({
           type="button"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="inline-flex h-8 items-center gap-1 rounded-md border border-neutral-200 bg-white px-2.5 text-xs font-semibold text-neutral-600 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+          aria-label="Previous page"
+          className="app-button-secondary h-8 px-2.5 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           Previous
@@ -88,7 +86,7 @@ export default function Pagination({
           item === "..." ? (
             <span
               key={`ellipsis-${index}`}
-              className="flex h-8 w-8 items-center justify-center text-xs text-neutral-400"
+              className="app-text-light flex h-8 w-8 items-center justify-center text-xs"
             >
               ...
             </span>
@@ -97,11 +95,13 @@ export default function Pagination({
               key={item}
               type="button"
               onClick={() => onPageChange(item)}
-              className={`h-8 min-w-8 rounded-md border px-2 text-xs font-bold transition ${
+              aria-current={item === page ? "page" : undefined}
+              aria-label={`Page ${item}`}
+              className={
                 item === page
-                  ? "border-blue-600 bg-blue-600 text-white"
-                  : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
-              }`}
+                  ? "app-button-primary h-8 min-w-8 px-2 text-xs"
+                  : "app-button-secondary h-8 min-w-8 px-2 text-xs"
+              }
             >
               {item}
             </button>
@@ -112,7 +112,8 @@ export default function Pagination({
           type="button"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="inline-flex h-8 items-center gap-1 rounded-md border border-neutral-200 bg-white px-2.5 text-xs font-semibold text-neutral-600 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+          aria-label="Next page"
+          className="app-button-secondary h-8 px-2.5 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Next
           <ChevronRight className="h-3.5 w-3.5" />

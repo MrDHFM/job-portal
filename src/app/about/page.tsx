@@ -35,7 +35,7 @@ export default function AboutPage() {
               <div className="mt-8">
                 <Link
                   href="/jobs"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition-all"
+                  className="app-button-primary gap-2 rounded-md px-5 py-3 text-sm shadow-md"
                 >
                   Browse Genuine Openings <ArrowRightIcon className="h-4 w-4" />
                 </Link>
@@ -45,7 +45,7 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {[
                 {
-                  icon: <ShieldCheck className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
+                  icon: <ShieldCheck className="h-6 w-6 text-[var(--color-primary)]" />,
                   title: "100% Verified",
                   desc: "Every company and job is manually checked and published by authorized personnel."
                 },
@@ -67,9 +67,9 @@ export default function AboutPage() {
               ].map((card, idx) => (
                 <div
                   key={idx}
-                  className="p-5 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750 hover:shadow-md transition-all"
+                  className="p-5 rounded-lg bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750 hover:shadow-md transition-all"
                 >
-                  <div className="mb-3 p-2.5 bg-white dark:bg-neutral-900 rounded-xl inline-block border border-neutral-150 dark:border-neutral-700">
+                  <div className="mb-3 p-2.5 bg-white dark:bg-neutral-900 rounded-md inline-block border border-neutral-150 dark:border-neutral-700">
                     {card.icon}
                   </div>
                   <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-1">
@@ -100,8 +100,8 @@ export default function AboutPage() {
               { label: "Verified Sectors", value: "6+" },
               { label: "Dynamic Tracking", value: "Active" }
             ].map((stat, idx) => (
-              <div key={idx} className="p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800">
-                <span className="block text-3xl font-extrabold text-blue-600 dark:text-blue-400 mb-1">
+              <div key={idx} className="p-6 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800">
+                <span className="block text-3xl font-extrabold text-[var(--color-primary)] mb-1">
                   {stat.value}
                 </span>
                 <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium uppercase tracking-wider">

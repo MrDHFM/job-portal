@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Settings, Save, CheckCircle, AlertTriangle } from "lucide-react";
+import { FormSkeleton } from "@/components/Skeletons";
 
 export default function AdminSettingsPage() {
   const [form, setForm] = useState({
@@ -63,9 +64,9 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Header Banner */}
-      <div className="bg-white dark:bg-neutral-900 border p-6 rounded-2xl shadow-xs">
+      <div className="bg-white dark:bg-neutral-900 border p-6 rounded-lg shadow-xs">
         <h1 className="text-xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
-          <Settings className="h-6 w-6 text-blue-600" /> Portal Settings
+          <Settings className="h-6 w-6 text-[var(--color-primary)]" /> Portal Settings
         </h1>
         <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
           Adjust corporate branding, helpline channels, and SEO parameters.
@@ -73,22 +74,20 @@ export default function AdminSettingsPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">
-          Loading settings...
-        </div>
+        <FormSkeleton fields={7} />
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-neutral-900 border p-6 sm:p-8 rounded-2xl space-y-6 shadow-sm"
+          className="bg-white dark:bg-neutral-900 border p-6 sm:p-8 rounded-lg space-y-6 shadow-sm"
         >
           {error && (
-            <div className="bg-red-50 text-red-700 border border-red-200 p-3.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 animate-in fade-in duration-150">
+            <div className="bg-red-50 text-red-700 border border-red-200 p-3.5 rounded-md text-xs font-semibold flex items-center gap-1.5 animate-in fade-in duration-150">
               <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-3.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 animate-in fade-in duration-150">
+            <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-3.5 rounded-md text-xs font-semibold flex items-center gap-1.5 animate-in fade-in duration-150">
               <CheckCircle className="h-4 w-4 shrink-0" /> {success}
             </div>
           )}
@@ -104,7 +103,7 @@ export default function AdminSettingsPage() {
                 value={form.siteName}
                 onChange={(e) => setForm({ ...form, siteName: e.target.value })}
                 placeholder="CareerDiscover"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3.5 py-2.5 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
               />
             </div>
 
@@ -120,7 +119,7 @@ export default function AdminSettingsPage() {
                   setForm({ ...form, contactEmail: e.target.value })
                 }
                 placeholder="support@jobportal.com"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3.5 py-2.5 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
               />
             </div>
           </div>
@@ -137,7 +136,7 @@ export default function AdminSettingsPage() {
                   setForm({ ...form, socialLinkedin: e.target.value })
                 }
                 placeholder="https://linkedin.com"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3.5 py-2.5 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
               />
             </div>
 
@@ -152,7 +151,7 @@ export default function AdminSettingsPage() {
                   setForm({ ...form, socialTwitter: e.target.value })
                 }
                 placeholder="https://twitter.com"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3.5 py-2.5 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
               />
             </div>
             <div>
@@ -170,7 +169,7 @@ export default function AdminSettingsPage() {
                   })
                 }
                 placeholder="https://instagram.com/yourpage"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3.5 py-2.5 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
               />
             </div>
 
@@ -189,7 +188,7 @@ export default function AdminSettingsPage() {
                   })
                 }
                 placeholder="https://t.me/yourchannel"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3.5 py-2.5 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
               />
             </div>
           </div>
@@ -207,7 +206,7 @@ export default function AdminSettingsPage() {
                   setForm({ ...form, defaultSeoTitle: e.target.value })
                 }
                 placeholder="GlobalJob Discover - Premium Job Board"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3.5 py-2.5 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
               />
             </div>
 
@@ -223,7 +222,7 @@ export default function AdminSettingsPage() {
                   setForm({ ...form, defaultSeoDescription: e.target.value })
                 }
                 placeholder="Write default description text for index crawlers..."
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3.5 py-2.5 text-sm resize-none"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm resize-none"
               ></textarea>
             </div>
           </div>
@@ -232,7 +231,7 @@ export default function AdminSettingsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl px-5 py-2.5 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+              className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white rounded-md px-5 py-2.5 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
             >
               <Save className="h-4 w-4" />{" "}
               {saving ? "Saving settings..." : "Save Settings"}

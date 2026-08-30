@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
-import { db } from "@/db";
-import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { db } from "../db";
+import { users } from "../db/schema";
 
 // Secure PBKDF2 Password Hashing
 export function hashPassword(password: string): string {

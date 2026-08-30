@@ -1,6 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import { useEffect, useState } from "react";
 import { Eye, MousePointerClick, Users, Globe } from "lucide-react";
+import Pagination from "@/components/admin/Pagination";
+import { TableSkeleton } from "@/components/Skeletons";
 
 type TrafficSource = {
   source: string;
@@ -28,8 +32,9 @@ type Props = {
   totalClicks: number;
   uniqueVisitors: number;
   trafficSources: TrafficSource[];
-  jobPerformance: JobPerformance[];
 };
+
+const JOB_PERFORMANCE_PER_PAGE = 10;
 
 const sourceLabels: Record<string, string> = {
   instagram: "Instagram",
@@ -50,8 +55,56 @@ export default function TrafficAnalytics({
   totalClicks,
   uniqueVisitors,
   trafficSources,
-  jobPerformance,
 }: Props) {
+  const [jobPerformance, setJobPerformance] = useState<JobPerformance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const loadJobPerformance = (requestedPage = page) => {
+    setLoading(true);
+
+    const params = new URLSearchParams();
+    params.set("page", String(requestedPage));
+    params.set("limit", String(JOB_PERFORMANCE_PER_PAGE));
+
+    fetch(`/api/admin/analytics/job-performance?${params.toString()}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) {
+          setJobPerformance(
+            (json.data || []).map((row: any) => ({
+              jobId: row.job_id,
+              title: row.title,
+              slug: row.slug,
+              views: row.views,
+              applyClicks: row.apply_clicks,
+              instagram: row.instagram,
+              telegram: row.telegram,
+              linkedin: row.linkedin,
+              x: row.x,
+              google: row.google,
+              direct: row.direct,
+            })),
+          );
+
+          setPage(json.pagination?.page || requestedPage);
+          setTotalPages(json.pagination?.totalPages || 1);
+          setTotal(json.pagination?.total || 0);
+        }
+      })
+      .catch((e) =>
+        console.error("Failed to load job performance:", e),
+      )
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadJobPerformance(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <section className="space-y-6">
       <div>
@@ -93,7 +146,7 @@ export default function TrafficAnalytics({
       </div>
 
       {/* Traffic Sources */}
-      <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
         <div className="mb-5">
           <h3 className="font-bold text-neutral-900 dark:text-white">
             Traffic Sources
@@ -133,7 +186,7 @@ export default function TrafficAnalytics({
 
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
                     <div
-                      className="h-full rounded-full bg-blue-600 transition-all"
+                      className="h-full rounded-full bg-[var(--color-primary)] transition-all"
                       style={{
                         width: `${percentage}%`,
                       }}
@@ -155,7 +208,7 @@ export default function TrafficAnalytics({
       </div>
 
       {/* Job performance */}
-      <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
         <div className="border-b border-neutral-100 p-6 dark:border-neutral-800">
           <h3 className="font-bold text-neutral-900 dark:text-white">
             Job Performance
@@ -167,69 +220,92 @@ export default function TrafficAnalytics({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead>
-              <tr className="border-b bg-neutral-50 text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950">
-                <th className="p-4 pl-6">Job</th>
+          {loading ? (
+            <div className="p-6">
+              <TableSkeleton rows={JOB_PERFORMANCE_PER_PAGE} columns={9} />
+            </div>
+          ) : jobPerformance.length === 0 ? (
+            <p className="py-12 text-center text-sm text-neutral-400">
+              No job performance data yet.
+            </p>
+          ) : (
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead>
+                <tr className="border-b bg-neutral-50 text-[10px] font-black uppercase tracking-wider text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950">
+                  <th className="p-4 pl-6">Job</th>
 
-                <th className="p-4 text-center">Views</th>
+                  <th className="p-4 text-center">Views</th>
 
-                <th className="p-4 text-center">Applies</th>
+                  <th className="p-4 text-center">Applies</th>
 
-                <th className="p-4 text-center">Instagram</th>
+                  <th className="p-4 text-center">Instagram</th>
 
-                <th className="p-4 text-center">Telegram</th>
+                  <th className="p-4 text-center">Telegram</th>
 
-                <th className="p-4 text-center">LinkedIn</th>
+                  <th className="p-4 text-center">LinkedIn</th>
 
-                <th className="p-4 text-center">X</th>
+                  <th className="p-4 text-center">X</th>
 
-                <th className="p-4 text-center">Google</th>
+                  <th className="p-4 text-center">Google</th>
 
-                <th className="p-4 text-center">Direct</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-              {jobPerformance.map((job, index) => (
-                <tr
-                  key={`${job.jobId ?? "job"}-${index}`}
-                  className="hover:bg-neutral-50 dark:hover:bg-neutral-950"
-                >
-                  <td className="max-w-[260px] p-4 pl-6">
-                    <div className="truncate font-bold text-neutral-900 dark:text-white">
-                      {job.title}
-                    </div>
-
-                    <div className="mt-1 text-[10px] text-neutral-400">
-                      Job #{job.jobId}
-                    </div>
-                  </td>
-
-                  <td className="p-4 text-center font-bold">
-                    {(job.views ?? 0).toLocaleString()}
-                  </td>
-
-                  <td className="p-4 text-center font-bold">
-                    {(job.applyClicks ?? 0).toLocaleString()}
-                  </td>
-
-                  <td className="p-4 text-center">{job.instagram}</td>
-
-                  <td className="p-4 text-center">{job.telegram}</td>
-
-                  <td className="p-4 text-center">{job.linkedin}</td>
-
-                  <td className="p-4 text-center">{job.x}</td>
-
-                  <td className="p-4 text-center">{job.google}</td>
-
-                  <td className="p-4 text-center">{job.direct}</td>
+                  <th className="p-4 text-center">Direct</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {jobPerformance.map((job, index) => (
+                  <tr
+                    key={`${job.jobId ?? "job"}-${index}`}
+                    className="hover:bg-neutral-50 dark:hover:bg-neutral-950"
+                  >
+                    <td className="max-w-[260px] p-4 pl-6">
+                      <div className="truncate font-bold text-neutral-900 dark:text-white">
+                        {job.title}
+                      </div>
+
+                      <div className="mt-1 text-[10px] text-neutral-400">
+                        Job #{job.jobId}
+                      </div>
+                    </td>
+
+                    <td className="p-4 text-center font-bold">
+                      {(job.views ?? 0).toLocaleString()}
+                    </td>
+
+                    <td className="p-4 text-center font-bold">
+                      {(job.applyClicks ?? 0).toLocaleString()}
+                    </td>
+
+                    <td className="p-4 text-center">{job.instagram}</td>
+
+                    <td className="p-4 text-center">{job.telegram}</td>
+
+                    <td className="p-4 text-center">{job.linkedin}</td>
+
+                    <td className="p-4 text-center">{job.x}</td>
+
+                    <td className="p-4 text-center">{job.google}</td>
+
+                    <td className="p-4 text-center">{job.direct}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
+
+        {!loading && jobPerformance.length > 0 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            limit={JOB_PERFORMANCE_PER_PAGE}
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              loadJobPerformance(nextPage);
+            }}
+          />
+        )}
       </div>
     </section>
   );
@@ -245,9 +321,9 @@ function Metric({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--color-primary-light)] text-[var(--color-primary)]">
           {icon}
         </div>
 

@@ -57,9 +57,9 @@ export default async function CompanyDetailPage(props: Props) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           
           {/* Header Card */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-2xl shadow-sm mb-8">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-8 rounded-lg shadow-sm mb-8">
             <div className="flex flex-col md:flex-row gap-6 items-start">
-              <div className="h-20 w-20 bg-neutral-100 dark:bg-neutral-800 rounded-2xl flex items-center justify-center border shrink-0">
+              <div className="h-20 w-20 bg-neutral-100 dark:bg-neutral-800 rounded-lg flex items-center justify-center border shrink-0">
                 {company.logoUrl ? (
                   <img src={company.logoUrl} alt={company.name} className="h-14 w-14 object-contain rounded" />
                 ) : (
@@ -72,7 +72,7 @@ export default async function CompanyDetailPage(props: Props) {
                   <h1 className="text-3xl font-extrabold text-neutral-900 dark:text-white leading-tight">
                     {company.name}
                   </h1>
-                  <span className="bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1 rounded-full">
+                  <span className="app-badge app-badge-primary text-xs px-3 py-1">
                     {company.industry}
                   </span>
                 </div>
@@ -101,7 +101,7 @@ export default async function CompanyDetailPage(props: Props) {
                   href={company.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-1.5"
+                  className="w-full md:w-auto app-button-primary font-semibold py-2.5 px-5 rounded-md text-sm shadow-sm gap-1.5"
                 >
                   Visit Website <ExternalLink className="h-4 w-4" />
                 </a>
@@ -113,7 +113,7 @@ export default async function CompanyDetailPage(props: Props) {
             {/* Description (8 cols) */}
             <div className="lg:col-span-8 space-y-6">
               
-              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 sm:p-8 rounded-2xl shadow-sm space-y-4">
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 sm:p-8 rounded-lg shadow-sm space-y-4">
                 <h2 className="text-xl font-bold text-neutral-900 dark:text-white border-b pb-2">About The Company</h2>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-line">
                   {company.description || "No corporate details registered for this employer."}
@@ -122,7 +122,7 @@ export default async function CompanyDetailPage(props: Props) {
                 {company.linkedin && (
                   <div className="pt-4 flex items-center gap-2">
                     <span className="text-xs font-bold text-neutral-400 uppercase">External Links:</span>
-                    <a href={company.linkedin} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">
+                    <a href={company.linkedin} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-[var(--color-primary)] hover:underline">
                       LinkedIn Company Page
                     </a>
                   </div>
@@ -136,7 +136,7 @@ export default async function CompanyDetailPage(props: Props) {
                 </h2>
 
                 {activeJobs.length === 0 ? (
-                  <div className="bg-white dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center rounded-2xl shadow-sm">
+                  <div className="bg-white dark:bg-neutral-900 border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center rounded-lg shadow-sm">
                     <Briefcase className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
                     <p className="text-neutral-600 dark:text-neutral-400 font-medium">No open positions available.</p>
                     <p className="text-xs text-neutral-400 mt-1">This firm has zero published vacancies right now.</p>
@@ -146,10 +146,10 @@ export default async function CompanyDetailPage(props: Props) {
                     {activeJobs.map((job) => (
                       <div
                         key={job.id}
-                        className="bg-white dark:bg-neutral-900 p-6 border border-neutral-200 dark:border-neutral-800 rounded-2xl hover:border-blue-500 shadow-xs transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                        className="bg-white dark:bg-neutral-900 p-6 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:border-[var(--color-primary)] shadow-xs transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                       >
                         <div>
-                          <h3 className="font-extrabold text-neutral-900 dark:text-white hover:text-blue-600 text-base">
+                          <h3 className="font-extrabold text-neutral-900 dark:text-white hover:text-[var(--color-primary)] text-base">
                             <Link href={`/jobs/detail/${job.slug}`}>{job.title}</Link>
                           </h3>
                           <p className="text-xs text-neutral-500 mt-1">
@@ -165,7 +165,7 @@ export default async function CompanyDetailPage(props: Props) {
                           </span>
                           <Link
                             href={`/jobs/detail/${job.slug}`}
-                            className="bg-neutral-100 hover:bg-blue-600 hover:text-white text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all"
+                            className="bg-neutral-100 hover:bg-[var(--color-primary)] hover:text-white text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all"
                           >
                             Apply
                           </Link>
@@ -180,7 +180,7 @@ export default async function CompanyDetailPage(props: Props) {
 
             {/* Quick Overview Sidebar (4 cols) */}
             <aside className="lg:col-span-4 space-y-6">
-              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-2xl shadow-sm">
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 rounded-lg shadow-sm">
                 <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4 border-b pb-2">Employer Snapshot</h3>
                 <div className="space-y-3.5 text-sm">
                   <p><strong className="text-neutral-400 text-xs uppercase block">Industry Sector</strong> <span className="font-semibold text-neutral-800 dark:text-neutral-100">{company.industry || "Not Specified"}</span></p>

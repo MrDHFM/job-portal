@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -13,6 +13,7 @@ import {
   Building2,
   MapPin,
 } from "lucide-react";
+import { useClickOutside } from "@/lib/hooks/useClickOutside";
 
 const INDIA_STATES = [
   "Andhra Pradesh",
@@ -118,6 +119,39 @@ export default function AdminJobForm({
   const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
+
+  // Refs for the wrapper (input + options list) of each custom
+  // autocomplete dropdown, so we can detect outside clicks per Part 8.
+  const companyDropdownRef = useRef<HTMLDivElement>(null);
+  const stateDropdownRef = useRef<HTMLDivElement>(null);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(companyDropdownRef, companyDropdownOpen, () =>
+    setCompanyDropdownOpen(false),
+  );
+  useClickOutside(stateDropdownRef, stateDropdownOpen, () =>
+    setStateDropdownOpen(false),
+  );
+  useClickOutside(cityDropdownRef, cityDropdownOpen, () =>
+    setCityDropdownOpen(false),
+  );
+
+  // Opening one autocomplete should close the others (Part 8).
+  const openCompanyDropdown = () => {
+    setStateDropdownOpen(false);
+    setCityDropdownOpen(false);
+    setCompanyDropdownOpen(true);
+  };
+  const openStateDropdown = () => {
+    setCompanyDropdownOpen(false);
+    setCityDropdownOpen(false);
+    setStateDropdownOpen(true);
+  };
+  const openCityDropdown = () => {
+    setCompanyDropdownOpen(false);
+    setStateDropdownOpen(false);
+    setCityDropdownOpen(true);
+  };
 
   // Form Field State
   const [form, setForm] = useState({
@@ -335,13 +369,13 @@ export default function AdminJobForm({
     <div className="space-y-6">
       {/* Alert indicators */}
       {error && (
-        <div className="bg-red-50 text-red-700 border border-red-200 p-4 rounded-xl text-xs font-semibold flex items-center gap-2">
+        <div className="bg-red-50 text-red-700 border border-red-200 p-4 rounded-md text-xs font-semibold flex items-center gap-2">
           <AlertCircle className="h-5 w-5 shrink-0" /> {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-4 rounded-xl text-xs font-semibold flex items-center gap-2">
+        <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-4 rounded-md text-xs font-semibold flex items-center gap-2">
           <CheckCircle className="h-5 w-5 shrink-0" /> {success}
         </div>
       )}
@@ -364,7 +398,7 @@ export default function AdminJobForm({
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-3.5 border-b-2 shrink-0 transition-colors ${
               activeTab === tab.id
-                ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                ? "border-[var(--color-primary)] text-[var(--color-primary)]"
                 : "border-transparent hover:text-neutral-700"
             }`}
           >
@@ -375,17 +409,17 @@ export default function AdminJobForm({
 
       <form
         onSubmit={(e) => handleSubmit(e, false)}
-        className="space-y-6 bg-white dark:bg-neutral-900 border p-6 rounded-2xl"
+        className="space-y-6 bg-white dark:bg-neutral-900 border p-6 rounded-lg"
       >
         {/* Tab 1: Basic */}
         {activeTab === "basic" && (
           <div className="space-y-4">
             <h3 className="text-base font-bold text-neutral-850 dark:text-neutral-100 flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-blue-600" /> Core Position
+              <Briefcase className="h-5 w-5 text-[var(--color-primary)]" /> Core Position
               Details
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="relative">
+              <div className="relative" ref={companyDropdownRef}>
                 <label
                   htmlFor="companyName"
                   className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
@@ -398,7 +432,7 @@ export default function AdminJobForm({
                   type="text"
                   required
                   value={form.companyName}
-                  onFocus={() => setCompanyDropdownOpen(true)}
+                  onFocus={openCompanyDropdown}
                   onChange={(e) => {
                     const value = e.target.value;
 
@@ -416,10 +450,10 @@ export default function AdminJobForm({
                         : "",
                     });
 
-                    setCompanyDropdownOpen(true);
+                    openCompanyDropdown();
                   }}
                   placeholder="Select existing company or type a new company name"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
                 />
 
                 {companyDropdownOpen && (
@@ -479,7 +513,7 @@ export default function AdminJobForm({
                   onChange={(e) =>
                     setForm({ ...form, categoryId: e.target.value })
                   }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 >
                   <option value="">-- Choose Industry Category --</option>
                   {categories.map((c) => (
@@ -501,7 +535,7 @@ export default function AdminJobForm({
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. Senior Frontend Software Engineer"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                 />
               </div>
 
@@ -516,7 +550,7 @@ export default function AdminJobForm({
                     setForm({ ...form, vacancies: e.target.value })
                   }
                   placeholder="e.g. 3"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -529,7 +563,7 @@ export default function AdminJobForm({
                 <select
                   value={form.sector}
                   onChange={(e) => setForm({ ...form, sector: e.target.value })}
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 >
                   <option value="IT">IT Sector</option>
                   <option value="Non-IT">Non-IT Sector</option>
@@ -545,7 +579,7 @@ export default function AdminJobForm({
                   onChange={(e) =>
                     setForm({ ...form, workMode: e.target.value })
                   }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 >
                   <option value="Remote">Remote</option>
                   <option value="Hybrid">Hybrid</option>
@@ -562,7 +596,7 @@ export default function AdminJobForm({
                   onChange={(e) =>
                     setForm({ ...form, employmentType: e.target.value })
                   }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 >
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
@@ -582,7 +616,7 @@ export default function AdminJobForm({
                   onChange={(e) =>
                     setForm({ ...form, experienceLevel: e.target.value })
                   }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 >
                   <option value="Fresher">Fresher (0-1 Years)</option>
                   <option value="Experienced">Experienced</option>
@@ -622,12 +656,12 @@ export default function AdminJobForm({
                     })
                   }
                   placeholder="e.g. India"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
 
               {/* State */}
-              <div className="relative">
+              <div className="relative" ref={stateDropdownRef}>
                 <label
                   htmlFor="state"
                   className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
@@ -640,7 +674,7 @@ export default function AdminJobForm({
                   type="text"
                   required
                   value={form.state}
-                  onFocus={() => setStateDropdownOpen(true)}
+                  onFocus={openStateDropdown}
                   onChange={(e) => {
                     const value = e.target.value;
 
@@ -649,10 +683,10 @@ export default function AdminJobForm({
                       state: value,
                     });
 
-                    setStateDropdownOpen(true);
+                    openStateDropdown();
                   }}
                   placeholder="Type or select a state"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
                 />
 
                 {stateDropdownOpen && (
@@ -690,7 +724,7 @@ export default function AdminJobForm({
               </div>
 
               {/* City */}
-              <div className="relative">
+              <div className="relative" ref={cityDropdownRef}>
                 <label
                   htmlFor="city"
                   className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
@@ -703,7 +737,7 @@ export default function AdminJobForm({
                   type="text"
                   required
                   value={form.city}
-                  onFocus={() => setCityDropdownOpen(true)}
+                  onFocus={openCityDropdown}
                   onChange={(e) => {
                     const value = e.target.value;
 
@@ -712,10 +746,10 @@ export default function AdminJobForm({
                       city: value,
                     });
 
-                    setCityDropdownOpen(true);
+                    openCityDropdown();
                   }}
                   placeholder="Type or select a city"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
                 />
 
                 {cityDropdownOpen && (
@@ -762,7 +796,7 @@ export default function AdminJobForm({
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="e.g. 100 Congress Ave Suite 300"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
               />
             </div>
 
@@ -805,7 +839,7 @@ export default function AdminJobForm({
                     setForm({ ...form, minSalary: e.target.value })
                   }
                   placeholder="e.g. 60000"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 />
               </div>
 
@@ -820,7 +854,7 @@ export default function AdminJobForm({
                     setForm({ ...form, maxSalary: e.target.value })
                   }
                   placeholder="e.g. 90000"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 />
               </div>
 
@@ -834,7 +868,7 @@ export default function AdminJobForm({
                     onChange={(e) =>
                       setForm({ ...form, currency: e.target.value })
                     }
-                    className="flex-1 bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-2 py-2 text-sm"
+                    className="flex-1 bg-neutral-50 dark:bg-neutral-800 border rounded-md px-2 py-2 text-sm"
                   >
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
@@ -846,7 +880,7 @@ export default function AdminJobForm({
                     onChange={(e) =>
                       setForm({ ...form, salaryPeriod: e.target.value })
                     }
-                    className="flex-1 bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-2 py-2 text-sm"
+                    className="flex-1 bg-neutral-50 dark:bg-neutral-800 border rounded-md px-2 py-2 text-sm"
                   >
                     <option value="yearly">/ year</option>
                     <option value="monthly">/ month</option>
@@ -893,7 +927,7 @@ export default function AdminJobForm({
                 value={form.summary}
                 onChange={(e) => setForm({ ...form, summary: e.target.value })}
                 placeholder="Give a quick 1-2 sentence hook for this job card summary..."
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm resize-none"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm resize-none"
               ></textarea>
             </div>
 
@@ -909,7 +943,7 @@ export default function AdminJobForm({
                   setForm({ ...form, description: e.target.value })
                 }
                 placeholder="Provide full description, overview, team details, technology stack..."
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
               ></textarea>
             </div>
 
@@ -924,7 +958,7 @@ export default function AdminJobForm({
                   setForm({ ...form, responsibilities: e.target.value })
                 }
                 placeholder="List core duties (each on a new line)..."
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
               ></textarea>
             </div>
 
@@ -939,7 +973,7 @@ export default function AdminJobForm({
                   setForm({ ...form, aboutRole: e.target.value })
                 }
                 placeholder="Describe team size, workflow model, work-life balance..."
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm resize-none"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm resize-none"
               ></textarea>
             </div>
           </div>
@@ -964,7 +998,7 @@ export default function AdminJobForm({
                     setForm({ ...form, requiredSkills: e.target.value })
                   }
                   placeholder="e.g. React, TypeScript, Tailwind CSS, PostgreSQL"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 />
               </div>
 
@@ -979,7 +1013,7 @@ export default function AdminJobForm({
                     setForm({ ...form, preferredSkills: e.target.value })
                   }
                   placeholder="e.g. Next.js, Docker, AWS, Drizzle ORM"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 />
               </div>
             </div>
@@ -996,7 +1030,7 @@ export default function AdminJobForm({
                     setForm({ ...form, educationDegree: e.target.value })
                   }
                   placeholder="e.g. B.Tech, B.S., MCA"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1011,7 +1045,7 @@ export default function AdminJobForm({
                     setForm({ ...form, educationBranch: e.target.value })
                   }
                   placeholder="e.g. Computer Science"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1026,7 +1060,7 @@ export default function AdminJobForm({
                     setForm({ ...form, minCgpa: e.target.value })
                   }
                   placeholder="e.g. 3.0 / 4.0 or 60%"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -1042,7 +1076,7 @@ export default function AdminJobForm({
                   setForm({ ...form, eligibility: e.target.value })
                 }
                 placeholder="List special rules, age limits, visa requirements..."
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm resize-none"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm resize-none"
               ></textarea>
             </div>
           </div>
@@ -1065,7 +1099,7 @@ export default function AdminJobForm({
                   onChange={(e) =>
                     setForm({ ...form, applicationMethod: e.target.value })
                   }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 >
                   <option value="INTERNAL">
                     INTERNAL RESUME (Apply on CareerDiscover)
@@ -1093,7 +1127,7 @@ export default function AdminJobForm({
                         setForm({ ...form, applicationUrl: e.target.value })
                       }
                       placeholder="https://acme.com/careers/job-apply"
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-blue-200 rounded-xl px-3 py-2 text-sm"
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-[var(--color-primary)]/30 rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                 )}
@@ -1111,13 +1145,13 @@ export default function AdminJobForm({
                         setForm({ ...form, recruiterEmail: e.target.value })
                       }
                       placeholder="hiring@acme.com"
-                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-blue-200 rounded-xl px-3 py-2 text-sm"
+                      className="w-full bg-neutral-50 dark:bg-neutral-800 border border-[var(--color-primary)]/30 rounded-md px-3 py-2 text-sm"
                     />
                   </div>
                 )}
 
                 {form.applicationMethod === "INTERNAL" && (
-                  <div className="bg-blue-50/50 p-3 rounded-xl border border-dashed border-blue-200 text-xs text-blue-800">
+                  <div className="bg-[var(--color-primary-light)]/50 p-3 rounded-md border border-dashed border-[var(--color-primary)]/30 text-xs text-[var(--color-primary-dark)]">
                     👍 Safe and automated first-party option! Candidates submit
                     standard PDF links, stored securely inside PostgreSQL for
                     recruiters.
@@ -1137,7 +1171,7 @@ export default function AdminJobForm({
                   onChange={(e) =>
                     setForm({ ...form, applicationDeadline: e.target.value })
                   }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1148,7 +1182,7 @@ export default function AdminJobForm({
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 >
                   <option value="PUBLISHED">
                     PUBLISHED (Instantly visible on portal)
@@ -1168,7 +1202,7 @@ export default function AdminJobForm({
               {/* Featured Job */}
               <label
                 htmlFor="isFeatured"
-                className={`flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all ${
+                className={`flex items-center gap-3 rounded-md border p-4 cursor-pointer transition-all ${
                   form.isFeatured
                     ? "border-yellow-400 bg-yellow-50 dark:border-yellow-600 dark:bg-yellow-950/20"
                     : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
@@ -1201,7 +1235,7 @@ export default function AdminJobForm({
               {/* Urgent Job */}
               <label
                 htmlFor="isUrgent"
-                className={`flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all ${
+                className={`flex items-center gap-3 rounded-md border p-4 cursor-pointer transition-all ${
                   form.isUrgent
                     ? "border-red-400 bg-red-50 dark:border-red-600 dark:bg-red-950/20"
                     : "border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"
@@ -1244,7 +1278,7 @@ export default function AdminJobForm({
                     setForm({ ...form, seoTitle: e.target.value })
                   }
                   placeholder="e.g. Senior Node.js Developer | Acme Careers"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1259,7 +1293,7 @@ export default function AdminJobForm({
                     setForm({ ...form, seoDescription: e.target.value })
                   }
                   placeholder="Summarize posting details for Google SERP crawls..."
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -1284,7 +1318,7 @@ export default function AdminJobForm({
                   onChange={(e) =>
                     setForm({ ...form, walkinDate: e.target.value })
                   }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1299,7 +1333,7 @@ export default function AdminJobForm({
                     setForm({ ...form, walkinStartTime: e.target.value })
                   }
                   placeholder="e.g. 09:30 AM"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1314,7 +1348,7 @@ export default function AdminJobForm({
                     setForm({ ...form, walkinEndTime: e.target.value })
                   }
                   placeholder="e.g. 04:30 PM"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -1330,7 +1364,7 @@ export default function AdminJobForm({
                   setForm({ ...form, walkinVenue: e.target.value })
                 }
                 placeholder="e.g. Block C, Tech Hub Conference Room, Austin, TX"
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
               />
             </div>
 
@@ -1346,7 +1380,7 @@ export default function AdminJobForm({
                     setForm({ ...form, walkinDocuments: e.target.value })
                   }
                   placeholder="e.g. 3 printed resumes, Gov photo ID card, Degree copies"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1361,7 +1395,7 @@ export default function AdminJobForm({
                     setForm({ ...form, walkinContactInfo: e.target.value })
                   }
                   placeholder="e.g. Recruiting Desk: +1 (512) 555-0100"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -1377,7 +1411,7 @@ export default function AdminJobForm({
                   setForm({ ...form, walkinInstructions: e.target.value })
                 }
                 placeholder="e.g. Smart casual dress code. Arrive 15 minutes before timings..."
-                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm resize-none"
+                className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm resize-none"
               ></textarea>
             </div>
           </div>
@@ -1402,7 +1436,7 @@ export default function AdminJobForm({
                     setForm({ ...form, govOrganization: e.target.value })
                   }
                   placeholder="e.g. Department of Energy, State Civil Board"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 />
               </div>
 
@@ -1417,7 +1451,7 @@ export default function AdminJobForm({
                     setForm({ ...form, govNotificationNumber: e.target.value })
                   }
                   placeholder="e.g. GAZETTE-DE-2026-904"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 />
               </div>
             </div>
@@ -1437,7 +1471,7 @@ export default function AdminJobForm({
                     })
                   }
                   placeholder="https://stateboards.gov/notif.pdf"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 />
               </div>
 
@@ -1452,7 +1486,7 @@ export default function AdminJobForm({
                     setForm({ ...form, govOfficialWebsiteUrl: e.target.value })
                   }
                   placeholder="https://stateboards.gov"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2.5 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
                 />
               </div>
             </div>
@@ -1469,7 +1503,7 @@ export default function AdminJobForm({
                     setForm({ ...form, govAgeLimit: e.target.value })
                   }
                   placeholder="e.g. 18 to 35 Years"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1484,7 +1518,7 @@ export default function AdminJobForm({
                     setForm({ ...form, govApplicationFee: e.target.value })
                   }
                   placeholder="e.g. General: $50, Reserve: Waived"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
 
@@ -1499,7 +1533,7 @@ export default function AdminJobForm({
                     setForm({ ...form, govSelectionProcess: e.target.value })
                   }
                   placeholder="e.g. Preliminary Screening followed by Written Exam"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
                 />
               </div>
             </div>
@@ -1516,14 +1550,14 @@ export default function AdminJobForm({
             <button
               type="button"
               onClick={() => router.push("/admin/jobs")}
-              className="px-4 py-2 border rounded-xl text-xs font-semibold text-neutral-500 hover:bg-neutral-50 cursor-pointer"
+              className="px-4 py-2 border rounded-md text-xs font-semibold text-neutral-500 hover:bg-neutral-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+              className="px-6 py-2.5 app-button-primary rounded-md text-xs shadow-md"
             >
               <Save className="h-4 w-4" />
               {loading
@@ -1539,7 +1573,7 @@ export default function AdminJobForm({
       {/* Duplicate Alert Modal */}
       {duplicateWarning && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neutral-900 border rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-neutral-900 border rounded-lg max-w-md w-full p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
             <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 mb-4">
               <AlertCircle className="h-6 w-6" />
             </div>
@@ -1562,7 +1596,7 @@ export default function AdminJobForm({
               <button
                 type="button"
                 onClick={(e) => handleSubmit(e, true)}
-                className="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl text-xs font-extrabold cursor-pointer"
+                className="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-xs font-extrabold cursor-pointer"
               >
                 Yes, Post Anyway
               </button>

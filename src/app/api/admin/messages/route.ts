@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { contactMessages } from "@/db/schema";
-import { desc, sql } from "drizzle-orm";
+import { desc, sql, and, or, ilike, eq } from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
@@ -29,10 +29,39 @@ export async function GET(req: NextRequest) {
 
     const offset = (page - 1) * limit;
 
+    const search = (searchParams.get("search") || "").trim();
+    const readFilter = searchParams.get("isRead"); // "true" | "false" | null
+    const resolvedFilter = searchParams.get("isResolved"); // "true" | "false" | null
+
+    const conditions: any[] = [];
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(contactMessages.name, `%${search}%`),
+          ilike(contactMessages.email, `%${search}%`),
+          ilike(contactMessages.subject, `%${search}%`),
+        ),
+      );
+    }
+
+    if (readFilter === "true" || readFilter === "false") {
+      conditions.push(eq(contactMessages.isRead, readFilter === "true"));
+    }
+
+    if (resolvedFilter === "true" || resolvedFilter === "false") {
+      conditions.push(
+        eq(contactMessages.isResolved, resolvedFilter === "true"),
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
     const [messages, countResult] = await Promise.all([
       db
         .select()
         .from(contactMessages)
+        .where(whereClause)
         .orderBy(desc(contactMessages.createdAt))
         .limit(limit)
         .offset(offset),
@@ -41,7 +70,8 @@ export async function GET(req: NextRequest) {
         .select({
           count: sql<number>`count(*)::int`,
         })
-        .from(contactMessages),
+        .from(contactMessages)
+        .where(whereClause),
     ]);
 
     const total = countResult[0]?.count || 0;

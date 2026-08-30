@@ -17,13 +17,39 @@ type Props = {
   health: InstagramTokenHealth;
 };
 
-function formatDate(timestamp: number | null) {
-  if (!timestamp) return "Not available";
+function formatDate(timestamp: number | null): string | null {
+  if (!timestamp) return null;
 
+  // Pin to a fixed timezone so the same token doesn't appear to expire
+  // at different times depending on which admin/device is viewing it.
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Asia/Kolkata",
   }).format(new Date(timestamp * 1000));
+}
+
+function expiryLabel(
+  timestamp: number | null,
+  health: InstagramTokenHealth,
+): string {
+  const formatted = formatDate(timestamp);
+
+  if (formatted) return formatted;
+
+  // Meta responded successfully but returned no expiry — this is normal
+  // for some long-lived Page/Instagram tokens that don't expire on a
+  // fixed schedule, not a data problem. Distinguish that from a genuine
+  // "we couldn't check" case (config missing / API error / offline).
+  const metaRespondedSuccessfully =
+    health.status === "healthy" ||
+    health.status === "warning" ||
+    health.status === "critical" ||
+    health.status === "expired";
+
+  return metaRespondedSuccessfully
+    ? "No fixed expiry"
+    : "Unknown — could not verify";
 }
 
 function getStatusStyles(status: InstagramTokenHealth["status"]) {
@@ -96,10 +122,10 @@ export default function InstagramTokenHealth({ health }: Props) {
 
   if (!health.configured) {
     return (
-      <div className="rounded-2xl border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="rounded-lg border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900">
         <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800">
-            <div className="h-9 w-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-neutral-100 dark:bg-neutral-800">
+            <div className="h-9 w-9 rounded-md bg-pink-50 text-pink-600 flex items-center justify-center">
               <span className="font-bold text-sm">IG</span>
             </div>
           </div>
@@ -139,13 +165,13 @@ export default function InstagramTokenHealth({ health }: Props) {
   return (
     <>
       <div
-        className={`relative overflow-hidden rounded-2xl border p-5 shadow-sm ${styles.wrapper}`}
+        className={`relative overflow-hidden rounded-lg border p-5 shadow-sm ${styles.wrapper}`}
       >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           {/* Header */}
           <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-orange-400 text-white shadow-lg">
-              <div className="h-9 w-9 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-pink-500 via-purple-500 to-orange-400 text-white shadow-lg">
+              <div className="h-9 w-9 rounded-md bg-pink-50 text-pink-600 flex items-center justify-center">
                 <span className="font-bold text-sm">IG</span>
               </div>
             </div>
@@ -195,13 +221,13 @@ export default function InstagramTokenHealth({ health }: Props) {
 
         {/* Dates */}
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-white/70 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/50">
+          <div className="rounded-md border border-white/70 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/50">
             <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
               Token expires
             </p>
 
             <p className="mt-1 font-bold text-neutral-900 dark:text-white">
-              {formatDate(health.expiresAt)}
+              {expiryLabel(health.expiresAt, health)}
             </p>
 
             {health.expiresInDays !== null && (
@@ -213,13 +239,13 @@ export default function InstagramTokenHealth({ health }: Props) {
             )}
           </div>
 
-          <div className="rounded-xl border border-white/70 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/50">
+          <div className="rounded-md border border-white/70 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/50">
             <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
               Data access expires
             </p>
 
             <p className="mt-1 font-bold text-neutral-900 dark:text-white">
-              {formatDate(health.dataAccessExpiresAt)}
+              {expiryLabel(health.dataAccessExpiresAt, health)}
             </p>
 
             {health.dataAccessExpiresInDays !== null && (
@@ -236,7 +262,7 @@ export default function InstagramTokenHealth({ health }: Props) {
         {(health.status === "warning" ||
           health.status === "critical" ||
           health.status === "expired") && (
-          <div className="mt-4 rounded-xl border border-current/10 bg-white/50 p-3 text-sm dark:bg-black/10">
+          <div className="mt-4 rounded-md border border-current/10 bg-white/50 p-3 text-sm dark:bg-black/10">
             <strong>Action required:</strong> Renew your Meta/Instagram access
             token before automatic Instagram publishing stops.
           </div>
@@ -247,11 +273,11 @@ export default function InstagramTokenHealth({ health }: Props) {
       {toastVisible && (
         <div className="fixed bottom-6 right-6 z-[100] w-[min(420px,calc(100vw-2rem))] animate-in slide-in-from-right-5 fade-in duration-300">
           <div
-            className={`rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ${styles.wrapper}`}
+            className={`rounded-lg border p-4 shadow-2xl backdrop-blur-xl ${styles.wrapper}`}
           >
             <div className="flex gap-3">
               <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${styles.icon}`}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${styles.icon}`}
               >
                 <StatusIcon className="h-5 w-5" />
               </div>

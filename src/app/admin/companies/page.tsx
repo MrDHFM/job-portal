@@ -16,6 +16,7 @@ import {
   Search,
 } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
+import { TableSkeleton } from "@/components/Skeletons";
 
 export default function AdminCompaniesPage() {
   const router = useRouter();
@@ -194,7 +195,7 @@ export default function AdminCompaniesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-neutral-900 border p-6 rounded-2xl">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-neutral-900 border p-6 rounded-lg">
         <div>
           <h1 className="text-xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
             🏢 Companies Registry
@@ -212,23 +213,21 @@ export default function AdminCompaniesPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search companies..."
-            className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-9 pr-3 text-xs outline-none focus:border-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+            className="w-full rounded-md border border-neutral-200 bg-white py-2.5 pl-9 pr-3 text-xs outline-none focus:border-[var(--color-primary)] dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           />
         </div>
         <button
           onClick={openCreateModal}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
+          className="app-button-primary rounded-md px-4 py-2.5 text-xs shadow-md"
         >
           <Plus className="h-4 w-4" /> Register Employer
         </button>
       </div>
 
       {loading ? (
-        <div className="bg-white p-12 text-center rounded-2xl animate-pulse">
-          Loading companies database...
-        </div>
+        <TableSkeleton rows={6} columns={5} />
       ) : companies.length === 0 ? (
-        <div className="bg-white dark:bg-neutral-900 border border-dashed rounded-2xl p-16 text-center">
+        <div className="bg-white dark:bg-neutral-900 border border-dashed rounded-lg p-16 text-center">
           <Building2 className="mx-auto h-12 w-12 text-neutral-300 mb-4" />
           <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
             No Registered Companies
@@ -239,7 +238,7 @@ export default function AdminCompaniesPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl border overflow-x-auto shadow-sm">
+        <div className="bg-white dark:bg-neutral-900 rounded-lg border overflow-x-auto shadow-sm">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="bg-neutral-50 dark:bg-neutral-850 text-neutral-500 dark:text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 text-xs uppercase font-bold tracking-wider">
@@ -288,7 +287,7 @@ export default function AdminCompaniesPage() {
                         href={comp.website}
                         target="_blank"
                         rel="noopener"
-                        className="text-blue-600 hover:underline inline-flex items-center gap-0.5 text-xs font-bold"
+                        className="text-[var(--color-primary)] hover:underline inline-flex items-center gap-0.5 text-xs font-bold"
                       >
                         Visit <ExternalLink className="h-3 w-3" />
                       </a>
@@ -321,7 +320,7 @@ export default function AdminCompaniesPage() {
         </div>
       )}
       {!loading && companies.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="overflow-hidden rounded-md border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
           <Pagination
             page={page}
             totalPages={totalPages}
@@ -338,7 +337,7 @@ export default function AdminCompaniesPage() {
       {/* Slide-In Modal Form for Create/Edit */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl max-w-lg w-full border border-neutral-200 dark:border-neutral-800 p-6 shadow-xl relative animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg max-w-lg w-full border border-neutral-200 dark:border-neutral-800 p-6 shadow-xl relative animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
             <button
               onClick={() => setFormModalOpen(false)}
               className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700"
@@ -377,7 +376,7 @@ export default function AdminCompaniesPage() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g. Acme Tech Limited"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                 />
               </div>
 
@@ -393,7 +392,7 @@ export default function AdminCompaniesPage() {
                       setForm({ ...form, logoUrl: e.target.value })
                     }
                     placeholder="https://acme.com/logo.png"
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                   />
                 </div>
 
@@ -408,7 +407,7 @@ export default function AdminCompaniesPage() {
                       setForm({ ...form, website: e.target.value })
                     }
                     placeholder="https://acme.com"
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                   />
                 </div>
               </div>
@@ -425,7 +424,7 @@ export default function AdminCompaniesPage() {
                       setForm({ ...form, industry: e.target.value })
                     }
                     placeholder="e.g. Software, Healthcare"
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                   />
                 </div>
 
@@ -436,7 +435,7 @@ export default function AdminCompaniesPage() {
                   <select
                     value={form.size}
                     onChange={(e) => setForm({ ...form, size: e.target.value })}
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
                   >
                     <option value="1-10">1-10 employees</option>
                     <option value="11-50">11-50 employees</option>
@@ -460,7 +459,7 @@ export default function AdminCompaniesPage() {
                       setForm({ ...form, headquarters: e.target.value })
                     }
                     placeholder="e.g. San Francisco, CA"
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                   />
                 </div>
 
@@ -475,7 +474,7 @@ export default function AdminCompaniesPage() {
                       setForm({ ...form, foundedYear: e.target.value })
                     }
                     placeholder="e.g. 2018"
-                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                   />
                 </div>
               </div>
@@ -491,7 +490,7 @@ export default function AdminCompaniesPage() {
                     setForm({ ...form, linkedin: e.target.value })
                   }
                   placeholder="https://linkedin.com/company/acme"
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)]"
                 />
               </div>
 
@@ -506,7 +505,7 @@ export default function AdminCompaniesPage() {
                     setForm({ ...form, description: e.target.value })
                   }
                   placeholder="Summarize corporate history, products, or vision..."
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-xl px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-blue-500 resize-none"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none text-neutral-850 dark:text-neutral-50 focus:border-[var(--color-primary)] resize-none"
                 ></textarea>
               </div>
 
@@ -520,7 +519,7 @@ export default function AdminCompaniesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 cursor-pointer"
+                  className="px-6 py-2 app-button-primary rounded-lg text-xs cursor-pointer"
                 >
                   {editId ? "Save Updates" : "Register Firm"}
                 </button>

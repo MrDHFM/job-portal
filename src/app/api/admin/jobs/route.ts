@@ -52,6 +52,24 @@ export async function GET(req: Request) {
     const status =
       searchParams.get("status") || "";
 
+    // A job is EFFECTIVELY expired the moment its applicationDeadline
+    // or expiresAt passes, even if the stored `status` column still says
+    // PUBLISHED (nothing flips that column automatically). Compute the
+    // same "effective status" here in SQL that the UI already computes
+    // client-side (see src/lib/jobs/job-expiry.ts), so filtering by
+    // "Expired" and the resulting pagination totals are both correct —
+    // not just correct for whatever happens to be on the current page.
+    const effectiveStatusExpr = sql<string>`
+      CASE
+        WHEN ${jobs.status} = 'EXPIRED' THEN 'EXPIRED'
+        WHEN ${jobs.status} = 'PUBLISHED' AND (
+          (${jobs.applicationDeadline} IS NOT NULL AND ${jobs.applicationDeadline} < NOW())
+          OR (${jobs.expiresAt} IS NOT NULL AND ${jobs.expiresAt} < NOW())
+        ) THEN 'EXPIRED'
+        ELSE ${jobs.status}
+      END
+    `;
+
     const conditions = [];
 
     if (search) {
@@ -65,11 +83,9 @@ export async function GET(req: Request) {
 
     if (
       status &&
-      ["PUBLISHED", "DRAFT", "ARCHIVED"].includes(status)
+      ["PUBLISHED", "DRAFT", "ARCHIVED", "SCHEDULED", "EXPIRED"].includes(status)
     ) {
-      conditions.push(
-        eq(jobs.status, status),
-      );
+      conditions.push(sql`${effectiveStatusExpr} = ${status}`);
     }
 
     const whereCondition =
@@ -85,6 +101,7 @@ export async function GET(req: Request) {
             title: jobs.title,
             slug: jobs.slug,
             status: jobs.status,
+            effectiveStatus: effectiveStatusExpr,
             sector: jobs.sector,
             employmentType:
               jobs.employmentType,

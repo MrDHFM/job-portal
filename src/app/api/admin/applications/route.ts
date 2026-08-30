@@ -5,6 +5,8 @@ import {
   eq,
   desc,
   and,
+  or,
+  ilike,
   sql,
 } from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
@@ -49,10 +51,36 @@ export async function GET(req: NextRequest) {
     const status =
       searchParams.get("status") || "";
 
+    const search =
+      (searchParams.get("search") || "").trim();
+
+    const jobIdParam =
+      searchParams.get("jobId") || "";
+
+    const conditions: any[] = [];
+
+    if (status) {
+      conditions.push(eq(applications.status, status));
+    }
+
+    if (jobIdParam) {
+      conditions.push(eq(applications.jobId, Number(jobIdParam)));
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(applications.name, `%${search}%`),
+          ilike(applications.email, `%${search}%`),
+          ilike(applications.phone, `%${search}%`),
+          ilike(jobs.title, `%${search}%`),
+          ilike(companies.name, `%${search}%`),
+        ),
+      );
+    }
+
     const whereCondition =
-      status
-        ? eq(applications.status, status)
-        : undefined;
+      conditions.length > 0 ? and(...conditions) : undefined;
 
     const [results, countResult] =
       await Promise.all([
@@ -112,6 +140,20 @@ export async function GET(req: NextRequest) {
               sql<number>`count(*)::int`,
           })
           .from(applications)
+          .innerJoin(
+            jobs,
+            eq(
+              applications.jobId,
+              jobs.id,
+            ),
+          )
+          .innerJoin(
+            companies,
+            eq(
+              jobs.companyId,
+              companies.id,
+            ),
+          )
           .where(whereCondition),
       ]);
 

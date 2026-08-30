@@ -1,6 +1,6 @@
 import React from "react";
-import { getAdminSession } from "@/lib/auth";
 import AdminSidebar from "./AdminSidebar";
+import { getAdminSession } from "../../lib/auth";
 
 export const dynamic = "force-dynamic";
 

@@ -1,7 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import { db } from "@/db";
-import { jobs, companies, categories } from "@/db/schema";
 import { eq, and, sql, desc } from "drizzle-orm";
 import {
   Search,
@@ -17,7 +15,9 @@ import {
   Building2,
   Calendar
 } from "lucide-react";
-import PublicLayout from "@/components/PublicLayout";
+import PublicLayout from "../components/PublicLayout";
+import { db } from "../db";
+import { categories, companies, jobs } from "../db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -136,18 +136,18 @@ export default async function HomePage() {
   return (
     <PublicLayout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 lg:py-28 bg-gradient-to-b from-blue-50/40 via-white to-white dark:from-neutral-900/40 dark:via-neutral-950 dark:to-neutral-950">
+      <section className="relative overflow-hidden py-20 lg:py-28 bg-gradient-to-b from-[var(--color-primary-light)]/40 via-white to-white dark:from-neutral-900/40 dark:via-neutral-950 dark:to-neutral-950">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-10">
             {/* Top Badge */}
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 px-3 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300 mb-6">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-light)] px-3 py-1 text-xs font-semibold text-[var(--color-primary-dark)] mb-6">
               <Zap className="h-3.5 w-3.5 fill-current" />
               Verified & Real-Time Openings
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 dark:text-white mb-6">
               Find the right opportunity for your{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-dark)]">
                 next career move
               </span>
             </h1>
@@ -159,7 +159,7 @@ export default async function HomePage() {
 
           {/* Interactive Search Box */}
           <div className="max-w-4xl mx-auto">
-            <form action="/jobs" method="GET" className="bg-white dark:bg-neutral-900 p-2 rounded-2xl shadow-xl border border-neutral-100 dark:border-neutral-800 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
+            <form action="/jobs" method="GET" className="bg-white dark:bg-neutral-900 p-2 rounded-lg shadow-xl border border-neutral-100 dark:border-neutral-800 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
               <div className="md:col-span-5 flex items-center px-3 gap-2">
                 <Search className="h-5 w-5 text-neutral-400 shrink-0" />
                 <input
@@ -181,7 +181,7 @@ export default async function HomePage() {
               <div className="md:col-span-3">
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl text-sm transition-all shadow-md shadow-blue-600/15 cursor-pointer"
+                  className="w-full app-button-primary py-3 px-4 rounded-md text-sm shadow-md cursor-pointer"
                 >
                   Search Jobs
                 </button>
@@ -191,22 +191,22 @@ export default async function HomePage() {
             {/* Quick Filters */}
             <div className="flex flex-wrap gap-2 justify-center mt-6 text-sm text-neutral-500 dark:text-neutral-400 items-center">
               <span className="font-medium text-neutral-700 dark:text-neutral-300">Quick Searches:</span>
-              <Link href="/jobs/remote" className="px-3 py-1 rounded-full bg-neutral-100 hover:bg-blue-50 dark:bg-neutral-800 dark:hover:bg-blue-950/30 dark:hover:text-blue-400 hover:text-blue-600 transition-all text-xs">
+              <Link href="/jobs/remote" className="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-all text-xs">
                 Remote Jobs
               </Link>
-              <Link href="/jobs/freshers" className="px-3 py-1 rounded-full bg-neutral-100 hover:bg-blue-50 dark:bg-neutral-800 dark:hover:bg-blue-950/30 dark:hover:text-blue-400 hover:text-blue-600 transition-all text-xs">
+              <Link href="/jobs/freshers" className="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-all text-xs">
                 Fresher Roles
               </Link>
-              <Link href="/jobs/internships" className="px-3 py-1 rounded-full bg-neutral-100 hover:bg-blue-50 dark:bg-neutral-800 dark:hover:bg-blue-950/30 dark:hover:text-blue-400 hover:text-blue-600 transition-all text-xs">
+              <Link href="/jobs/internships" className="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-all text-xs">
                 Internships
               </Link>
-              <Link href="/jobs/walk-ins" className="px-3 py-1 rounded-full bg-neutral-100 hover:bg-blue-50 dark:bg-neutral-800 dark:hover:bg-blue-950/30 dark:hover:text-blue-400 hover:text-blue-600 transition-all text-xs">
+              <Link href="/jobs/walk-ins" className="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-all text-xs">
                 Walk-In Drives
               </Link>
-              <Link href="/jobs/government" className="px-3 py-1 rounded-full bg-neutral-100 hover:bg-blue-50 dark:bg-neutral-800 dark:hover:bg-blue-950/30 dark:hover:text-blue-400 hover:text-blue-600 transition-all text-xs">
+              <Link href="/jobs/government" className="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-all text-xs">
                 Government Jobs
               </Link>
-              <Link href="/jobs/it" className="px-3 py-1 rounded-full bg-neutral-100 hover:bg-blue-50 dark:bg-neutral-800 dark:hover:bg-blue-950/30 dark:hover:text-blue-400 hover:text-blue-600 transition-all text-xs">
+              <Link href="/jobs/it" className="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-all text-xs">
                 IT Sector
               </Link>
             </div>
@@ -230,32 +230,32 @@ export default async function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: "IT Sector Jobs", desc: "Software, Cloud, Cybersecurity & Data Engineering", href: "/jobs/it", badge: "Tech Roles", bg: "from-sky-50 to-blue-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
+              { title: "IT Sector Jobs", desc: "Software, Cloud, Cybersecurity & Data Engineering", href: "/jobs/it", badge: "Tech Roles", bg: "from-orange-50 to-[var(--color-primary-light)]/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
               { title: "Non-IT Sector", desc: "Operations, Administration, Marketing & Retail", href: "/jobs/non-it", badge: "Business", bg: "from-amber-50 to-orange-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
               { title: "Government Jobs", desc: "Public sector notifications, examinations & departments", href: "/jobs/government", badge: "Public Sector", bg: "from-emerald-50 to-teal-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
               { title: "Private Jobs", desc: "Private limited enterprises, startups & corporations", href: "/jobs/private", badge: "Corporate", bg: "from-purple-50 to-indigo-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
               { title: "Internships", desc: "Summer projects, co-ops & student learning roles", href: "/jobs/internships", badge: "For Students", bg: "from-pink-50 to-rose-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
               { title: "Walk-In Drives", desc: "Direct interview venues, date, time & spot hiring", href: "/jobs/walk-ins", badge: "Direct Interview", bg: "from-cyan-50 to-teal-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
               { title: "Fresher Openings", desc: "Entry-level jobs with 0-1 years required experience", href: "/jobs/freshers", badge: "No Experience", bg: "from-indigo-50 to-violet-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-              { title: "Remote Work", desc: "Work from anywhere, digital nomad models", href: "/jobs/remote", badge: "Work from Home", bg: "from-blue-50 to-indigo-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
+              { title: "Remote Work", desc: "Work from anywhere, digital nomad models", href: "/jobs/remote", badge: "Work from Home", bg: "from-[var(--color-primary-light)] to-orange-100/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
             ].map((item, idx) => (
               <Link
                 key={idx}
                 href={item.href}
-                className={`group flex flex-col justify-between p-6 rounded-2xl bg-gradient-to-br ${item.bg} border border-neutral-100 dark:border-neutral-800 hover:border-blue-400 dark:hover:border-blue-500/50 hover:shadow-lg transition-all duration-300`}
+                className={`group flex flex-col justify-between p-6 rounded-lg bg-gradient-to-br ${item.bg} border border-neutral-100 dark:border-neutral-800 hover:border-[var(--color-primary)] hover:shadow-lg transition-all duration-300`}
               >
                 <div>
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-3 bg-white dark:bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-100 dark:border-neutral-800">
+                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)] mb-3 bg-white dark:bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-100 dark:border-neutral-800">
                     {item.badge}
                   </span>
-                  <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-[var(--color-primary)] transition-colors">
                     {item.title}
                   </h3>
                   <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                     {item.desc}
                   </p>
                 </div>
-                <div className="mt-5 flex items-center text-xs font-semibold text-blue-600 dark:text-blue-400 gap-1 group-hover:translate-x-1 transition-transform">
+                <div className="mt-5 flex items-center text-xs font-semibold text-[var(--color-primary)] gap-1 group-hover:translate-x-1 transition-transform">
                   Explore Now <ArrowRight className="h-3 w-3" />
                 </div>
               </Link>
@@ -269,7 +269,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 text-center md:text-left md:flex md:items-end md:justify-between">
             <div>
-              <div className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-2">
+              <div className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--color-primary)] mb-2">
                 <TrendingUp className="h-3.5 w-3.5" /> High Priority Roles
               </div>
               <h2 className="text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
@@ -278,14 +278,14 @@ export default async function HomePage() {
             </div>
             <Link
               href="/jobs?isFeatured=true"
-              className="hidden md:flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              className="hidden md:flex items-center gap-1 text-sm font-semibold text-[var(--color-primary)] hover:opacity-80"
             >
               View all featured <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
           {featuredJobs.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center bg-white dark:bg-neutral-900">
+            <div className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center bg-white dark:bg-neutral-900">
               <Briefcase className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700 mb-4" />
               <p className="text-neutral-600 dark:text-neutral-400 font-medium">No featured jobs available yet.</p>
               <p className="text-xs text-neutral-400 mt-1">Check back later or browse standard latest roles.</p>
@@ -293,15 +293,15 @@ export default async function HomePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredJobs.map((job) => (
-                <div key={job.id} className="relative flex flex-col justify-between p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-blue-500 shadow-sm transition-all duration-300">
+                <div key={job.id} className="relative flex flex-col justify-between p-6 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-[var(--color-primary)] shadow-sm transition-all duration-300">
                   <div className="absolute top-4 right-4 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md">
                     Featured
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-1.5 hover:text-blue-600">
+                    <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-1.5 hover:text-[var(--color-primary)]">
                       <Link href={`/jobs/detail/${job.slug}`}>{job.title}</Link>
                     </h3>
-                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-4">
+                    <p className="text-xs font-semibold text-[var(--color-primary)] mb-4">
                       {job.company.name}
                     </p>
                     <div className="flex flex-wrap gap-2 text-xs text-neutral-500 dark:text-neutral-400 mb-4">
@@ -325,7 +325,7 @@ export default async function HomePage() {
                     </span>
                     <Link
                       href={`/jobs/detail/${job.slug}`}
-                      className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5"
+                      className="text-xs font-semibold text-[var(--color-primary)] hover:underline flex items-center gap-0.5"
                     >
                       View Details <ChevronRightIcon className="h-3 w-3" />
                     </Link>
@@ -350,7 +350,7 @@ export default async function HomePage() {
           </div>
 
           {activeCategories.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center">
+            <div className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center">
               <Layers className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700 mb-4" />
               <p className="text-neutral-600 dark:text-neutral-400 font-medium">No categories available.</p>
               <p className="text-xs text-neutral-400 mt-1">Create categories in the Admin panel first.</p>
@@ -361,7 +361,7 @@ export default async function HomePage() {
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
-                  className="p-5 rounded-2xl bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750 hover:bg-blue-50/50 dark:hover:bg-neutral-700 hover:border-blue-400 transition-all text-center"
+                  className="p-5 rounded-lg bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-750 hover:bg-[var(--color-primary-light)]/50 dark:hover:bg-neutral-700 hover:border-[var(--color-primary)] transition-all text-center"
                 >
                   <h3 className="font-bold text-neutral-900 dark:text-white truncate">
                     {category.name}
@@ -390,27 +390,27 @@ export default async function HomePage() {
             </div>
             <Link
               href="/jobs"
-              className="mt-4 md:mt-0 flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-750 dark:text-blue-400 dark:hover:text-blue-300"
+              className="mt-4 md:mt-0 flex items-center gap-1 text-sm font-semibold text-[var(--color-primary)] hover:opacity-80"
             >
               Browse All Jobs <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
           {latestJobs.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center bg-white dark:bg-neutral-900">
+            <div className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center bg-white dark:bg-neutral-900">
               <Briefcase className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700 mb-4" />
               <p className="text-neutral-600 dark:text-neutral-400 font-medium">No jobs available yet.</p>
               <p className="text-xs text-neutral-400 mt-1">Analytics and job records will appear once real activity is registered.</p>
-              <Link href="/admin" className="inline-flex items-center gap-1.5 mt-5 bg-blue-600 text-white rounded-lg px-4 py-2 text-xs font-semibold hover:bg-blue-700">
+              <Link href="/admin" className="inline-flex items-center gap-1.5 mt-5 app-button-primary px-4 py-2 text-xs">
                 <Plus className="h-3.5 w-3.5" /> Post First Job
               </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {latestJobs.map((job) => (
-                <div key={job.id} className="p-6 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-blue-500 shadow-sm transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div key={job.id} className="p-6 bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-[var(--color-primary)] shadow-sm transition-all duration-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div className="flex gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200 dark:border-neutral-700">
+                    <div className="h-12 w-12 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200 dark:border-neutral-700">
                       {job.company.logoUrl ? (
                         <img src={job.company.logoUrl} alt={job.company.name} className="h-8 w-8 object-contain rounded" />
                       ) : (
@@ -418,7 +418,7 @@ export default async function HomePage() {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-neutral-900 dark:text-white hover:text-blue-600">
+                      <h3 className="text-base font-bold text-neutral-900 dark:text-white hover:text-[var(--color-primary)]">
                         <Link href={`/jobs/detail/${job.slug}`}>{job.title}</Link>
                       </h3>
                       <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 mt-0.5">
@@ -446,7 +446,7 @@ export default async function HomePage() {
                     </span>
                     <Link
                       href={`/jobs/detail/${job.slug}`}
-                      className="bg-neutral-100 hover:bg-blue-600 hover:text-white dark:bg-neutral-800 dark:hover:bg-blue-600 text-neutral-800 dark:text-neutral-200 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
+                      className="bg-neutral-100 hover:bg-[var(--color-primary)] hover:text-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
                     >
                       Apply Now
                     </Link>
@@ -471,7 +471,7 @@ export default async function HomePage() {
           </div>
 
           {popularCompanies.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center">
+            <div className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 p-12 text-center">
               <Building2 className="mx-auto h-12 w-12 text-neutral-300 dark:text-neutral-700 mb-4" />
               <p className="text-neutral-600 dark:text-neutral-400 font-medium">No companies available.</p>
               <p className="text-xs text-neutral-400 mt-1">Registered companies with active jobs will appear here.</p>
@@ -479,9 +479,9 @@ export default async function HomePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {popularCompanies.map((company) => (
-                <div key={company.id} className="p-6 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl flex flex-col justify-between hover:shadow-md transition-all">
+                <div key={company.id} className="p-6 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg flex flex-col justify-between hover:shadow-md transition-all">
                   <div className="flex gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center shrink-0">
+                    <div className="h-12 w-12 rounded-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center shrink-0">
                       {company.logoUrl ? (
                         <img src={company.logoUrl} alt={company.name} className="h-8 w-8 object-contain rounded" />
                       ) : (
@@ -490,7 +490,7 @@ export default async function HomePage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-neutral-900 dark:text-white">
-                        <Link href={`/companies/${company.slug}`} className="hover:text-blue-600">{company.name}</Link>
+                        <Link href={`/companies/${company.slug}`} className="hover:text-[var(--color-primary)]">{company.name}</Link>
                       </h3>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                         {company.industry} • {company.headquarters || "Global HQ"}
@@ -498,12 +498,12 @@ export default async function HomePage() {
                     </div>
                   </div>
                   <div className="mt-6 flex items-center justify-between border-t border-neutral-200 dark:border-neutral-700 pt-4">
-                    <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                    <span className="text-xs font-semibold text-[var(--color-primary)]">
                       {company.activeJobsCount} Active Jobs
                     </span>
                     <Link
                       href={`/companies/${company.slug}`}
-                      className="text-xs text-neutral-600 dark:text-neutral-300 hover:text-blue-600 flex items-center gap-0.5"
+                      className="text-xs text-neutral-600 dark:text-neutral-300 hover:text-[var(--color-primary)] flex items-center gap-0.5"
                     >
                       View Profile <ChevronRightIcon className="h-3 w-3" />
                     </Link>
@@ -516,25 +516,25 @@ export default async function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-blue-600 text-white border-t border-blue-700 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700 opacity-90 z-0"></div>
+      <section className="py-16 bg-[var(--color-primary)] text-white border-t border-[var(--color-primary-dark)] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-primary-dark)] to-orange-800 opacity-90 z-0"></div>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
             Ready to find your next breakthrough?
           </h2>
-          <p className="text-blue-100 max-w-2xl mx-auto mb-8 text-base">
+          <p className="text-orange-100 max-w-2xl mx-auto mb-8 text-base">
             No fake salaries, no ghost vacancies. Join thousands of candidates discovering real, verified opportunities every single day.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link
               href="/jobs"
-              className="bg-white hover:bg-neutral-100 text-blue-600 font-bold px-6 py-3 rounded-xl shadow-md transition-all text-sm"
+              className="bg-white hover:bg-neutral-100 text-[var(--color-primary)] font-bold px-6 py-3 rounded-md shadow-md transition-all text-sm"
             >
               Browse Active Jobs
             </Link>
             <Link
               href="/admin"
-              className="bg-blue-500/30 hover:bg-blue-500/50 border border-blue-400/40 text-white font-bold px-6 py-3 rounded-xl transition-all text-sm"
+              className="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold px-6 py-3 rounded-md transition-all text-sm"
             >
               Employer Dashboard
             </Link>

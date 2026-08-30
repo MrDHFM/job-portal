@@ -1,7 +1,8 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { getAdminSession } from "@/lib/auth";
+
 import LoginForm from "./LoginForm";
+import { getAdminSession } from "../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 

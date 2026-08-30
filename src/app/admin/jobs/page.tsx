@@ -26,6 +26,7 @@ import SocialMediaPostManager from "@/components/SocialMediaPostManager";
 import { isJobExpired } from "@/lib/jobs/job-expiry";
 
 import Pagination from "@/components/admin/Pagination";
+import { TableSkeleton } from "@/components/Skeletons";
 
 export default function AdminJobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -59,7 +60,7 @@ export default function AdminJobsPage() {
       params.set("search", searchTerm.trim());
     }
 
-    if (statusFilter && statusFilter !== "EXPIRED") {
+    if (statusFilter) {
       params.set("status", statusFilter);
     }
 
@@ -168,21 +169,17 @@ export default function AdminJobsPage() {
   /*
    * Filter jobs
    */
+  // Status filtering now happens server-side via the effective-status
+  // SQL expression (see /api/admin/jobs), so pagination totals are
+  // correct even for the "Expired" tab. This client-side pass only
+  // re-checks search as a defensive no-op; isJobExpired below is used
+  // purely for badge/label display, not for filtering.
   const filteredJobs = jobs.filter((job) => {
     const title = String(job.title || "").toLowerCase();
     const company = String(job.company?.name || "").toLowerCase();
     const search = searchTerm.toLowerCase();
 
-    const matchesSearch = title.includes(search) || company.includes(search);
-
-    const expired = isJobExpired(job);
-
-    const effectiveStatus = expired ? "EXPIRED" : job.status;
-
-    const matchesStatus =
-      statusFilter === "" || effectiveStatus === statusFilter;
-
-    return matchesSearch && matchesStatus;
+    return !search || title.includes(search) || company.includes(search);
   });
 
   /*
@@ -358,8 +355,8 @@ export default function AdminJobsPage() {
         aria-label={checked ? `Deselect ${job.title}` : `Select ${job.title}`}
         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
           checked
-            ? "border-blue-600 bg-blue-600 text-white"
-            : "border-neutral-300 bg-white hover:border-blue-500 dark:border-neutral-600 dark:bg-neutral-900"
+            ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+            : "border-neutral-300 bg-white hover:border-[var(--color-primary)] dark:border-neutral-600 dark:bg-neutral-900"
         }`}
       >
         {checked && <Check className="h-3 w-3" />}
@@ -417,7 +414,7 @@ export default function AdminJobsPage() {
       <div className="flex flex-col items-start justify-between gap-4 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 sm:flex-row sm:items-center">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-black text-neutral-900 dark:text-white">
-            <Briefcase className="h-6 w-6 text-blue-600" />
+            <Briefcase className="h-6 w-6 text-[var(--color-primary)]" />
             Jobs Management
           </h1>
 
@@ -429,7 +426,7 @@ export default function AdminJobsPage() {
 
         <Link
           href="/admin/jobs/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700"
+          className="app-button-primary rounded-lg px-4 py-2.5 text-xs shadow-sm"
         >
           <Plus className="h-4 w-4" />
           Create New Job
@@ -448,7 +445,7 @@ export default function AdminJobsPage() {
               placeholder="Search job title or company..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-2 pl-9 pr-4 text-sm text-neutral-800 outline-none transition placeholder:text-neutral-400 focus:border-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-2 pl-9 pr-4 text-sm text-neutral-800 outline-none transition placeholder:text-neutral-400 focus:border-[var(--color-primary)] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
             />
           </div>
 
@@ -462,11 +459,12 @@ export default function AdminJobsPage() {
                 setStatusFilter(e.target.value);
                 clearSelection();
               }}
-              className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-800 outline-none transition focus:border-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-800 outline-none transition focus:border-[var(--color-primary)] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
             >
               <option value="">All Statuses</option>
               <option value="PUBLISHED">Published</option>
               <option value="DRAFT">Draft</option>
+              <option value="SCHEDULED">Scheduled</option>
               <option value="EXPIRED">Expired</option>
               <option value="ARCHIVED">Archived</option>
             </select>
@@ -513,10 +511,10 @@ export default function AdminJobsPage() {
               onClick={toggleSelectAll}
               className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
                 allVisibleSelected
-                  ? "border-blue-600 bg-blue-600 text-white"
+                  ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
                   : someVisibleSelected
-                    ? "border-blue-600 bg-blue-100 text-blue-600"
-                    : "border-neutral-300 bg-white hover:border-blue-500 dark:border-neutral-600 dark:bg-neutral-900"
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]"
+                    : "border-neutral-300 bg-white hover:border-[var(--color-primary)] dark:border-neutral-600 dark:bg-neutral-900"
               }`}
               aria-label={
                 allVisibleSelected
@@ -527,14 +525,14 @@ export default function AdminJobsPage() {
               {allVisibleSelected && <Check className="h-3 w-3" />}
 
               {someVisibleSelected && !allVisibleSelected && (
-                <span className="h-0.5 w-2 bg-blue-600" />
+                <span className="h-0.5 w-2 bg-[var(--color-primary)]" />
               )}
             </button>
 
             <button
               type="button"
               onClick={toggleSelectAll}
-              className="text-xs font-bold text-neutral-700 hover:text-blue-600 dark:text-neutral-300 dark:hover:text-blue-400"
+              className="text-xs font-bold text-neutral-700 hover:text-[var(--color-primary)] dark:text-neutral-300"
             >
               {allVisibleSelected ? "Deselect All" : "Select All"}
             </button>
@@ -579,11 +577,7 @@ export default function AdminJobsPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="rounded-lg border border-neutral-200 bg-white p-12 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-          <div className="animate-pulse text-sm font-semibold text-neutral-500">
-            Loading jobs database...
-          </div>
-        </div>
+        <TableSkeleton rows={6} columns={6} />
       ) : filteredJobs.length === 0 ? (
         <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-16 text-center dark:border-neutral-700 dark:bg-neutral-900">
           <Briefcase className="mx-auto mb-4 h-12 w-12 text-neutral-300" />
@@ -611,9 +605,9 @@ export default function AdminJobsPage() {
                     onClick={toggleSelectAll}
                     className={`flex h-4 w-4 items-center justify-center rounded border ${
                       allVisibleSelected
-                        ? "border-blue-600 bg-blue-600 text-white"
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
                         : someVisibleSelected
-                          ? "border-blue-600 bg-blue-100"
+                          ? "border-[var(--color-primary)] bg-[var(--color-primary-light)]"
                           : "border-neutral-300 bg-white dark:border-neutral-600 dark:bg-neutral-900"
                     }`}
                     aria-label="Select all jobs"
@@ -621,7 +615,7 @@ export default function AdminJobsPage() {
                     {allVisibleSelected && <Check className="h-3 w-3" />}
 
                     {someVisibleSelected && !allVisibleSelected && (
-                      <span className="h-0.5 w-2 bg-blue-600" />
+                      <span className="h-0.5 w-2 bg-[var(--color-primary)]" />
                     )}
                   </button>
                 </th>
@@ -650,7 +644,7 @@ export default function AdminJobsPage() {
                   key={job.id}
                   className={`transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/40 ${
                     selectedJobIds.includes(Number(job.id))
-                      ? "bg-blue-50/40 dark:bg-blue-950/10"
+                      ? "bg-[var(--color-primary-light)]/40"
                       : ""
                   }`}
                 >
@@ -664,7 +658,7 @@ export default function AdminJobsPage() {
                         {job.title}
                       </span>
 
-                      <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                      <span className="text-xs font-bold text-[var(--color-primary)]">
                         {job.company?.name}
                       </span>
                     </div>
@@ -724,7 +718,7 @@ export default function AdminJobsPage() {
                 key={job.id}
                 className={`rounded-lg border bg-white p-4 shadow-sm transition dark:bg-neutral-900 ${
                   selected
-                    ? "border-blue-400 ring-1 ring-blue-400/30"
+                    ? "border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]/30"
                     : "border-neutral-200 dark:border-neutral-800"
                 }`}
               >
@@ -738,7 +732,7 @@ export default function AdminJobsPage() {
                         {job.title}
                       </h3>
 
-                      <p className="mt-0.5 truncate text-xs font-bold text-blue-600 dark:text-blue-400">
+                      <p className="mt-0.5 truncate text-xs font-bold text-[var(--color-primary)]">
                         {job.company?.name}
                       </p>
                     </div>
