@@ -1,8 +1,8 @@
 import React from "react";
 import { redirect, notFound } from "next/navigation";
 import { db } from "@/db";
-import { jobs } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { jobs, companies, categories } from "@/db/schema";
+import { eq, getTableColumns } from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
 import AdminJobForm from "@/components/AdminJobForm";
 
@@ -20,8 +20,22 @@ export default async function AdminEditJobPage(props: Props) {
     redirect("/admin/login");
   }
 
-  // Retrieve job data
-  const results = await db.select().from(jobs).where(eq(jobs.id, id)).limit(1);
+  // Retrieve job data, joined with company/category so the edit form
+  // can actually display their current names (previously this was a
+  // plain `select().from(jobs)` with no join, so the Company field
+  // silently rendered blank on every edit).
+  const results = await db
+    .select({
+      ...getTableColumns(jobs),
+      companyName: companies.name,
+      categoryName: categories.name,
+    })
+    .from(jobs)
+    .leftJoin(companies, eq(jobs.companyId, companies.id))
+    .leftJoin(categories, eq(jobs.categoryId, categories.id))
+    .where(eq(jobs.id, id))
+    .limit(1);
+
   if (results.length === 0) {
     return notFound();
   }

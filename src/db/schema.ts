@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, integer, boolean , index } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, boolean , index, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { relations } from "drizzle-orm";
 
@@ -55,6 +55,8 @@ export const jobs = pgTable("jobs", {
   sector: text("sector").notNull(), // "IT", "Non-IT"
   employmentType: text("employment_type").notNull(), // "Full-time", "Part-time", "Contract", "Internship", "Walk-In", "Fresher"
   experienceLevel: text("experience_level").notNull(), // "Fresher", "Experienced", "0-1 Years", "1-3 Years", etc.
+  minExperienceYears: integer("min_experience_years"),
+  maxExperienceYears: integer("max_experience_years"),
   workMode: text("work_mode").notNull(), // "Remote", "Hybrid", "On-site"
   vacancies: integer("vacancies").default(1).notNull(),
   
@@ -75,7 +77,7 @@ export const jobs = pgTable("jobs", {
   // Rich-text contents
   summary: text("summary"),
   aboutRole: text("about_role"),
-  description: text("description").notNull(),
+  description: text("description"),
   responsibilities: text("responsibilities"), // lines separated by newline or list
   eligibility: text("eligibility"),
   benefits: text("benefits"),
@@ -124,6 +126,11 @@ export const jobs = pgTable("jobs", {
   seoTitle: text("seo_title"),
   seoDescription: text("seo_description"),
 
+  // Auto-import tracking (Part: automatic job sourcing).
+  // Null for jobs created manually in the admin panel.
+  externalSource: text("external_source"), // e.g. "adzuna"
+  externalId: text("external_id"), // the source's own ID for this listing
+
   // Metrics
   viewsCount: integer("views_count").default(0).notNull(),
   applyClicksCount: integer("apply_clicks_count").default(0).notNull(),
@@ -147,6 +154,14 @@ export const jobs = pgTable("jobs", {
     statusPublishedAtIdx: index("jobs_status_published_at_idx").on(
       table.status,
       table.publishedAt,
+    ),
+    // Prevents the same external listing from being imported twice on
+    // repeated cron runs. Both columns are nullable (manual jobs have
+    // neither), so this only constrains rows that actually came from
+    // an import source.
+    externalSourceIdIdx: uniqueIndex("jobs_external_source_id_unique").on(
+      table.externalSource,
+      table.externalId,
     ),
   }),
 );

@@ -205,10 +205,13 @@ export async function POST(req: NextRequest) {
       companyId,
       companyName,
       categoryId,
+      categoryName,
       title,
       sector,
       employmentType,
       experienceLevel,
+      minExperienceYears,
+      maxExperienceYears,
       workMode,
       vacancies,
       country,
@@ -268,10 +271,12 @@ export async function POST(req: NextRequest) {
       force,
     } = body;
 
-    // Validation
+    // Validation — description is intentionally NOT required here anymore.
+    // Category, like Company, can be either an existing categoryId or a
+    // freshly typed categoryName that gets auto-created below.
     if (
       !companyName?.trim() ||
-      !categoryId ||
+      !categoryName?.trim() ||
       !title ||
       !sector ||
       !employmentType ||
@@ -280,7 +285,6 @@ export async function POST(req: NextRequest) {
       !country ||
       !state ||
       !city ||
-      !description ||
       !applicationMethod
     ) {
       return NextResponse.json(
@@ -380,6 +384,74 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // -----------------------------------------------------
+    // Category handling — same resolve-or-create pattern as Company.
+    // -----------------------------------------------------
+    const normalizedCategoryName = categoryName.trim();
+
+    let selectedCategoryId: number;
+
+    if (categoryId) {
+      selectedCategoryId = parseInt(categoryId);
+
+      const existingCategory = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.id, selectedCategoryId))
+        .limit(1);
+
+      if (existingCategory.length === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Selected category was not found.",
+          },
+          { status: 400 },
+        );
+      }
+    } else {
+      const existingCategory = await db
+        .select()
+        .from(categories)
+        .where(ilike(categories.name, normalizedCategoryName))
+        .limit(1);
+
+      if (existingCategory.length > 0) {
+        selectedCategoryId = existingCategory[0].id;
+      } else {
+        const baseCategorySlug = normalizedCategoryName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, "");
+
+        let categorySlug = baseCategorySlug || "category";
+        let categorySlugCount = 1;
+
+        while (true) {
+          const existingSlug = await db
+            .select()
+            .from(categories)
+            .where(eq(categories.slug, categorySlug))
+            .limit(1);
+
+          if (existingSlug.length === 0) break;
+
+          categorySlug = `${baseCategorySlug}-${categorySlugCount++}`;
+        }
+
+        const [newCategory] = await db
+          .insert(categories)
+          .values({
+            name: normalizedCategoryName,
+            slug: categorySlug,
+            isVisible: true,
+          })
+          .returning();
+
+        selectedCategoryId = newCategory.id;
+      }
+    }
+
      // Duplicate prevention check
     if (!force) {
       const possibleDuplicates = await db
@@ -408,15 +480,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const category = await db
-      .select()
-      .from(categories)
-      .where(eq(categories.id, parseInt(categoryId)))
-      .limit(1);
-
     const resolvedCompanyName = normalizedCompanyName;
-
-    const categoryName = category[0]?.name || null;
+    const resolvedCategoryName = normalizedCategoryName;
 
     // Create unique slug
     let slug = makeSlug(title, resolvedCompanyName, city);
@@ -449,12 +514,18 @@ export async function POST(req: NextRequest) {
       .insert(jobs)
       .values({
         companyId: selectedCompanyId,
-        categoryId: parseInt(categoryId),
+        categoryId: selectedCategoryId,
         title: title.trim(),
         slug,
         sector,
         employmentType,
         experienceLevel,
+        minExperienceYears: minExperienceYears
+          ? parseInt(minExperienceYears)
+          : null,
+        maxExperienceYears: maxExperienceYears
+          ? parseInt(maxExperienceYears)
+          : null,
         workMode,
         vacancies: vacancies ? parseInt(vacancies) : 1,
         country: country.trim(),

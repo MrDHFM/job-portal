@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { jobs, companies, categories, adminActivityLogs } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
 import { publishJobToSocialMedia } from "@/lib/social/publisher";
 
@@ -60,6 +60,109 @@ export async function PUT(
 
     const categoryName = categoryResult[0]?.name || null;
 
+    // -----------------------------------------------------
+    // Company + Category resolve-or-create — same pattern as the
+    // create (POST) route. Previously this route only accepted an
+    // existing companyId/categoryId, so typing a brand-new company or
+    // category name while editing a job silently failed to save.
+    // -----------------------------------------------------
+    let resolvedCompanyId: number | undefined = undefined;
+    let resolvedCompanyName = companyName;
+    let resolvedCompanyLogoUrl = companyLogoUrl;
+
+    if (body.companyId) {
+      resolvedCompanyId = parseInt(body.companyId);
+    } else if (body.companyName?.trim()) {
+      const typedName = body.companyName.trim();
+
+      const existingCompany = await db
+        .select()
+        .from(companies)
+        .where(ilike(companies.name, typedName))
+        .limit(1);
+
+      if (existingCompany.length > 0) {
+        resolvedCompanyId = existingCompany[0].id;
+        resolvedCompanyName = existingCompany[0].name;
+        resolvedCompanyLogoUrl = existingCompany[0].logoUrl || null;
+      } else {
+        const baseSlug = typedName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, "");
+
+        let companySlug = baseSlug || "company";
+        let slugCount = 1;
+
+        while (true) {
+          const existingSlug = await db
+            .select()
+            .from(companies)
+            .where(eq(companies.slug, companySlug))
+            .limit(1);
+
+          if (existingSlug.length === 0) break;
+          companySlug = `${baseSlug}-${slugCount++}`;
+        }
+
+        const [newCompany] = await db
+          .insert(companies)
+          .values({ name: typedName, slug: companySlug, isActive: true })
+          .returning();
+
+        resolvedCompanyId = newCompany.id;
+        resolvedCompanyName = newCompany.name;
+        resolvedCompanyLogoUrl = newCompany.logoUrl || null;
+      }
+    }
+
+    let resolvedCategoryId: number | undefined = undefined;
+    let resolvedCategoryName = categoryName;
+
+    if (body.categoryId) {
+      resolvedCategoryId = parseInt(body.categoryId);
+    } else if (body.categoryName?.trim()) {
+      const typedName = body.categoryName.trim();
+
+      const existingCategory = await db
+        .select()
+        .from(categories)
+        .where(ilike(categories.name, typedName))
+        .limit(1);
+
+      if (existingCategory.length > 0) {
+        resolvedCategoryId = existingCategory[0].id;
+        resolvedCategoryName = existingCategory[0].name;
+      } else {
+        const baseSlug = typedName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, "");
+
+        let categorySlug = baseSlug || "category";
+        let slugCount = 1;
+
+        while (true) {
+          const existingSlug = await db
+            .select()
+            .from(categories)
+            .where(eq(categories.slug, categorySlug))
+            .limit(1);
+
+          if (existingSlug.length === 0) break;
+          categorySlug = `${baseSlug}-${slugCount++}`;
+        }
+
+        const [newCategory] = await db
+          .insert(categories)
+          .values({ name: typedName, slug: categorySlug, isVisible: true })
+          .returning();
+
+        resolvedCategoryId = newCategory.id;
+        resolvedCategoryName = newCategory.name;
+      }
+    }
+
     const nextDeadline =
       body.applicationDeadline !== undefined
         ? body.applicationDeadline
@@ -85,14 +188,26 @@ export async function PUT(
     const updated = await db
       .update(jobs)
       .set({
-        companyId: body.companyId ? parseInt(body.companyId) : undefined,
-        categoryId: body.categoryId ? parseInt(body.categoryId) : undefined,
+        companyId: resolvedCompanyId,
+        categoryId: resolvedCategoryId,
         title: body.title !== undefined ? body.title.trim() : undefined,
         sector: body.sector !== undefined ? body.sector : undefined,
         employmentType:
           body.employmentType !== undefined ? body.employmentType : undefined,
         experienceLevel:
           body.experienceLevel !== undefined ? body.experienceLevel : undefined,
+        minExperienceYears:
+          body.minExperienceYears !== undefined
+            ? body.minExperienceYears
+              ? parseInt(body.minExperienceYears)
+              : null
+            : undefined,
+        maxExperienceYears:
+          body.maxExperienceYears !== undefined
+            ? body.maxExperienceYears
+              ? parseInt(body.maxExperienceYears)
+              : null
+            : undefined,
         workMode: body.workMode !== undefined ? body.workMode : undefined,
         vacancies:
           body.vacancies !== undefined ? parseInt(body.vacancies) : undefined,
@@ -249,7 +364,7 @@ export async function PUT(
           title: updated[0].title,
           slug: updated[0].slug,
 
-          companyName,
+          companyName: resolvedCompanyName,
 
           city: updated[0].city,
           state: updated[0].state,
@@ -275,9 +390,9 @@ export async function PUT(
 
           applicationDeadline: updated[0].applicationDeadline,
 
-          companyLogoUrl,
+          companyLogoUrl: resolvedCompanyLogoUrl,
 
-          categoryName,
+          categoryName: resolvedCategoryName,
 
           isUrgent: updated[0].isUrgent,
 
