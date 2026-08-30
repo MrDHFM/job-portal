@@ -46,6 +46,24 @@ const INDIA_STATES = [
   "West Bengal",
 ];
 
+const SECTOR_OPTIONS = [
+  "IT",
+  "Non-IT",
+  "Government",
+  "Private",
+  "Public Sector Undertaking (PSU)",
+  "Banking & Finance",
+  "Healthcare",
+  "Education",
+  "BPO / KPO",
+  "Manufacturing",
+  "Retail & E-commerce",
+  "Construction & Real Estate",
+  "Hospitality & Travel",
+  "Media & Entertainment",
+  "NGO / Non-Profit",
+];
+
 const POPULAR_INDIAN_CITIES = [
   "Ahmedabad",
   "Amritsar",
@@ -119,15 +137,25 @@ export default function AdminJobForm({
   const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [sectorDropdownOpen, setSectorDropdownOpen] = useState(false);
 
   // Refs for the wrapper (input + options list) of each custom
   // autocomplete dropdown, so we can detect outside clicks per Part 8.
   const companyDropdownRef = useRef<HTMLDivElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const sectorDropdownRef = useRef<HTMLDivElement>(null);
   const stateDropdownRef = useRef<HTMLDivElement>(null);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(companyDropdownRef, companyDropdownOpen, () =>
     setCompanyDropdownOpen(false),
+  );
+  useClickOutside(categoryDropdownRef, categoryDropdownOpen, () =>
+    setCategoryDropdownOpen(false),
+  );
+  useClickOutside(sectorDropdownRef, sectorDropdownOpen, () =>
+    setSectorDropdownOpen(false),
   );
   useClickOutside(stateDropdownRef, stateDropdownOpen, () =>
     setStateDropdownOpen(false),
@@ -138,17 +166,37 @@ export default function AdminJobForm({
 
   // Opening one autocomplete should close the others (Part 8).
   const openCompanyDropdown = () => {
+    setCategoryDropdownOpen(false);
+    setSectorDropdownOpen(false);
     setStateDropdownOpen(false);
     setCityDropdownOpen(false);
     setCompanyDropdownOpen(true);
   };
+  const openCategoryDropdown = () => {
+    setCompanyDropdownOpen(false);
+    setSectorDropdownOpen(false);
+    setStateDropdownOpen(false);
+    setCityDropdownOpen(false);
+    setCategoryDropdownOpen(true);
+  };
+  const openSectorDropdown = () => {
+    setCompanyDropdownOpen(false);
+    setCategoryDropdownOpen(false);
+    setStateDropdownOpen(false);
+    setCityDropdownOpen(false);
+    setSectorDropdownOpen(true);
+  };
   const openStateDropdown = () => {
     setCompanyDropdownOpen(false);
+    setCategoryDropdownOpen(false);
+    setSectorDropdownOpen(false);
     setCityDropdownOpen(false);
     setStateDropdownOpen(true);
   };
   const openCityDropdown = () => {
     setCompanyDropdownOpen(false);
+    setCategoryDropdownOpen(false);
+    setSectorDropdownOpen(false);
     setStateDropdownOpen(false);
     setCityDropdownOpen(true);
   };
@@ -156,12 +204,19 @@ export default function AdminJobForm({
   // Form Field State
   const [form, setForm] = useState({
     companyId: initialData?.companyId ? String(initialData.companyId) : "",
-    companyName: initialData?.company?.name || "",
+    companyName: initialData?.companyName || "",
     categoryId: initialData?.categoryId ? String(initialData.categoryId) : "",
+    categoryName: initialData?.categoryName || "",
     title: initialData?.title || "",
-    sector: initialData?.sector || "IT", // IT, Non-IT
+    sector: initialData?.sector || "IT", // free text now — see SECTOR_OPTIONS for suggestions
     employmentType: initialData?.employmentType || "Full-time", // Full-time, Part-time, Contract, Internship, Walk-In, Fresher
     experienceLevel: initialData?.experienceLevel || "Fresher", // Fresher, Experienced
+    minExperienceYears: initialData?.minExperienceYears
+      ? String(initialData.minExperienceYears)
+      : "",
+    maxExperienceYears: initialData?.maxExperienceYears
+      ? String(initialData.maxExperienceYears)
+      : "",
     workMode: initialData?.workMode || "Remote", // Remote, Hybrid, On-site
     vacancies: initialData?.vacancies ? String(initialData.vacancies) : "",
 
@@ -249,8 +304,9 @@ export default function AdminJobForm({
         setCompanies(companyList);
 
         // When editing an existing job, populate company name
-        // using the companyId stored in the job record.
-        if (initialData?.companyId && !initialData?.company?.name) {
+        // using the companyId stored in the job record (fallback in
+        // case the initial join didn't resolve a name).
+        if (initialData?.companyId && !initialData?.companyName) {
           const existingCompany = companyList.find(
             (company: any) =>
               String(company.id) === String(initialData.companyId),
@@ -275,7 +331,25 @@ export default function AdminJobForm({
     .then((res) => res.json())
     .then((json) => {
       if (json.success) {
-        setCategories(json.data || []);
+        const categoryList = json.data || [];
+
+        setCategories(categoryList);
+
+        // Same fallback for category.
+        if (initialData?.categoryId && !initialData?.categoryName) {
+          const existingCategory = categoryList.find(
+            (category: any) =>
+              String(category.id) === String(initialData.categoryId),
+          );
+
+          if (existingCategory) {
+            setForm((prev) => ({
+              ...prev,
+              categoryName: existingCategory.name,
+              categoryId: String(existingCategory.id),
+            }));
+          }
+        }
       }
     })
     .catch((error) => {
@@ -293,7 +367,7 @@ export default function AdminJobForm({
       missingFields.push("Company");
     }
 
-    if (!form.categoryId) {
+    if (!form.categoryName.trim()) {
       missingFields.push("Category");
     }
 
@@ -303,10 +377,6 @@ export default function AdminJobForm({
 
     if (!form.city.trim()) {
       missingFields.push("City");
-    }
-
-    if (!form.description.trim()) {
-      missingFields.push("Job Description");
     }
 
     if (missingFields.length > 0) {
@@ -503,25 +573,89 @@ export default function AdminJobForm({
                   published.
                 </p>
               </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+              <div className="relative" ref={categoryDropdownRef}>
+                <label
+                  htmlFor="categoryName"
+                  className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
+                >
                   Industry Category *
                 </label>
-                <select
+
+                <input
+                  id="categoryName"
+                  type="text"
                   required
-                  value={form.categoryId}
-                  onChange={(e) =>
-                    setForm({ ...form, categoryId: e.target.value })
-                  }
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm"
-                >
-                  <option value="">-- Choose Industry Category --</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  value={form.categoryName}
+                  onFocus={openCategoryDropdown}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    const existingCategory = categories.find(
+                      (category) =>
+                        category.name.trim().toLowerCase() ===
+                        value.trim().toLowerCase(),
+                    );
+
+                    setForm({
+                      ...form,
+                      categoryName: value,
+                      categoryId: existingCategory
+                        ? String(existingCategory.id)
+                        : "",
+                    });
+
+                    openCategoryDropdown();
+                  }}
+                  placeholder="Select existing category or type a new one"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
+                />
+
+                {categoryDropdownOpen && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg">
+                    {categories
+                      .filter((category) =>
+                        category.name
+                          .toLowerCase()
+                          .includes(form.categoryName.toLowerCase()),
+                      )
+                      .map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setForm({
+                              ...form,
+                              categoryName: category.name,
+                              categoryId: String(category.id),
+                            });
+
+                            setCategoryDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        >
+                          {category.name}
+                        </button>
+                      ))}
+
+                    {categories.filter((category) =>
+                      category.name
+                        .toLowerCase()
+                        .includes(form.categoryName.toLowerCase()),
+                    ).length === 0 &&
+                      form.categoryName.trim() !== "" && (
+                        <div className="px-3 py-2 text-xs text-neutral-400">
+                          No existing category found. You can create &ldquo;
+                          {form.categoryName}&rdquo;.
+                        </div>
+                      )}
+                  </div>
+                )}
+
+                <p className="mt-1 text-[10px] text-neutral-400">
+                  Select an existing category or type a new one. New
+                  categories will be created automatically.
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -556,18 +690,57 @@ export default function AdminJobForm({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+              <div className="relative" ref={sectorDropdownRef}>
+                <label
+                  htmlFor="sector"
+                  className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1"
+                >
                   Sector *
                 </label>
-                <select
+
+                <input
+                  id="sector"
+                  type="text"
+                  required
                   value={form.sector}
-                  onChange={(e) => setForm({ ...form, sector: e.target.value })}
-                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
-                >
-                  <option value="IT">IT Sector</option>
-                  <option value="Non-IT">Non-IT Sector</option>
-                </select>
+                  onFocus={openSectorDropdown}
+                  onChange={(e) => {
+                    setForm({ ...form, sector: e.target.value });
+                    openSectorDropdown();
+                  }}
+                  placeholder="Type or select a sector"
+                  className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
+                />
+
+                {sectorDropdownOpen && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg">
+                    {SECTOR_OPTIONS.filter((option) =>
+                      option.toLowerCase().includes(form.sector.toLowerCase()),
+                    ).map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setForm({ ...form, sector: option });
+                          setSectorDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      >
+                        {option}
+                      </button>
+                    ))}
+
+                    {SECTOR_OPTIONS.filter((option) =>
+                      option.toLowerCase().includes(form.sector.toLowerCase()),
+                    ).length === 0 &&
+                      form.sector.trim() !== "" && (
+                        <div className="px-3 py-2 text-xs text-neutral-400">
+                          Using custom sector &ldquo;{form.sector}&rdquo;.
+                        </div>
+                      )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -623,6 +796,48 @@ export default function AdminJobForm({
                 </select>
               </div>
             </div>
+
+            {form.experienceLevel === "Experienced" && (
+              <div className="grid grid-cols-2 gap-4 rounded-md border border-dashed border-neutral-200 dark:border-neutral-700 p-3 bg-neutral-50/50 dark:bg-neutral-800/30">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    Min Years of Experience
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={form.minExperienceYears}
+                    onChange={(e) =>
+                      setForm({ ...form, minExperienceYears: e.target.value })
+                    }
+                    placeholder="e.g. 2"
+                    className="w-full bg-white dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    Max Years of Experience
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={form.maxExperienceYears}
+                    onChange={(e) =>
+                      setForm({ ...form, maxExperienceYears: e.target.value })
+                    }
+                    placeholder="e.g. 5"
+                    className="w-full bg-white dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)]"
+                  />
+                </div>
+
+                <p className="col-span-2 text-[10px] text-neutral-400">
+                  Optional — leave blank if the years required aren&apos;t fixed. Fill just one to show &quot;3+ years&quot; style ranges.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -933,16 +1148,15 @@ export default function AdminJobForm({
 
             <div>
               <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
-                Job Description (Rich-Text Markdown Compatible) *
+                Job Description (Rich-Text Markdown Compatible)
               </label>
               <textarea
                 rows={6}
-                required
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
-                placeholder="Provide full description, overview, team details, technology stack..."
+                placeholder="Provide full description, overview, team details, technology stack... (optional)"
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm"
               ></textarea>
             </div>
