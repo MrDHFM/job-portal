@@ -1,5 +1,7 @@
 import React from "react";
 import Link from "next/link";
+import { db } from "@/db";
+import { jobs, companies, categories } from "@/db/schema";
 import { eq, and, sql, desc } from "drizzle-orm";
 import {
   Search,
@@ -13,11 +15,18 @@ import {
   ShieldCheck,
   Zap,
   Building2,
-  Calendar
+  Calendar,
+  FileText,
+  CheckCircle2,
+  Code2,
+  Landmark,
+  GraduationCap,
+  Users,
+  Sparkles,
+  Home
 } from "lucide-react";
-import PublicLayout from "../components/PublicLayout";
-import { db } from "../db";
-import { categories, companies, jobs } from "../db/schema";
+import PublicLayout from "@/components/PublicLayout";
+import { HeroGlow, HeroBriefcaseIcon, HeroDocumentIcon, HeroGrowthIcon } from "@/components/HeroAccents";
 
 export const dynamic = "force-dynamic";
 
@@ -137,6 +146,16 @@ export default async function HomePage() {
     <PublicLayout>
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-28 bg-gradient-to-b from-[var(--color-primary-light)]/40 via-white to-white dark:from-neutral-900/40 dark:via-neutral-950 dark:to-neutral-950">
+        <HeroGlow />
+
+        {/* Floating accent icons — desktop only, tucked into the side
+            margins so they never sit behind the headline or search box. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
+          <HeroBriefcaseIcon className="app-float-soft absolute left-[6%] top-[18%] h-14 w-14 opacity-70 drop-shadow-sm" />
+          <HeroGrowthIcon className="app-float-soft absolute right-[7%] top-[22%] h-16 w-16 opacity-70 drop-shadow-sm" style={{ animationDelay: "1.4s", animationDuration: "8s" }} />
+          <HeroDocumentIcon className="app-float-soft absolute left-[10%] bottom-[10%] h-12 w-12 opacity-60 drop-shadow-sm" style={{ animationDelay: "2.2s", animationDuration: "9s" }} />
+        </div>
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-10">
             {/* Top Badge */}
@@ -229,37 +248,90 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { title: "IT Sector Jobs", desc: "Software, Cloud, Cybersecurity & Data Engineering", href: "/jobs/it", badge: "Tech Roles", bg: "from-orange-50 to-[var(--color-primary-light)]/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-              { title: "Non-IT Sector", desc: "Operations, Administration, Marketing & Retail", href: "/jobs/non-it", badge: "Business", bg: "from-amber-50 to-orange-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-              { title: "Government Jobs", desc: "Public sector notifications, examinations & departments", href: "/jobs/government", badge: "Public Sector", bg: "from-emerald-50 to-teal-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-              { title: "Private Jobs", desc: "Private limited enterprises, startups & corporations", href: "/jobs/private", badge: "Corporate", bg: "from-purple-50 to-indigo-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-              { title: "Internships", desc: "Summer projects, co-ops & student learning roles", href: "/jobs/internships", badge: "For Students", bg: "from-pink-50 to-rose-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-              { title: "Walk-In Drives", desc: "Direct interview venues, date, time & spot hiring", href: "/jobs/walk-ins", badge: "Direct Interview", bg: "from-cyan-50 to-teal-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-              { title: "Fresher Openings", desc: "Entry-level jobs with 0-1 years required experience", href: "/jobs/freshers", badge: "No Experience", bg: "from-indigo-50 to-violet-50/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-              { title: "Remote Work", desc: "Work from anywhere, digital nomad models", href: "/jobs/remote", badge: "Work from Home", bg: "from-[var(--color-primary-light)] to-orange-100/50 dark:from-neutral-800/40 dark:to-neutral-850/40" },
-            ].map((item, idx) => (
-              <Link
-                key={idx}
-                href={item.href}
-                className={`group flex flex-col justify-between p-6 rounded-lg bg-gradient-to-br ${item.bg} border border-neutral-100 dark:border-neutral-800 hover:border-[var(--color-primary)] hover:shadow-lg transition-all duration-300`}
-              >
-                <div>
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)] mb-3 bg-white dark:bg-neutral-900 px-2 py-0.5 rounded-md border border-neutral-100 dark:border-neutral-800">
-                    {item.badge}
-                  </span>
-                  <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-[var(--color-primary)] transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-                <div className="mt-5 flex items-center text-xs font-semibold text-[var(--color-primary)] gap-1 group-hover:translate-x-1 transition-transform">
-                  Explore Now <ArrowRight className="h-3 w-3" />
-                </div>
-              </Link>
-            ))}
+            {(() => {
+              // Tailwind's compiler only picks up literal class strings it
+              // can see in source — never dynamically built ones like
+              // `bg-${accent}-50`. This map keeps every className a full,
+              // static string so the accent colors actually generate.
+              const accentStyles = {
+                sky: {
+                  chip: "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400",
+                  badge: "text-sky-600 dark:text-sky-400",
+                },
+                amber: {
+                  chip: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+                  badge: "text-amber-600 dark:text-amber-400",
+                },
+                emerald: {
+                  chip: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+                  badge: "text-emerald-600 dark:text-emerald-400",
+                },
+                primary: {
+                  chip: "bg-[var(--color-primary-light)] text-[var(--color-primary)]",
+                  badge: "text-[var(--color-primary)]",
+                },
+                rose: {
+                  chip: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400",
+                  badge: "text-rose-600 dark:text-rose-400",
+                },
+                cyan: {
+                  chip: "bg-cyan-50 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-400",
+                  badge: "text-cyan-600 dark:text-cyan-400",
+                },
+                violet: {
+                  chip: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400",
+                  badge: "text-violet-600 dark:text-violet-400",
+                },
+                teal: {
+                  chip: "bg-teal-50 text-teal-600 dark:bg-teal-500/10 dark:text-teal-400",
+                  badge: "text-teal-600 dark:text-teal-400",
+                },
+              } as const;
+
+              const items = [
+                { title: "IT Sector Jobs", desc: "Software, Cloud, Cybersecurity & Data Engineering", href: "/jobs/it", badge: "Tech Roles", icon: Code2, accent: "sky" as const },
+                { title: "Non-IT Sector", desc: "Operations, Administration, Marketing & Retail", href: "/jobs/non-it", badge: "Business", icon: Building2, accent: "amber" as const },
+                { title: "Government Jobs", desc: "Public sector notifications, examinations & departments", href: "/jobs/government", badge: "Public Sector", icon: Landmark, accent: "emerald" as const },
+                { title: "Private Jobs", desc: "Private limited enterprises, startups & corporations", href: "/jobs/private", badge: "Corporate", icon: Briefcase, accent: "primary" as const },
+                { title: "Internships", desc: "Summer projects, co-ops & student learning roles", href: "/jobs/internships", badge: "For Students", icon: GraduationCap, accent: "rose" as const },
+                { title: "Walk-In Drives", desc: "Direct interview venues, date, time & spot hiring", href: "/jobs/walk-ins", badge: "Direct Interview", icon: Users, accent: "cyan" as const },
+                { title: "Fresher Openings", desc: "Entry-level jobs with 0-1 years required experience", href: "/jobs/freshers", badge: "No Experience", icon: Sparkles, accent: "violet" as const },
+                { title: "Remote Work", desc: "Work from anywhere, digital nomad models", href: "/jobs/remote", badge: "Work from Home", icon: Home, accent: "teal" as const },
+              ];
+
+              return items.map((item, idx) => {
+                const Icon = item.icon;
+                const style = accentStyles[item.accent];
+
+                return (
+                  <Link
+                    key={idx}
+                    href={item.href}
+                    className="app-card group flex flex-col justify-between p-6 hover:border-[var(--color-primary)]"
+                  >
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${style.chip}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${style.badge}`}>
+                          {item.badge}
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-bold text-neutral-900 dark:text-white group-hover:text-[var(--color-primary)] transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                    <div className="mt-5 flex items-center text-xs font-semibold text-[var(--color-primary)] gap-1 group-hover:translate-x-1 transition-transform">
+                      Explore Now <ArrowRight className="h-3 w-3" />
+                    </div>
+                  </Link>
+                );
+              });
+            })()}
           </div>
         </div>
       </section>
@@ -516,25 +588,40 @@ export default async function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-[var(--color-primary)] text-white border-t border-[var(--color-primary-dark)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-primary-dark)] to-orange-800 opacity-90 z-0"></div>
+      <section className="py-20 sm:py-24 bg-[var(--color-primary-light)]/40 dark:bg-neutral-900 border-t border-[var(--color-primary)]/15 relative overflow-hidden">
+        {/* Floating job-themed icons — pure CSS, no WebGL: cheap, SSR-safe,
+            and cleans up automatically on navigation. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0 [perspective:1000px]"
+        >
+          <Briefcase className="app-float-icon absolute left-[8%] top-[15%] h-10 w-10 text-[var(--color-primary)]/25" style={{ animationDuration: "9s", animationDelay: "0s" }} />
+          <FileText className="app-float-icon absolute left-[18%] top-[65%] h-8 w-8 text-[var(--color-primary)]/20" style={{ animationDuration: "11s", animationDelay: "1.2s" }} />
+          <Briefcase className="app-float-icon absolute left-[80%] top-[20%] h-12 w-12 text-[var(--color-primary)]/20" style={{ animationDuration: "10s", animationDelay: "0.6s" }} />
+          <FileText className="app-float-icon absolute left-[88%] top-[62%] h-9 w-9 text-[var(--color-primary)]/25" style={{ animationDuration: "8s", animationDelay: "2s" }} />
+          <CheckCircle2 className="app-float-icon absolute left-[45%] top-[8%] h-7 w-7 text-[var(--color-primary)]/20" style={{ animationDuration: "12s", animationDelay: "0.3s" }} />
+          <Briefcase className="app-float-icon absolute left-[6%] top-[85%] h-7 w-7 text-[var(--color-primary)]/15" style={{ animationDuration: "13s", animationDelay: "1.6s" }} />
+          <FileText className="app-float-icon absolute left-[93%] top-[88%] h-8 w-8 text-[var(--color-primary)]/15" style={{ animationDuration: "10s", animationDelay: "2.4s" }} />
+          <CheckCircle2 className="app-float-icon absolute left-[60%] top-[80%] h-6 w-6 text-[var(--color-primary)]/25" style={{ animationDuration: "9.5s", animationDelay: "0.9s" }} />
+        </div>
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 text-neutral-900 dark:text-white">
             Ready to find your next breakthrough?
           </h2>
-          <p className="text-orange-100 max-w-2xl mx-auto mb-8 text-base">
+          <p className="text-neutral-600 dark:text-neutral-300 max-w-2xl mx-auto mb-8 text-base">
             No fake salaries, no ghost vacancies. Join thousands of candidates discovering real, verified opportunities every single day.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link
               href="/jobs"
-              className="bg-white hover:bg-neutral-100 text-[var(--color-primary)] font-bold px-6 py-3 rounded-md shadow-md transition-all text-sm"
+              className="app-button-primary px-6 py-3 shadow-md text-sm"
             >
               Browse Active Jobs
             </Link>
             <Link
               href="/admin"
-              className="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold px-6 py-3 rounded-md transition-all text-sm"
+              className="bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-white font-bold px-6 py-3 rounded-md transition-all text-sm shadow-sm"
             >
               Employer Dashboard
             </Link>

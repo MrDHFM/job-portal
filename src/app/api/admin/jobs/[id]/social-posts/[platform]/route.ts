@@ -32,12 +32,12 @@ export async function PATCH(
 
     const { id, platform } = await props.params;
 
-    if (platform !== "x") {
+    if (platform !== "linkedin" && platform !== "x") {
       return NextResponse.json(
         {
           success: false,
           error:
-            "Manual status updates are only for X. LinkedIn now publishes automatically — use the Retry action instead.",
+            "Manual status updates are only for LinkedIn and X.",
         },
         { status: 400 }
       );

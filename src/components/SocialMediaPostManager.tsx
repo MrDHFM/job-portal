@@ -204,7 +204,10 @@ export default function SocialMediaPostManager({
 
     return {
       platform,
-      status: platform === "x" ? "MANUAL_READY" : "PENDING",
+      status:
+        platform === "linkedin" || platform === "x"
+          ? "MANUAL_READY"
+          : "PENDING",
     };
   };
 
@@ -599,7 +602,7 @@ export default function SocialMediaPostManager({
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                      {(["x"] as const).map((platform) => {
+                      {(["linkedin", "x"] as const).map((platform) => {
                         const status =
                           getStatus(platform);
 
@@ -763,8 +766,10 @@ export default function SocialMediaPostManager({
             <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <p className="text-[10px] text-neutral-500">
-                  Telegram, Instagram & LinkedIn publish
-                  automatically. X remains manual by design.
+                  Telegram &amp; Instagram publish automatically. LinkedIn
+                  posts automatically once configured, and always has a
+                  ready-to-copy manual option below too. X remains manual
+                  by design.
                 </p>
 
                 <button
