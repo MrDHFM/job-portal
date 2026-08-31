@@ -23,12 +23,31 @@ export async function GET(req: NextRequest) {
     );
     const offset = (page - 1) * limit;
 
+    const search = (searchParams.get("search") || "").trim();
+
+    // Whitelisted sort options — never interpolate the sort column/
+    // direction directly from the query string into raw SQL.
+    const sortKey = searchParams.get("sort") || "latest";
+    const sortExpr =
+      {
+        latest: sql`j.created_at DESC`,
+        oldest: sql`j.created_at ASC`,
+        views: sql`j.views_count DESC`,
+        applies: sql`j.apply_clicks_count DESC`,
+        title: sql`j.title ASC`,
+      }[sortKey] || sql`j.created_at DESC`;
+
+    const searchFilter = search
+      ? sql`WHERE j.title ILIKE ${`%${search}%`}`
+      : sql``;
+
     const [rowsRes, countRes] = await Promise.all([
       db.execute(sql`
         SELECT
           j.id AS job_id,
           j.title,
           j.slug,
+          j.created_at,
           j.views_count AS views,
           j.apply_clicks_count AS apply_clicks,
 
@@ -67,19 +86,24 @@ export async function GET(req: NextRequest) {
         LEFT JOIN job_traffic_events e
           ON e.job_id = j.id
 
+        ${searchFilter}
+
         GROUP BY
           j.id,
           j.title,
           j.slug,
+          j.created_at,
           j.views_count,
           j.apply_clicks_count
 
-        ORDER BY j.views_count DESC
+        ORDER BY ${sortExpr}
         LIMIT ${limit}
         OFFSET ${offset}
       `),
 
-      db.execute(sql`SELECT count(*)::int AS count FROM jobs`),
+      db.execute(sql`
+        SELECT count(*)::int AS count FROM jobs j ${searchFilter}
+      `),
     ]);
 
     const total = Number((countRes.rows[0] as any)?.count || 0);

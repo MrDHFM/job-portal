@@ -58,7 +58,7 @@ export const jobs = pgTable("jobs", {
   minExperienceYears: integer("min_experience_years"),
   maxExperienceYears: integer("max_experience_years"),
   workMode: text("work_mode").notNull(), // "Remote", "Hybrid", "On-site"
-  vacancies: integer("vacancies").default(1).notNull(),
+  vacancies: integer("vacancies"), // null = not specified; do not default to 1
   
   // Location
   country: text("country").notNull(),
@@ -126,10 +126,17 @@ export const jobs = pgTable("jobs", {
   seoTitle: text("seo_title"),
   seoDescription: text("seo_description"),
 
-  // Auto-import tracking (Part: automatic job sourcing).
-  // Null for jobs created manually in the admin panel.
-  externalSource: text("external_source"), // e.g. "adzuna"
+  // Source tracking, shared by both the URL-import feature and the
+  // Adzuna auto-import feature — externalSource doubles as "sourceType"
+  // (e.g. "MANUAL", "URL_IMPORT", "GREENHOUSE", "LEVER", "ASHBY", "adzuna")
+  // and externalId as "externalJobId", so we don't carry two near-duplicate
+  // column pairs for the same concept.
+  externalSource: text("external_source"), // e.g. "adzuna", "GREENHOUSE", "URL_IMPORT"
   externalId: text("external_id"), // the source's own ID for this listing
+  originalJobUrl: text("original_job_url"), // the URL an admin pasted / the source listing URL
+  originalApplyUrl: text("original_apply_url"), // the source's own "apply" link, if different from applicationUrl
+  sourcePublishedAt: timestamp("source_published_at"), // datePosted from the source, if known
+  autoImported: boolean("auto_imported").default(false).notNull(), // true only for unattended pipelines (e.g. Adzuna cron); false for manual + URL-import (an admin always reviews those before saving)
 
   // Metrics
   viewsCount: integer("views_count").default(0).notNull(),

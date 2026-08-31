@@ -12,9 +12,9 @@ import {
   X,
   ShieldAlert,
 } from "lucide-react";
+import { useTheme } from "@/app/theme-provider";
 import Image from "next/image";
-import { useClickOutside } from "../lib/hooks/useClickOutside";
-import { useTheme } from "../app/theme-provider";
+import { useClickOutside } from "@/lib/hooks/useClickOutside";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

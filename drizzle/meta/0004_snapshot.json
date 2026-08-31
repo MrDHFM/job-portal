@@ -1,6 +1,6 @@
 {
-  "id": "b612ad54-2b25-4b6e-a4a2-f43afabe6842",
-  "prevId": "11112e6c-ab28-42e2-bcda-1b6b16c8ae8e",
+  "id": "f0f81b48-8791-4930-9fa2-5544b65e6cb4",
+  "prevId": "0a1f0fe5-fffd-4083-b182-7462a277ba20",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -838,6 +838,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "min_experience_years": {
+          "name": "min_experience_years",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_experience_years": {
+          "name": "max_experience_years",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "work_mode": {
           "name": "work_mode",
           "type": "text",
@@ -931,7 +943,7 @@
           "name": "description",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "responsibilities": {
           "name": "responsibilities",
@@ -1146,6 +1158,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "external_source": {
+          "name": "external_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "views_count": {
           "name": "views_count",
           "type": "integer",
@@ -1302,6 +1326,27 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "jobs_external_source_id_unique": {
+          "name": "jobs_external_source_id_unique",
+          "columns": [
+            {
+              "expression": "external_source",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "external_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}

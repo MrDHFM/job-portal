@@ -19,7 +19,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useTheme } from "../theme-provider";
+import { useTheme } from "@/app/theme-provider";
 
 type AdminSidebarProps = {
   session: {

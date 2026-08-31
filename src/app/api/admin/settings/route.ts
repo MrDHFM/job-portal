@@ -25,6 +25,10 @@ export async function GET(req: NextRequest) {
       defaultSeoTitle: "GlobalJob Discover - Premium Job Board",
       defaultSeoDescription:
         "Find premium jobs, remote roles, government, Walk-Ins, and private positions worldwide.",
+      jobImportEnabled: "false",
+      jobImportKeywords: "",
+      jobImportCountry: "in",
+      jobImportMode: "publish",
     };
 
     return NextResponse.json({

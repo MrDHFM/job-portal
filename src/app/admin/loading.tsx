@@ -1,5 +1,4 @@
-import { DashboardCardSkeleton, TableSkeleton } from "../../components/Skeletons";
-
+import { DashboardCardSkeleton, TableSkeleton } from "@/components/Skeletons";
 
 export default function AdminDashboardLoading() {
   return (

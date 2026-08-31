@@ -269,6 +269,14 @@ export async function POST(req: NextRequest) {
 
       // Force create (skip duplicate warning)
       force,
+
+      // Source tracking (Part 25) — falsy values normalized to null
+      // below so they never collide with the externalSource/externalId
+      // unique index across multiple MANUAL jobs.
+      sourceType,
+      externalJobId,
+      originalJobUrl,
+      originalApplyUrl,
     } = body;
 
     // Validation — description is intentionally NOT required here anymore.
@@ -527,7 +535,7 @@ export async function POST(req: NextRequest) {
           ? parseInt(maxExperienceYears)
           : null,
         workMode,
-        vacancies: vacancies ? parseInt(vacancies) : 1,
+        vacancies: vacancies ? parseInt(vacancies) : null,
         country: country.trim(),
         state: state.trim(),
         city: city.trim(),
@@ -582,6 +590,15 @@ export async function POST(req: NextRequest) {
         viewsCount: 0,
         applyClicksCount: 0,
         publishedAt: new Date(),
+
+        // Source tracking — empty externalJobId becomes null (not ''),
+        // since Postgres treats every NULL as distinct in a unique
+        // index but would treat repeated '' values as duplicates.
+        externalSource: sourceType || "MANUAL",
+        externalId: externalJobId || null,
+        originalJobUrl: originalJobUrl || null,
+        originalApplyUrl: originalApplyUrl || null,
+        autoImported: false, // true is reserved for unattended pipelines like the Adzuna cron
       })
       .returning();
 

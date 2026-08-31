@@ -155,7 +155,6 @@ export default async function AdminDashboardPage() {
     );
 
     stats.trafficSources = trafficSourcesRes.rows || [];
-
   } catch (e) {
     console.error("Failed to load direct DB admin analytics:", e);
   }

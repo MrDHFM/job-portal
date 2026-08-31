@@ -152,8 +152,8 @@ export default async function HomePage() {
             margins so they never sit behind the headline or search box. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
           <HeroBriefcaseIcon className="app-float-soft absolute left-[6%] top-[18%] h-14 w-14 opacity-70 drop-shadow-sm" />
-          <HeroGrowthIcon className="app-float-soft absolute right-[7%] top-[22%] h-16 w-16 opacity-70 drop-shadow-sm" style={{ animationDelay: "1.4s", animationDuration: "8s" }} />
-          <HeroDocumentIcon className="app-float-soft absolute left-[10%] bottom-[10%] h-12 w-12 opacity-60 drop-shadow-sm" style={{ animationDelay: "2.2s", animationDuration: "9s" }} />
+          <HeroGrowthIcon className="app-float-soft absolute right-[7%] top-[22%] h-16 w-16 opacity-70 drop-shadow-sm" style={{ animationDelay: "1.4s", animationDuration: "8s" } as React.CSSProperties} />
+          <HeroDocumentIcon className="app-float-soft absolute left-[10%] bottom-[10%] h-12 w-12 opacity-60 drop-shadow-sm" style={{ animationDelay: "2.2s", animationDuration: "9s" } as React.CSSProperties} />
         </div>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">

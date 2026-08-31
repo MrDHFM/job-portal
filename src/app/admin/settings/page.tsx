@@ -15,6 +15,10 @@ export default function AdminSettingsPage() {
     socialTwitter: "",
     socialInstagram: "",
     socialTelegram: "",
+    jobImportEnabled: "false",
+    jobImportKeywords: "",
+    jobImportCountry: "in",
+    jobImportMode: "publish",
   });
 
   const [loading, setLoading] = useState(true);
@@ -191,6 +195,99 @@ export default function AdminSettingsPage() {
                 className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
               />
             </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t">
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+                Automatic Job Import
+              </h3>
+              <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                Pulls fresh listings from Adzuna on a schedule and posts
+                them automatically — even while you&apos;re offline. Requires
+                ADZUNA_APP_ID and ADZUNA_APP_KEY to be configured on the
+                server.
+              </p>
+            </div>
+
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.jobImportEnabled === "true"}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    jobImportEnabled: e.target.checked ? "true" : "false",
+                  })
+                }
+                className="h-4 w-4 rounded border-neutral-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+              />
+              <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                Enable automatic job import
+              </span>
+            </label>
+
+            {form.jobImportEnabled === "true" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-6">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+                    Keywords
+                  </label>
+                  <input
+                    type="text"
+                    value={form.jobImportKeywords}
+                    onChange={(e) =>
+                      setForm({ ...form, jobImportKeywords: e.target.value })
+                    }
+                    placeholder="e.g. software engineer"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
+                  />
+                  <p className="mt-1 text-[10px] text-neutral-400">
+                    Leave blank to import across all categories.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+                    Country
+                  </label>
+                  <select
+                    value={form.jobImportCountry}
+                    onChange={(e) =>
+                      setForm({ ...form, jobImportCountry: e.target.value })
+                    }
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
+                  >
+                    <option value="in">India</option>
+                    <option value="us">United States</option>
+                    <option value="gb">United Kingdom</option>
+                    <option value="ca">Canada</option>
+                    <option value="au">Australia</option>
+                    <option value="sg">Singapore</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+                    When a new job is found
+                  </label>
+                  <select
+                    value={form.jobImportMode}
+                    onChange={(e) =>
+                      setForm({ ...form, jobImportMode: e.target.value })
+                    }
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border rounded-md px-3.5 py-2.5 text-sm"
+                  >
+                    <option value="publish">
+                      Publish immediately (fully automatic, posts to social too)
+                    </option>
+                    <option value="draft">
+                      Save as Draft for me to review first
+                    </option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-4 border-t">

@@ -210,7 +210,11 @@ export async function PUT(
             : undefined,
         workMode: body.workMode !== undefined ? body.workMode : undefined,
         vacancies:
-          body.vacancies !== undefined ? parseInt(body.vacancies) : undefined,
+          body.vacancies !== undefined
+            ? body.vacancies
+              ? parseInt(body.vacancies)
+              : null
+            : undefined,
         country: body.country !== undefined ? body.country.trim() : undefined,
         state: body.state !== undefined ? body.state.trim() : undefined,
         city: body.city !== undefined ? body.city.trim() : undefined,
@@ -340,6 +344,19 @@ export async function PUT(
             : undefined,
 
         updatedAt: new Date(),
+
+        // Source tracking — only touched if explicitly provided, so
+        // editing unrelated fields never clobbers existing provenance.
+        externalSource:
+          body.sourceType !== undefined ? body.sourceType || null : undefined,
+        externalId:
+          body.externalJobId !== undefined ? body.externalJobId || null : undefined,
+        originalJobUrl:
+          body.originalJobUrl !== undefined ? body.originalJobUrl || null : undefined,
+        originalApplyUrl:
+          body.originalApplyUrl !== undefined
+            ? body.originalApplyUrl || null
+            : undefined,
       })
       .where(eq(jobs.id, id))
       .returning();

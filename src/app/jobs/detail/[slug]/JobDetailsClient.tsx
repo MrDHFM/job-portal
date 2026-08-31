@@ -532,6 +532,42 @@ Best regards`,
               </span>
             </div>
           )}
+
+          {/* Source attribution — shown only for jobs sourced from an
+              external listing, never for manually-authored ones. This
+              is a transparency signal (this content originated
+              elsewhere, here's the original), not a legal disclaimer. */}
+          {job.externalSource &&
+            job.externalSource !== "MANUAL" &&
+            (job.originalJobUrl || job.originalApplyUrl) && (
+              <p className="mt-3 text-[11px] text-neutral-400 dark:text-neutral-500">
+                Job source:{" "}
+                {
+                  (
+                    {
+                      GREENHOUSE: "Greenhouse job board",
+                      LEVER: "Lever job board",
+                      ASHBY: "Ashby job board",
+                      URL_IMPORT: "Official company careers page",
+                      adzuna: "Adzuna job listings",
+                    } as Record<string, string>
+                  )[job.externalSource] || "External listing"
+                }
+                {job.originalJobUrl && (
+                  <>
+                    {" — "}
+                    <a
+                      href={job.originalJobUrl}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="underline hover:text-[var(--color-primary)]"
+                    >
+                      view original posting
+                    </a>
+                  </>
+                )}
+              </p>
+            )}
         </div>
       </div>
 

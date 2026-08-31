@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, MousePointerClick, Users, Globe } from "lucide-react";
+import { Eye, MousePointerClick, Users, Globe, Search } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import { TableSkeleton } from "@/components/Skeletons";
 
@@ -16,6 +16,7 @@ type JobPerformance = {
   jobId: number;
   title: string;
   slug: string;
+  createdAt: string;
   views: number;
   applyClicks: number;
   instagram: number;
@@ -61,13 +62,18 @@ export default function TrafficAnalytics({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [sort, setSort] = useState("latest");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
 
-  const loadJobPerformance = (requestedPage = page) => {
+  const loadJobPerformance = (requestedPage = page, requestedSort = sort, requestedSearch = search) => {
     setLoading(true);
 
     const params = new URLSearchParams();
     params.set("page", String(requestedPage));
     params.set("limit", String(JOB_PERFORMANCE_PER_PAGE));
+    params.set("sort", requestedSort);
+    if (requestedSearch) params.set("search", requestedSearch);
 
     fetch(`/api/admin/analytics/job-performance?${params.toString()}`)
       .then((res) => res.json())
@@ -78,6 +84,7 @@ export default function TrafficAnalytics({
               jobId: row.job_id,
               title: row.title,
               slug: row.slug,
+              createdAt: row.created_at,
               views: row.views,
               applyClicks: row.apply_clicks,
               instagram: row.instagram,
@@ -101,9 +108,15 @@ export default function TrafficAnalytics({
   };
 
   useEffect(() => {
-    loadJobPerformance(1);
+    loadJobPerformance(1, sort, search);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sort, search]);
+
+  // Debounce the search box.
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   return (
     <section className="space-y-6">
@@ -209,14 +222,41 @@ export default function TrafficAnalytics({
 
       {/* Job performance */}
       <div className="rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-        <div className="border-b border-neutral-100 p-6 dark:border-neutral-800">
-          <h3 className="font-bold text-neutral-900 dark:text-white">
-            Job Performance
-          </h3>
+        <div className="border-b border-neutral-100 p-6 dark:border-neutral-800 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-neutral-900 dark:text-white">
+              Job Performance
+            </h3>
 
-          <p className="mt-1 text-xs text-neutral-500">
-            Views, applications and traffic sources for each job.
-          </p>
+            <p className="mt-1 text-xs text-neutral-500">
+              Views, applications and traffic sources for each job.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search job title..."
+                className="app-input pl-8 py-2 text-sm w-full sm:w-56"
+              />
+            </div>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="bg-white dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm text-neutral-800 dark:text-neutral-300 outline-none"
+            >
+              <option value="latest">Latest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="views">Most views</option>
+              <option value="applies">Most applies</option>
+              <option value="title">Title A-Z</option>
+            </select>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -226,7 +266,7 @@ export default function TrafficAnalytics({
             </div>
           ) : jobPerformance.length === 0 ? (
             <p className="py-12 text-center text-sm text-neutral-400">
-              No job performance data yet.
+              {search ? "No jobs match your search." : "No job performance data yet."}
             </p>
           ) : (
             <table className="w-full min-w-[900px] text-left text-sm">
@@ -265,6 +305,16 @@ export default function TrafficAnalytics({
 
                       <div className="mt-1 text-[10px] text-neutral-400">
                         Job #{job.jobId}
+                        {job.createdAt && (
+                          <>
+                            {" · "}
+                            {new Date(job.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </>
+                        )}
                       </div>
                     </td>
 

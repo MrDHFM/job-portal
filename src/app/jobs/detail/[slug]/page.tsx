@@ -268,9 +268,16 @@ const attribution =
                     { label: "Work Model", value: job.workMode, icon: <Globe className="h-4 w-4 text-cyan-600 shrink-0" /> },
                     { label: "Experience", value: job.experienceLevel, icon: <Award className="h-4 w-4 text-amber-500 shrink-0" /> },
                     { label: "Salary Period", value: job.salaryPeriod, icon: <DollarSign className="h-4 w-4 text-green-500 shrink-0" /> },
-                    { label: "Vacancies", value: `${job.vacancies} open position${job.vacancies > 1 ? "s" : ""}`, icon: <Users className="h-4 w-4 text-pink-500 shrink-0" /> },
+                    // Only shown when a real number was specified — a
+                    // job with no vacancy count given should show
+                    // nothing here, not silently imply "1 opening".
+                    job.vacancies
+                      ? { label: "Vacancies", value: `${job.vacancies} open position${job.vacancies > 1 ? "s" : ""}`, icon: <Users className="h-4 w-4 text-pink-500 shrink-0" /> }
+                      : null,
                     { label: "Education", value: job.educationDegree || "Not Specified", icon: <GraduationCap className="h-4 w-4 text-indigo-500 shrink-0" /> },
-                  ].map((row, idx) => (
+                  ]
+                    .filter((row): row is NonNullable<typeof row> => row !== null)
+                    .map((row, idx) => (
                     <div key={idx} className="flex gap-3 text-sm">
                       <div className="mt-0.5">{row.icon}</div>
                       <div>

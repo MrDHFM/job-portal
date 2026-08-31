@@ -12,6 +12,9 @@ import {
   Briefcase,
   Building2,
   MapPin,
+  Link2,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { useClickOutside } from "@/lib/hooks/useClickOutside";
 
@@ -284,11 +287,46 @@ export default function AdminJobForm({
     govSelectionProcess: initialData?.govSelectionProcess || "",
     govOfficialNotificationUrl: initialData?.govOfficialNotificationUrl || "",
     govOfficialWebsiteUrl: initialData?.govOfficialWebsiteUrl || "",
+
+    // Source tracking (Part 25) — every job identifies how it was created.
+    sourceType: initialData?.externalSource || "MANUAL",
+    externalJobId: initialData?.externalId || "",
+    originalJobUrl: initialData?.originalJobUrl || "",
+    originalApplyUrl: initialData?.originalApplyUrl || "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Paste-a-URL-to-autofill state
+  const [extractUrl, setExtractUrl] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [extractWarnings, setExtractWarnings] = useState<string[]>([]);
+  const [extractSource, setExtractSource] = useState<{
+    sourceName: string;
+    originalJobUrl: string;
+  } | null>(null);
+  const [extractedFields, setExtractedFields] = useState<{
+    title: boolean;
+    companyName: boolean;
+    city: boolean;
+    employmentType: boolean;
+    minSalary: boolean;
+    applicationDeadline: boolean;
+    description: boolean;
+    requiredSkills: boolean;
+  } | null>(null);
+  const [importDuplicate, setImportDuplicate] = useState<{
+    id: number;
+    title: string;
+    companyName: string;
+    city: string;
+    status: string;
+    slug: string;
+  } | null>(null);
+  const [duplicateAcknowledged, setDuplicateAcknowledged] = useState(false);
 
   // Duplicate Warning Modal states
   const [duplicateWarning, setDuplicateWarning] = useState<any | null>(null);
@@ -356,6 +394,137 @@ export default function AdminJobForm({
       console.error("Failed to load categories:", error);
     });
 }, [initialData]);
+
+  const handleExtractFromUrl = async () => {
+    if (!extractUrl.trim()) return;
+
+    setExtracting(true);
+    setExtractError(null);
+    setExtractWarnings([]);
+    setExtractSource(null);
+    setExtractedFields(null);
+    setImportDuplicate(null);
+    setDuplicateAcknowledged(false);
+
+    try {
+      const res = await fetch("/api/admin/jobs/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: extractUrl.trim() }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setExtractError(json.error || "Extraction failed.");
+        return;
+      }
+
+      const data = json.data;
+
+      setExtractSource({
+        sourceName: data.sourceName,
+        originalJobUrl: data.originalJobUrl,
+      });
+      setExtractWarnings(data.warnings || []);
+      setExtractedFields({
+        title: Boolean(data.title),
+        companyName: Boolean(data.companyName),
+        city: Boolean(data.city),
+        employmentType: Boolean(data.employmentType),
+        minSalary: Boolean(data.minSalary),
+        applicationDeadline: Boolean(data.applicationDeadline),
+        description: Boolean(data.description),
+        requiredSkills: Boolean(data.requiredSkills),
+      });
+
+      if (json.duplicate) {
+        setImportDuplicate(json.duplicate);
+      }
+
+      // Only overwrite fields we actually got a value for — never
+      // blank out something the admin may have already typed.
+      setForm((prev) => {
+        const next = { ...prev };
+
+        if (data.title) next.title = data.title;
+        if (data.companyName) {
+          next.companyName = data.companyName;
+
+          const existingCompany = companies.find(
+            (c) =>
+              c.name.trim().toLowerCase() ===
+              data.companyName.trim().toLowerCase(),
+          );
+          next.companyId = existingCompany ? String(existingCompany.id) : "";
+        }
+        if (data.categoryName) {
+          next.categoryName = data.categoryName;
+
+          const existingCategory = categories.find(
+            (c) =>
+              c.name.trim().toLowerCase() ===
+              data.categoryName.trim().toLowerCase(),
+          );
+          next.categoryId = existingCategory ? String(existingCategory.id) : "";
+        }
+        if (data.description) next.description = data.description;
+        if (data.city) next.city = data.city;
+        if (data.state) next.state = data.state;
+        if (data.country) next.country = data.country;
+        if (data.employmentType) next.employmentType = data.employmentType;
+        if (data.experienceLevel) next.experienceLevel = data.experienceLevel;
+        if (data.minExperienceYears) next.minExperienceYears = String(data.minExperienceYears);
+        if (data.maxExperienceYears) next.maxExperienceYears = String(data.maxExperienceYears);
+        if (data.workMode) next.workMode = data.workMode;
+        if (data.isRemoteEligible) next.isRemoteEligible = true;
+        if (data.minSalary) next.minSalary = String(data.minSalary);
+        if (data.maxSalary) next.maxSalary = String(data.maxSalary);
+        if (data.currency) next.currency = data.currency;
+        if (data.salaryPeriod) next.salaryPeriod = data.salaryPeriod;
+        if (data.requiredSkills) next.requiredSkills = data.requiredSkills;
+        if (data.responsibilities) next.responsibilities = data.responsibilities;
+        if (data.benefits) next.benefits = data.benefits;
+        if (data.summary) next.summary = data.summary;
+        // Auto-generated from what was actually extracted — never
+        // overwrites an SEO title/description the admin already typed.
+        if (data.seoTitle && !prev.seoTitle) next.seoTitle = data.seoTitle;
+        if (data.seoDescription && !prev.seoDescription) {
+          next.seoDescription = data.seoDescription;
+        }
+        if (data.applicationDeadline) {
+          next.applicationDeadline = new Date(data.applicationDeadline)
+            .toISOString()
+            .split("T")[0];
+        }
+
+        // The apply link should be the source's own apply URL when
+        // known, otherwise the page the admin pasted.
+        next.applicationMethod = "EXTERNAL_URL";
+        next.applicationUrl = data.originalApplyUrl || data.applicationUrl || extractUrl.trim();
+
+        // Never let an apparently-expired posting default to Publish —
+        // force it to Draft so the admin has to make a conscious choice.
+        if (data.isLikelyExpired) {
+          next.status = "DRAFT";
+        }
+
+        // Source provenance — never fabricated, always what the connector reported.
+        next.sourceType = data.sourceType;
+        next.externalJobId = data.externalJobId || "";
+        next.originalJobUrl = data.originalJobUrl;
+        next.originalApplyUrl = data.originalApplyUrl || "";
+
+        return next;
+      });
+    } catch (err) {
+      setExtractError(
+        "Something went wrong reaching that page. Please fill the form manually.",
+      );
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent, force = false) => {
     if (e) e.preventDefault();
@@ -447,6 +616,159 @@ export default function AdminJobForm({
       {success && (
         <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 p-4 rounded-md text-xs font-semibold flex items-center gap-2">
           <CheckCircle className="h-5 w-5 shrink-0" /> {success}
+        </div>
+      )}
+
+      {/* Quick Import Job — only offered for brand new jobs. Reads
+          Greenhouse/Lever/Ashby's own public APIs when the URL matches
+          one of them, otherwise schema.org/JobPosting structured data
+          (the same data Google for Jobs reads), with an OpenGraph
+          fallback for pages with neither. Always leaves the form
+          editable — nothing here auto-publishes or auto-creates a
+          company/category until the admin actually saves the job. */}
+      {!jobId && (
+        <div className="rounded-lg border border-dashed border-[var(--color-primary)]/40 bg-[var(--color-primary-light)]/30 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+            <h3 className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+              Quick Import Job
+            </h3>
+          </div>
+
+          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mb-3">
+            Paste the official/public job posting URL and we&apos;ll try to
+            fill the details automatically. You can review and edit
+            everything before saving — or just skip this and use manual
+            entry below.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <input
+                type="url"
+                value={extractUrl}
+                onChange={(e) => setExtractUrl(e.target.value)}
+                placeholder="https://company.com/careers/job/software-engineer"
+                className="w-full bg-white dark:bg-neutral-800 border rounded-md pl-9 pr-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleExtractFromUrl}
+              disabled={extracting || !extractUrl.trim()}
+              className="app-button-primary px-4 py-2.5 text-sm shrink-0 disabled:opacity-50 inline-flex items-center gap-1.5 justify-center"
+            >
+              {extracting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Fetching job details...
+                </>
+              ) : (
+                "Fetch Job Details"
+              )}
+            </button>
+          </div>
+
+          {extractSource && (
+            <div className="mt-3 rounded-md bg-white/70 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-700 p-3 space-y-1">
+              <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                <CheckCircle className="h-3.5 w-3.5" /> Job details imported — review below before saving.
+              </p>
+              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                Source: {extractSource.sourceName}
+              </p>
+              <p className="text-[10px] text-neutral-400 truncate">
+                Original URL: {extractSource.originalJobUrl}
+              </p>
+            </div>
+          )}
+
+          {extractedFields && (
+            <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+              {[
+                { key: "title", label: "Job title" },
+                { key: "companyName", label: "Company" },
+                { key: "city", label: "Location" },
+                { key: "employmentType", label: "Employment type" },
+                { key: "minSalary", label: "Salary" },
+                { key: "applicationDeadline", label: "Application deadline" },
+                { key: "requiredSkills", label: "Skills" },
+              ].map((field) => {
+                const found = extractedFields[field.key as keyof typeof extractedFields];
+                return (
+                  <li
+                    key={field.key}
+                    className={`text-[11px] flex items-center gap-1 ${
+                      found ? "text-emerald-600" : "text-neutral-400"
+                    }`}
+                  >
+                    {found ? (
+                      <CheckCircle className="h-3 w-3" />
+                    ) : (
+                      <AlertCircle className="h-3 w-3" />
+                    )}
+                    {field.label} {found ? "detected" : "not found"}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {extractWarnings.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {extractWarnings.map((warning, i) => (
+                <li
+                  key={i}
+                  className="text-[11px] font-semibold text-amber-600 flex items-start gap-1"
+                >
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px" /> {warning}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {extractError && (
+            <p className="mt-2 text-[11px] font-semibold text-red-600 flex items-start gap-1">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px" /> {extractError}
+            </p>
+          )}
+
+          {importDuplicate && !duplicateAcknowledged && (
+            <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3">
+              <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-1">
+                Possible duplicate job found
+              </p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 mb-2">
+                {importDuplicate.title} — {importDuplicate.companyName} — {importDuplicate.city} (
+                {importDuplicate.status})
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`/admin/jobs/edit/${importDuplicate.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-bold px-3 py-1.5 rounded-md border border-amber-300 bg-white dark:bg-neutral-900 text-amber-800 dark:text-amber-300 hover:bg-amber-100 transition-colors"
+                >
+                  View Existing Job
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setDuplicateAcknowledged(true)}
+                  className="text-[11px] font-bold px-3 py-1.5 rounded-md border border-amber-300 bg-white dark:bg-neutral-900 text-amber-800 dark:text-amber-300 hover:bg-amber-100 transition-colors"
+                >
+                  Create Anyway
+                </button>
+              </div>
+            </div>
+          )}
+
+          <p className="mt-2 text-[10px] text-neutral-400">
+            Works best with Greenhouse, Lever, Ashby, and pages that publish
+            structured job data (LinkedIn, Indeed, Naukri, most company
+            career pages). Nothing is saved until you click Create Draft or
+            Publish below.
+          </p>
         </div>
       )}
 
