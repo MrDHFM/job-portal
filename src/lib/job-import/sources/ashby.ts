@@ -141,6 +141,7 @@ export async function extractFromAshby(url: string): Promise<ImportOutcome> {
 
     applicationUrl: posting.applyUrl || posting.jobUrl || url,
     applicationDeadline: null,
+    recruiterEmail: null,
 
     sourceType: "ASHBY",
     sourceName: "Ashby Job Board",

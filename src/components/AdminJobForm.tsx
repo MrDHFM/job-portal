@@ -328,6 +328,12 @@ export default function AdminJobForm({
   } | null>(null);
   const [duplicateAcknowledged, setDuplicateAcknowledged] = useState(false);
 
+  // Paste-a-job-description-to-autofill state (separate error/loading
+  // state from URL import since they're two independent boxes).
+  const [extractText, setExtractText] = useState("");
+  const [extractingText, setExtractingText] = useState(false);
+  const [textExtractError, setTextExtractError] = useState<string | null>(null);
+
   // Duplicate Warning Modal states
   const [duplicateWarning, setDuplicateWarning] = useState<any | null>(null);
 
@@ -395,6 +401,94 @@ export default function AdminJobForm({
     });
 }, [initialData]);
 
+  // Shared between URL-import and text-paste import — both produce
+  // the same NormalizedUrlImport shape, so the same "fill in only what
+  // we actually got" logic applies to both. Only how applicationMethod
+  // gets resolved differs (a URL import always has the pasted URL to
+  // fall back on; a text paste might only have an email).
+  const applyExtractedDataToForm = (
+    data: any,
+    resolveApplication: (prev: typeof form) => {
+      applicationMethod: string;
+      applicationUrl: string;
+      recruiterEmail?: string;
+    },
+  ) => {
+    setForm((prev) => {
+      const next = { ...prev };
+
+      if (data.title) next.title = data.title;
+      if (data.companyName) {
+        next.companyName = data.companyName;
+
+        const existingCompany = companies.find(
+          (c) =>
+            c.name.trim().toLowerCase() ===
+            data.companyName.trim().toLowerCase(),
+        );
+        next.companyId = existingCompany ? String(existingCompany.id) : "";
+      }
+      if (data.categoryName) {
+        next.categoryName = data.categoryName;
+
+        const existingCategory = categories.find(
+          (c) =>
+            c.name.trim().toLowerCase() ===
+            data.categoryName.trim().toLowerCase(),
+        );
+        next.categoryId = existingCategory ? String(existingCategory.id) : "";
+      }
+      if (data.description) next.description = data.description;
+      if (data.city) next.city = data.city;
+      if (data.state) next.state = data.state;
+      if (data.country) next.country = data.country;
+      if (data.employmentType) next.employmentType = data.employmentType;
+      if (data.experienceLevel) next.experienceLevel = data.experienceLevel;
+      if (data.minExperienceYears) next.minExperienceYears = String(data.minExperienceYears);
+      if (data.maxExperienceYears) next.maxExperienceYears = String(data.maxExperienceYears);
+      if (data.workMode) next.workMode = data.workMode;
+      if (data.isRemoteEligible) next.isRemoteEligible = true;
+      if (data.minSalary) next.minSalary = String(data.minSalary);
+      if (data.maxSalary) next.maxSalary = String(data.maxSalary);
+      if (data.currency) next.currency = data.currency;
+      if (data.salaryPeriod) next.salaryPeriod = data.salaryPeriod;
+      if (data.requiredSkills) next.requiredSkills = data.requiredSkills;
+      if (data.responsibilities) next.responsibilities = data.responsibilities;
+      if (data.benefits) next.benefits = data.benefits;
+      if (data.summary) next.summary = data.summary;
+      // Auto-generated from what was actually extracted — never
+      // overwrites an SEO title/description the admin already typed.
+      if (data.seoTitle && !prev.seoTitle) next.seoTitle = data.seoTitle;
+      if (data.seoDescription && !prev.seoDescription) {
+        next.seoDescription = data.seoDescription;
+      }
+      if (data.applicationDeadline) {
+        next.applicationDeadline = new Date(data.applicationDeadline)
+          .toISOString()
+          .split("T")[0];
+      }
+
+      const resolved = resolveApplication(prev);
+      next.applicationMethod = resolved.applicationMethod;
+      next.applicationUrl = resolved.applicationUrl;
+      if (resolved.recruiterEmail) next.recruiterEmail = resolved.recruiterEmail;
+
+      // Never let an apparently-expired posting default to Publish —
+      // force it to Draft so the admin has to make a conscious choice.
+      if (data.isLikelyExpired) {
+        next.status = "DRAFT";
+      }
+
+      // Source provenance — never fabricated, always what the connector reported.
+      next.sourceType = data.sourceType;
+      next.externalJobId = data.externalJobId || "";
+      next.originalJobUrl = data.originalJobUrl;
+      next.originalApplyUrl = data.originalApplyUrl || "";
+
+      return next;
+    });
+  };
+
   const handleExtractFromUrl = async () => {
     if (!extractUrl.trim()) return;
 
@@ -442,87 +536,97 @@ export default function AdminJobForm({
         setImportDuplicate(json.duplicate);
       }
 
-      // Only overwrite fields we actually got a value for — never
-      // blank out something the admin may have already typed.
-      setForm((prev) => {
-        const next = { ...prev };
-
-        if (data.title) next.title = data.title;
-        if (data.companyName) {
-          next.companyName = data.companyName;
-
-          const existingCompany = companies.find(
-            (c) =>
-              c.name.trim().toLowerCase() ===
-              data.companyName.trim().toLowerCase(),
-          );
-          next.companyId = existingCompany ? String(existingCompany.id) : "";
-        }
-        if (data.categoryName) {
-          next.categoryName = data.categoryName;
-
-          const existingCategory = categories.find(
-            (c) =>
-              c.name.trim().toLowerCase() ===
-              data.categoryName.trim().toLowerCase(),
-          );
-          next.categoryId = existingCategory ? String(existingCategory.id) : "";
-        }
-        if (data.description) next.description = data.description;
-        if (data.city) next.city = data.city;
-        if (data.state) next.state = data.state;
-        if (data.country) next.country = data.country;
-        if (data.employmentType) next.employmentType = data.employmentType;
-        if (data.experienceLevel) next.experienceLevel = data.experienceLevel;
-        if (data.minExperienceYears) next.minExperienceYears = String(data.minExperienceYears);
-        if (data.maxExperienceYears) next.maxExperienceYears = String(data.maxExperienceYears);
-        if (data.workMode) next.workMode = data.workMode;
-        if (data.isRemoteEligible) next.isRemoteEligible = true;
-        if (data.minSalary) next.minSalary = String(data.minSalary);
-        if (data.maxSalary) next.maxSalary = String(data.maxSalary);
-        if (data.currency) next.currency = data.currency;
-        if (data.salaryPeriod) next.salaryPeriod = data.salaryPeriod;
-        if (data.requiredSkills) next.requiredSkills = data.requiredSkills;
-        if (data.responsibilities) next.responsibilities = data.responsibilities;
-        if (data.benefits) next.benefits = data.benefits;
-        if (data.summary) next.summary = data.summary;
-        // Auto-generated from what was actually extracted — never
-        // overwrites an SEO title/description the admin already typed.
-        if (data.seoTitle && !prev.seoTitle) next.seoTitle = data.seoTitle;
-        if (data.seoDescription && !prev.seoDescription) {
-          next.seoDescription = data.seoDescription;
-        }
-        if (data.applicationDeadline) {
-          next.applicationDeadline = new Date(data.applicationDeadline)
-            .toISOString()
-            .split("T")[0];
-        }
-
+      applyExtractedDataToForm(data, () => ({
         // The apply link should be the source's own apply URL when
         // known, otherwise the page the admin pasted.
-        next.applicationMethod = "EXTERNAL_URL";
-        next.applicationUrl = data.originalApplyUrl || data.applicationUrl || extractUrl.trim();
-
-        // Never let an apparently-expired posting default to Publish —
-        // force it to Draft so the admin has to make a conscious choice.
-        if (data.isLikelyExpired) {
-          next.status = "DRAFT";
-        }
-
-        // Source provenance — never fabricated, always what the connector reported.
-        next.sourceType = data.sourceType;
-        next.externalJobId = data.externalJobId || "";
-        next.originalJobUrl = data.originalJobUrl;
-        next.originalApplyUrl = data.originalApplyUrl || "";
-
-        return next;
-      });
+        applicationMethod: "EXTERNAL_URL",
+        applicationUrl: data.originalApplyUrl || data.applicationUrl || extractUrl.trim(),
+      }));
     } catch (err) {
       setExtractError(
         "Something went wrong reaching that page. Please fill the form manually.",
       );
     } finally {
       setExtracting(false);
+    }
+  };
+
+  const handleExtractFromText = async () => {
+    if (!extractText.trim()) return;
+
+    setExtractingText(true);
+    setTextExtractError(null);
+    setExtractWarnings([]);
+    setExtractSource(null);
+    setExtractedFields(null);
+    setImportDuplicate(null);
+    setDuplicateAcknowledged(false);
+
+    try {
+      const res = await fetch("/api/admin/jobs/import-from-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: extractText.trim() }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setTextExtractError(json.error || "Extraction failed.");
+        return;
+      }
+
+      const data = json.data;
+
+      setExtractSource({
+        sourceName: data.sourceName,
+        originalJobUrl: "",
+      });
+      setExtractWarnings(data.warnings || []);
+      setExtractedFields({
+        title: Boolean(data.title),
+        companyName: Boolean(data.companyName),
+        city: Boolean(data.city),
+        employmentType: Boolean(data.employmentType),
+        minSalary: Boolean(data.minSalary),
+        applicationDeadline: Boolean(data.applicationDeadline),
+        description: Boolean(data.description),
+        requiredSkills: Boolean(data.requiredSkills),
+      });
+
+      if (json.duplicate) {
+        setImportDuplicate(json.duplicate);
+      }
+
+      applyExtractedDataToForm(data, (prev) => {
+        // A pasted description usually gives either an application
+        // link or an email, sometimes neither — never both reliably,
+        // so pick whichever was actually found instead of assuming.
+        if (data.applicationUrl) {
+          return {
+            applicationMethod: "EXTERNAL_URL",
+            applicationUrl: data.applicationUrl,
+          };
+        }
+        if (data.recruiterEmail) {
+          return {
+            applicationMethod: "EMAIL",
+            applicationUrl: prev.applicationUrl,
+            recruiterEmail: data.recruiterEmail,
+          };
+        }
+        // Neither found — leave whatever the admin already had.
+        return {
+          applicationMethod: prev.applicationMethod,
+          applicationUrl: prev.applicationUrl,
+        };
+      });
+    } catch (err) {
+      setTextExtractError(
+        "Something went wrong extracting that text. Please fill the form manually.",
+      );
+    } finally {
+      setExtractingText(false);
     }
   };
 
@@ -670,22 +774,100 @@ export default function AdminJobForm({
             </button>
           </div>
 
-          {extractSource && (
-            <div className="mt-3 rounded-md bg-white/70 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-700 p-3 space-y-1">
-              <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
-                <CheckCircle className="h-3.5 w-3.5" /> Job details imported — review below before saving.
-              </p>
-              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
-                Source: {extractSource.sourceName}
-              </p>
-              <p className="text-[10px] text-neutral-400 truncate">
-                Original URL: {extractSource.originalJobUrl}
-              </p>
-            </div>
+          {extractError && (
+            <p className="mt-2 text-[11px] font-semibold text-red-600 flex items-start gap-1">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px" /> {extractError}
+            </p>
+          )}
+
+          <p className="mt-2 text-[10px] text-neutral-400">
+            Works best with Greenhouse, Lever, Ashby, and pages that publish
+            structured job data (LinkedIn, Indeed, Naukri, most company
+            career pages). Nothing is saved until you click Create Draft or
+            Publish below.
+          </p>
+        </div>
+      )}
+
+      {/* Paste Job Description — for JDs from email, LinkedIn posts, or
+          anywhere else with no fetchable URL. Uses AI extraction since
+          free-text formats vary too much for pattern matching alone.
+          Same non-fabrication rule and review-before-save flow as the
+          URL importer above. */}
+      {!jobId && (
+        <div className="rounded-lg border border-dashed border-[var(--color-primary)]/40 bg-[var(--color-primary-light)]/30 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
+            <h3 className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+              Or Paste a Job Description
+            </h3>
+          </div>
+
+          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mb-3">
+            Got a JD from an email, LinkedIn post, or WhatsApp forward
+            with no link to fetch? Paste the full text below and
+            we&apos;ll try to fill the form from it. Review everything
+            before saving — same as URL import.
+          </p>
+
+          <textarea
+            rows={6}
+            value={extractText}
+            onChange={(e) => setExtractText(e.target.value)}
+            placeholder="Paste the full job description text here..."
+            className="w-full bg-white dark:bg-neutral-800 border rounded-md px-3 py-2.5 text-sm outline-none focus:border-[var(--color-primary)] resize-y"
+          />
+
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              onClick={handleExtractFromText}
+              disabled={extractingText || !extractText.trim()}
+              className="app-button-primary px-4 py-2.5 text-sm shrink-0 disabled:opacity-50 inline-flex items-center gap-1.5 justify-center"
+            >
+              {extractingText ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Extracting...
+                </>
+              ) : (
+                "Extract & Fill Form"
+              )}
+            </button>
+          </div>
+
+          {textExtractError && (
+            <p className="mt-2 text-[11px] font-semibold text-red-600 flex items-start gap-1">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px" /> {textExtractError}
+            </p>
+          )}
+
+          <p className="mt-2 text-[10px] text-neutral-400">
+            Extraction only pulls facts actually stated in the text —
+            it never guesses salary, location, or experience that
+            isn&apos;t mentioned.
+          </p>
+        </div>
+      )}
+
+      {/* Shared results — populated by whichever import method (URL or
+          pasted text) was actually used, so this shows in the right
+          place either way instead of being tied to one box. */}
+      {!jobId && extractSource && (
+        <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-4">
+          <p className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+            <CheckCircle className="h-3.5 w-3.5" /> Job details imported — review below before saving.
+          </p>
+          <p className="mt-1 text-[10px] text-neutral-500 dark:text-neutral-400">
+            Source: {extractSource.sourceName}
+          </p>
+          {extractSource.originalJobUrl && (
+            <p className="text-[10px] text-neutral-400 truncate">
+              Original URL: {extractSource.originalJobUrl}
+            </p>
           )}
 
           {extractedFields && (
-            <ul className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+            <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
               {[
                 { key: "title", label: "Job title" },
                 { key: "companyName", label: "Company" },
@@ -728,12 +910,6 @@ export default function AdminJobForm({
             </ul>
           )}
 
-          {extractError && (
-            <p className="mt-2 text-[11px] font-semibold text-red-600 flex items-start gap-1">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px" /> {extractError}
-            </p>
-          )}
-
           {importDuplicate && !duplicateAcknowledged && (
             <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/20 p-3">
               <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-1">
@@ -762,13 +938,6 @@ export default function AdminJobForm({
               </div>
             </div>
           )}
-
-          <p className="mt-2 text-[10px] text-neutral-400">
-            Works best with Greenhouse, Lever, Ashby, and pages that publish
-            structured job data (LinkedIn, Indeed, Naukri, most company
-            career pages). Nothing is saved until you click Create Draft or
-            Publish below.
-          </p>
         </div>
       )}
 

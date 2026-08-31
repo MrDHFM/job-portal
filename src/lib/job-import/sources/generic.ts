@@ -162,6 +162,7 @@ export async function extractGeneric(url: string): Promise<ImportOutcome> {
 
       applicationUrl: jobPosting.url || url,
       applicationDeadline: jobPosting.validThrough || null,
+      recruiterEmail: null,
 
       sourceType: "URL_IMPORT",
       sourceName: "Structured job data (JobPosting)",
@@ -228,6 +229,7 @@ export async function extractGeneric(url: string): Promise<ImportOutcome> {
       seoDescription: seo.seoDescription,
       applicationUrl: url,
       applicationDeadline: null,
+      recruiterEmail: null,
       sourceType: "URL_IMPORT",
       sourceName: "Generic page metadata",
       sourceUrl: url,

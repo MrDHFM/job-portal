@@ -125,6 +125,7 @@ export async function extractFromGreenhouse(url: string): Promise<ImportOutcome>
 
     applicationUrl: json.absolute_url || url,
     applicationDeadline: null,
+    recruiterEmail: null,
 
     sourceType: "GREENHOUSE",
     sourceName: "Greenhouse Job Board",

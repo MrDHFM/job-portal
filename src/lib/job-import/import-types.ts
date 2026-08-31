@@ -43,10 +43,11 @@ export type NormalizedUrlImport = {
   // Application
   applicationUrl: string | null;
   applicationDeadline: string | null; // ISO date string
+  recruiterEmail: string | null; // populated when a source gives an email instead of/alongside a URL
 
   // Provenance (Part 24/25 of the spec) — maps onto existing
   // externalSource/externalId columns plus the new provenance fields.
-  sourceType: "URL_IMPORT" | "GREENHOUSE" | "LEVER" | "ASHBY";
+  sourceType: "URL_IMPORT" | "GREENHOUSE" | "LEVER" | "ASHBY" | "TEXT_PASTE";
   sourceName: string;
   sourceUrl: string;
   originalJobUrl: string;

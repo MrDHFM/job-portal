@@ -139,6 +139,7 @@ export async function extractFromLever(url: string): Promise<ImportOutcome> {
 
     applicationUrl: json.applyUrl || json.hostedUrl || url,
     applicationDeadline: null,
+    recruiterEmail: null,
 
     sourceType: "LEVER",
     sourceName: "Lever Job Board",

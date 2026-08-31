@@ -47,40 +47,45 @@ export async function findDuplicateJob(
   }
 
   // 2. Canonical URL match (same job page, tracking params aside).
-  const canonicalIncoming = canonicalizeUrl(data.originalJobUrl);
+  // Skipped entirely when there's no real URL to compare (e.g. a
+  // text-pasted job description) — matching on empty strings would
+  // produce false-positive "duplicates" against other URL-less jobs.
+  if (data.originalJobUrl) {
+    const canonicalIncoming = canonicalizeUrl(data.originalJobUrl);
 
-  const urlMatches = await db
-    .select({
-      id: jobs.id,
-      title: jobs.title,
-      city: jobs.city,
-      status: jobs.status,
-      slug: jobs.slug,
-      companyName: companies.name,
-      originalJobUrl: jobs.originalJobUrl,
-    })
-    .from(jobs)
-    .innerJoin(companies, eq(jobs.companyId, companies.id))
-    .where(
-      or(
-        eq(jobs.originalJobUrl, data.originalJobUrl),
-        eq(jobs.applicationUrl, data.originalJobUrl),
-      ),
-    )
-    .limit(5);
+    const urlMatches = await db
+      .select({
+        id: jobs.id,
+        title: jobs.title,
+        city: jobs.city,
+        status: jobs.status,
+        slug: jobs.slug,
+        companyName: companies.name,
+        originalJobUrl: jobs.originalJobUrl,
+      })
+      .from(jobs)
+      .innerJoin(companies, eq(jobs.companyId, companies.id))
+      .where(
+        or(
+          eq(jobs.originalJobUrl, data.originalJobUrl),
+          eq(jobs.applicationUrl, data.originalJobUrl),
+        ),
+      )
+      .limit(5);
 
-  const canonicalMatch = urlMatches.find(
-    (row) =>
-      row.originalJobUrl && canonicalizeUrl(row.originalJobUrl) === canonicalIncoming,
-  );
+    const canonicalMatch = urlMatches.find(
+      (row) =>
+        row.originalJobUrl && canonicalizeUrl(row.originalJobUrl) === canonicalIncoming,
+    );
 
-  if (canonicalMatch) {
-    const { originalJobUrl, ...rest } = canonicalMatch;
-    return rest;
-  }
-  if (urlMatches.length > 0) {
-    const { originalJobUrl, ...rest } = urlMatches[0];
-    return rest;
+    if (canonicalMatch) {
+      const { originalJobUrl, ...rest } = canonicalMatch;
+      return rest;
+    }
+    if (urlMatches.length > 0) {
+      const { originalJobUrl, ...rest } = urlMatches[0];
+      return rest;
+    }
   }
 
   // 3. Fuzzy match: same company + same title + same city, still live.

@@ -158,13 +158,14 @@ export function buildLinkedInPost(
 
     "",
 
+
     `📲 ${TELEGRAM_GROUP_CTA}:`,
 
     TELEGRAM_GROUP_URL,
 
     "",
 
-        "Apply now 👇",
+    "Apply now 👇",
 
     jobUrl,
 
