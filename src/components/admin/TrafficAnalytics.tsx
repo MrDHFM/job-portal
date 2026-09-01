@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, MousePointerClick, Users, Globe, Search } from "lucide-react";
+import { Eye, MousePointerClick, Users, Globe, Search, Clock } from "lucide-react";
 import Pagination from "@/components/admin/Pagination";
 import { TableSkeleton } from "@/components/Skeletons";
 
@@ -49,6 +49,18 @@ const sourceLabels: Record<string, string> = {
   referral: "Referral",
   other: "Other",
 };
+
+function timeAgo(dateString: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export default function TrafficAnalytics({
   totalTraffic,
@@ -117,6 +129,53 @@ export default function TrafficAnalytics({
     const timer = setTimeout(() => setSearch(searchInput.trim()), 350);
     return () => clearTimeout(timer);
   }, [searchInput]);
+
+  // --- Recent Activity feed (individual view/apply events, not
+  // aggregated stats — "which job just got a view, from where, when") ---
+  const [recentActivity, setRecentActivity] = useState<{
+    id: number;
+    event_type: string;
+    source: string;
+    created_at: string;
+    job_id: number;
+    job_title: string;
+    job_slug: string;
+    company_name: string;
+  }[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityTotalPages, setActivityTotalPages] = useState(1);
+  const [activityTotal, setActivityTotal] = useState(0);
+  const [activityFilter, setActivityFilter] = useState("");
+
+  const ACTIVITY_PER_PAGE = 15;
+
+  const loadRecentActivity = (requestedPage = activityPage, requestedFilter = activityFilter) => {
+    setActivityLoading(true);
+
+    const params = new URLSearchParams();
+    params.set("page", String(requestedPage));
+    params.set("limit", String(ACTIVITY_PER_PAGE));
+    if (requestedFilter) params.set("eventType", requestedFilter);
+
+    fetch(`/api/admin/analytics/recent-activity?${params.toString()}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) {
+          setRecentActivity(json.data || []);
+          setActivityPage(json.pagination?.page || requestedPage);
+          setActivityTotalPages(json.pagination?.totalPages || 1);
+          setActivityTotal(json.pagination?.total || 0);
+        }
+      })
+      .catch((e) => console.error("Failed to load recent activity:", e))
+      .finally(() => setActivityLoading(false));
+  };
+
+  useEffect(() => {
+    loadRecentActivity(1, activityFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activityFilter]);
 
   return (
     <section className="space-y-6">
@@ -353,6 +412,112 @@ export default function TrafficAnalytics({
             onPageChange={(nextPage) => {
               setPage(nextPage);
               loadJobPerformance(nextPage);
+            }}
+          />
+        )}
+      </div>
+
+      {/* Recent Activity — a live feed of individual visitor events
+          (which job, what kind of event, where from, when), distinct
+          from the aggregated stats above and from the admin Audit
+          Logs (which tracks admin actions, not visitor traffic). */}
+      <div className="rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="border-b border-neutral-100 p-6 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[var(--color-primary)]" />
+              Recent Activity
+            </h3>
+            <p className="mt-1 text-xs text-neutral-500">
+              Live feed of views and apply clicks, per job, as they happen.
+            </p>
+          </div>
+
+          <select
+            value={activityFilter}
+            onChange={(e) => setActivityFilter(e.target.value)}
+            className="bg-white dark:bg-neutral-800 border rounded-md px-3 py-2 text-sm text-neutral-800 dark:text-neutral-300 outline-none"
+          >
+            <option value="">All activity</option>
+            <option value="VIEW">Views only</option>
+            <option value="APPLY_CLICK">Apply clicks only</option>
+          </select>
+        </div>
+
+        <div className="p-3">
+          {activityLoading ? (
+            <div className="space-y-2 p-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="app-skeleton h-12 w-full" />
+              ))}
+            </div>
+          ) : recentActivity.length === 0 ? (
+            <p className="py-12 text-center text-sm text-neutral-400">
+              No activity yet.
+            </p>
+          ) : (
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {recentActivity.map((event) => {
+                const isView = event.event_type === "VIEW";
+
+                return (
+                  <div
+                    key={event.id}
+                    className="flex items-center gap-3 px-3 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-950 transition-colors"
+                  >
+                    <div
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+                        isView
+                          ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400"
+                          : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                      }`}
+                    >
+                      {isView ? (
+                        <Eye className="h-4 w-4" />
+                      ) : (
+                        <MousePointerClick className="h-4 w-4" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-neutral-800 dark:text-neutral-100 truncate">
+                        <span className="font-bold">
+                          {isView ? "New view" : "Apply click"}
+                        </span>{" "}
+                        on{" "}
+                        <a
+                          href={`/jobs/detail/${event.job_slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-[var(--color-primary)] hover:underline"
+                        >
+                          {event.job_title}
+                        </a>
+                      </p>
+                      <p className="text-[11px] text-neutral-400">
+                        {event.company_name} · {sourceLabels[event.source] || event.source}
+                      </p>
+                    </div>
+
+                    <span className="shrink-0 text-[11px] text-neutral-400 whitespace-nowrap">
+                      {timeAgo(event.created_at)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {!activityLoading && recentActivity.length > 0 && (
+          <Pagination
+            page={activityPage}
+            totalPages={activityTotalPages}
+            total={activityTotal}
+            limit={ACTIVITY_PER_PAGE}
+            onPageChange={(nextPage) => {
+              setActivityPage(nextPage);
+              loadRecentActivity(nextPage);
             }}
           />
         )}
