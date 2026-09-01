@@ -1,19 +1,40 @@
-import React, { Suspense } from "react";
+import React from "react";
 import PublicLayout from "@/components/PublicLayout";
 import JobListingView from "@/components/JobListingView";
+import { getPublicJobs, getVisibleCategories } from "@/lib/jobs/get-public-jobs";
 
 export const dynamic = "force-dynamic";
 
-export default function ExperiencedPage() {
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function ExperiencedPage(props: Props) {
+  const searchParams = await props.searchParams;
+
+  const page =
+    typeof searchParams.page === "string" ? parseInt(searchParams.page) : 1;
+
+  const [{ jobs, pagination }, categories] = await Promise.all([
+    getPublicJobs({
+      page,
+      limit: 10,
+      experienceLevel: "Experienced",
+      sort: "latest",
+    }),
+    getVisibleCategories(),
+  ]);
+
   return (
     <PublicLayout>
-      <Suspense fallback={<div className="p-12 text-center">Loading Experienced Jobs...</div>}>
-        <JobListingView
-          title="Experienced Roles"
-          subtitle="Discover mid-to-senior positions matching your specialized technical skills."
-          preappliedFilters={{ experienceLevel: "Experienced" }}
-        />
-      </Suspense>
+      <JobListingView
+        title="Experienced Roles"
+        subtitle="Discover mid-to-senior positions matching your specialized technical skills."
+        preappliedFilters={{ experienceLevel: "Experienced" }}
+        initialJobs={jobs}
+        initialPagination={pagination}
+        initialCategories={categories}
+      />
     </PublicLayout>
   );
 }

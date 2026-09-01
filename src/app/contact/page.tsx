@@ -129,7 +129,7 @@ export default function ContactPage() {
                       Email Address
                     </h3>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-                      recruiting@globaljobportal.com
+                      enfectest@gmail.com
                     </p>
                   </div>
                 </div>
@@ -158,68 +158,79 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {(socialLinks.socialLinkedin ||
-              socialLinks.socialTwitter ||
-              socialLinks.socialInstagram ||
-              socialLinks.socialTelegram) && (
-              <div className="mt-8">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-4">
-                  Follow Us
-                </h3>
+              {/* Follow Us lives inside this same left column (not as
+                  a separate grid sibling) so it can never desync the
+                  page layout — it only affects this column's own
+                  height, whether or not it's rendered yet. */}
+              {(socialLinks.socialLinkedin ||
+                socialLinks.socialTwitter ||
+                socialLinks.socialInstagram ||
+                socialLinks.socialTelegram) && (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-4">
+                    Follow Us
+                  </h3>
 
-                <div className="flex items-center gap-3">
-                  {socialLinks.socialLinkedin && (
-                    <a
-                      href={socialLinks.socialLinkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="LinkedIn"
-                      className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-colors"
-                    >
-                      <span className="font-bold text-sm">in</span>
-                    </a>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {socialLinks.socialLinkedin && (
+                      <a
+                        href={socialLinks.socialLinkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="LinkedIn"
+                        className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-[var(--color-primary-light)] hover:text-[var(--color-primary)] transition-colors"
+                      >
+                        <span className="font-bold text-sm">in</span>
+                      </a>
+                    )}
 
-                  {socialLinks.socialTwitter && (
-                    <a
-                      href={socialLinks.socialTwitter}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="X / Twitter"
-                      className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
-                    >
-                      <span className="font-bold text-sm">𝕏</span>
-                    </a>
-                  )}
+                    {socialLinks.socialTwitter && (
+                      <a
+                        href={socialLinks.socialTwitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="X / Twitter"
+                        className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                      >
+                        <span className="font-bold text-sm">𝕏</span>
+                      </a>
+                    )}
 
-                  {socialLinks.socialInstagram && (
-                    <a
-                      href={socialLinks.socialInstagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Instagram"
-                      className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-pink-500 transition-colors"
-                    >
-                      <Send className="h-5 w-5" />
-                    </a>
-                  )}
+                    {socialLinks.socialInstagram && (
+                      <a
+                        href={socialLinks.socialInstagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Instagram"
+                        className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-pink-500 transition-colors"
+                      >
+                         <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="currentColor"
+                  >
+                    <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5a4.25 4.25 0 0 0 4.25 4.25h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5a4.25 4.25 0 0 0-4.25-4.25h-8.5ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm5.25-2.25a1.125 1.125 0 1 1 0 2.25 1.125 1.125 0 0 1 0-2.25Z" />
+                  </svg>
+                      </a>
+                    )}
 
-                  {socialLinks.socialTelegram && (
-                    <a
-                      href={socialLinks.socialTelegram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="Telegram"
-                      className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-sky-500 transition-colors"
-                    >
-                      <Send className="h-5 w-5" />
-                    </a>
-                  )}
+                    {socialLinks.socialTelegram && (
+                      <a
+                        href={socialLinks.socialTelegram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Telegram"
+                        className="h-10 w-10 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center hover:text-sky-500 transition-colors"
+                      >
+                        <Send className="h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Right Col: Form Input */}
             <div className="lg:col-span-7 bg-neutral-50 dark:bg-neutral-800 p-8 rounded-lg border border-neutral-150 dark:border-neutral-750">

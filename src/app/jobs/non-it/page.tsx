@@ -1,19 +1,40 @@
-import React, { Suspense } from "react";
+import React from "react";
 import PublicLayout from "@/components/PublicLayout";
 import JobListingView from "@/components/JobListingView";
+import { getPublicJobs, getVisibleCategories } from "@/lib/jobs/get-public-jobs";
 
 export const dynamic = "force-dynamic";
 
-export default function NonITJobsPage() {
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function NonITJobsPage(props: Props) {
+  const searchParams = await props.searchParams;
+
+  const page =
+    typeof searchParams.page === "string" ? parseInt(searchParams.page) : 1;
+
+  const [{ jobs, pagination }, categories] = await Promise.all([
+    getPublicJobs({
+      page,
+      limit: 10,
+      sector: "Non-IT",
+      sort: "latest",
+    }),
+    getVisibleCategories(),
+  ]);
+
   return (
     <PublicLayout>
-      <Suspense fallback={<div className="p-12 text-center">Loading Non-IT Jobs...</div>}>
-        <JobListingView
-          title="Non-IT Jobs"
-          subtitle="Explore careers in Operations, Marketing, Business Dev, and Administration."
-          preappliedFilters={{ sector: "Non-IT" }}
-        />
-      </Suspense>
+      <JobListingView
+        title="Non-IT Jobs"
+        subtitle="Explore careers in Operations, Marketing, Business Dev, and Administration."
+        preappliedFilters={{ sector: "Non-IT" }}
+        initialJobs={jobs}
+        initialPagination={pagination}
+        initialCategories={categories}
+      />
     </PublicLayout>
   );
 }

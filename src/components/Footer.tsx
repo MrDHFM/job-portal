@@ -120,7 +120,7 @@ export default function Footer() {
                   title="Telegram"
                   aria-label="Telegram"
                 >
-                  <Send className="h-5 w-5" />
+                  <Send className="h-4 w-4" />
                 </a>
               )}
 

@@ -34,12 +34,23 @@ type JobListingViewProps = {
     isFeatured?: boolean;
     isUrgent?: boolean;
   };
+  // Seeded from the server component for the very first paint — real
+  // job data (and a real total count) is already in the HTML before
+  // any client JS runs, instead of an empty "Searching database..."
+  // shell. All client-side filtering/pagination behavior below is
+  // completely unchanged; this only affects what shows up first.
+  initialJobs?: any[];
+  initialPagination?: { total: number; totalPages: number; limit: number };
+  initialCategories?: any[];
 };
 
 export default function JobListingView({
   title = "Explore Jobs",
   subtitle = "Find your next career move among our verified listings.",
-  preappliedFilters
+  preappliedFilters,
+  initialJobs,
+  initialPagination,
+  initialCategories,
 }: JobListingViewProps) {
   const searchParams = useSearchParams();
 
@@ -64,11 +75,14 @@ export default function JobListingView({
   const [sort, setSort] = useState(() => searchParams.get("sort") || "latest");
   const [page, setPage] = useState(() => parseInt(searchParams.get("page") || "1"));
 
-  // API Data State
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 10 });
-  const [loading, setLoading] = useState(true);
+  // API Data State — seeded from server-rendered props when available,
+  // so first paint already shows real data instead of an empty state.
+  const [jobs, setJobs] = useState<any[]>(() => initialJobs || []);
+  const [categories, setCategories] = useState<any[]>(() => initialCategories || []);
+  const [pagination, setPagination] = useState(
+    () => initialPagination || { total: 0, totalPages: 1, limit: 10 },
+  );
+  const [loading, setLoading] = useState(() => !initialJobs);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Close the mobile filter drawer on Escape.
@@ -83,14 +97,17 @@ export default function JobListingView({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileFiltersOpen]);
 
-  // Load Categories list once
+  // Load Categories list once (skip if SSR already provided them)
   useEffect(() => {
+    if (initialCategories && initialCategories.length > 0) return;
+
     fetch("/api/v1/categories")
       .then((res) => res.json())
       .then((json) => {
         if (json.success) setCategories(json.data);
       })
       .catch((err) => console.error("Error loading categories:", err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch Jobs from backend REST API

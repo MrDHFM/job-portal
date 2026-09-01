@@ -132,16 +132,18 @@ export default function TrafficAnalytics({
 
   // --- Recent Activity feed (individual view/apply events, not
   // aggregated stats — "which job just got a view, from where, when") ---
-  const [recentActivity, setRecentActivity] = useState<{
-    id: number;
-    event_type: string;
-    source: string;
-    created_at: string;
-    job_id: number;
-    job_title: string;
-    job_slug: string;
-    company_name: string;
-  }[]>([]);
+  const [recentActivity, setRecentActivity] = useState<
+    {
+      id: number;
+      event_type: string;
+      source: string;
+      created_at: string;
+      job_id: number;
+      job_title: string;
+      job_slug: string;
+      company_name: string;
+    }[]
+  >([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [activityPage, setActivityPage] = useState(1);
   const [activityTotalPages, setActivityTotalPages] = useState(1);
